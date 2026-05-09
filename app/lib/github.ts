@@ -19,28 +19,52 @@ const SINCE_ISO = (() => {
 })();
 
 /**
- * Fetch a pool of trending public repos. We use GitHub search ordered by stars
- * over the last 30 days as a "trending" proxy. Optionally filtered by topic
- * keywords. Anonymous rate limit is 60 req/hr — fine for hackathon.
+ * Fetch a pool of trending public repos. Tries (in order) topic-filtered
+ * recency-windowed → keyword search → all-time keyword. The first non-empty
+ * tier wins so unusual queries like "podcast" still surface something.
+ * Anonymous rate limit is 60 req/hr — fine for hackathon.
  */
 export async function fetchTrending({
   topic,
+  query,
   perPage = 30,
 }: {
   topic?: string;
+  query?: string;
   perPage?: number;
 } = {}): Promise<Repo[]> {
-  const q = [`created:>${SINCE_ISO}`, "is:public", "stars:>50"];
-  if (topic) q.push(`topic:${topic}`);
+  const tiers: string[][] = [];
+  const t = (topic || "").trim().toLowerCase();
+  const q = (query || "").trim();
 
-  const { data } = await octokit().rest.search.repos({
-    q: q.join(" "),
-    sort: "stars",
-    order: "desc",
-    per_page: perPage,
-  });
+  // Tier 1: recency-windowed topic filter (the "trending" sweet spot).
+  if (t) tiers.push([`created:>${SINCE_ISO}`, "is:public", "stars:>50", `topic:${t}`]);
 
-  return data.items.map(toRepo);
+  // Tier 2: recency-windowed freeform keyword (covers things that aren't a topic slug).
+  const keyword = q || t;
+  if (keyword) tiers.push([keyword, `pushed:>${SINCE_ISO}`, "is:public", "stars:>50"]);
+
+  // Tier 3: all-time keyword + topic — last resort so we always show *something*.
+  if (keyword) tiers.push([keyword, "is:public", "stars:>200"]);
+
+  // Tier 4: pure recency (no topic) — final fallback for empty input.
+  if (tiers.length === 0) tiers.push([`created:>${SINCE_ISO}`, "is:public", "stars:>50"]);
+
+  for (const tier of tiers) {
+    try {
+      const { data } = await octokit().rest.search.repos({
+        q: tier.join(" "),
+        sort: "stars",
+        order: "desc",
+        per_page: perPage,
+      });
+      if (data.items.length > 0) return data.items.map(toRepo);
+    } catch (err) {
+      // Skip tier on error (likely rate limit) and try the next.
+      console.warn("[fetchTrending] tier failed:", err instanceof Error ? err.message : err);
+    }
+  }
+  return [];
 }
 
 /**

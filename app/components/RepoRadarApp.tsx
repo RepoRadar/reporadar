@@ -94,24 +94,28 @@ export function RepoRadarApp() {
   useCopilotAction({
     name: "rankRepos",
     description:
-      "Find trending GitHub repos that match a topic or theme and surface them on the radar. Always call this when the user asks for repos, examples, or projects. The 'topic' parameter MUST be a single GitHub topic slug — lowercase, hyphenated, no spaces. Examples: 'rust', 'iot', 'agent', 'rag', 'langchain', 'cli', 'machine-learning', 'security', 'web3'. Pick ONE single-word slug. Never pass multi-word phrases.",
+      "Find trending GitHub repos and surface them on the radar. Call this any time the user asks for repos, examples, or projects — even loose phrases like 'a podcast platform' or 'something for travel'. ALWAYS provide a 'query' (freeform keywords) and OPTIONALLY a 'topic' (single GitHub topic slug). The backend tries the topic first then falls back to keyword search, so it's better to over-call this with both than to refuse.",
     parameters: [
-      { name: "topic", type: "string", description: "ONE GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent', 'rag', 'langchain', 'security'.", required: false },
+      { name: "query", type: "string", description: "Freeform search keywords. Spaces OK. e.g. 'podcast', 'image generation', 'low effort weekend project'. Pull this from the user's message.", required: false },
+      { name: "topic", type: "string", description: "OPTIONAL single GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent'. Skip if no obvious slug fits.", required: false },
       { name: "limit", type: "number", description: "How many repos to surface (1-12)", required: false },
       { name: "summary", type: "string", description: "A one-sentence framing for the user about what you found", required: false },
     ],
-    handler: async ({ topic, limit, summary }: { topic?: string; limit?: number; summary?: string }) => {
+    handler: async ({ topic, query, limit, summary }: { topic?: string; query?: string; limit?: number; summary?: string }) => {
       const normalizedTopic = topic
         ?.toLowerCase()
         .trim()
         .replace(/\s+/g, "-")
         .replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, "");
+      const trimmedQuery = (query ?? "").trim();
 
-      setLastQuery(summary ?? normalizedTopic ?? "");
+      setLastQuery(summary ?? trimmedQuery ?? normalizedTopic ?? "");
       if (normalizedTopic) setActiveCategory(normalizedTopic);
+      else if (trimmedQuery) setActiveCategory("");
 
       const params = new URLSearchParams();
       if (normalizedTopic) params.set("topic", normalizedTopic);
+      if (trimmedQuery) params.set("q", trimmedQuery);
       params.set("limit", String(Math.min(12, Math.max(3, limit ?? 8))));
 
       const res = await fetch(`/api/repos?${params}`);

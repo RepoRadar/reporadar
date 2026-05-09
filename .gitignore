@@ -44,3 +44,11 @@ next-env.d.ts
 # playwright/dev artifacts
 /.playwright-mcp/
 /reporadar-*.png
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
