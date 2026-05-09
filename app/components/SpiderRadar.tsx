@@ -8,36 +8,15 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from "recharts";
+import { DIMENSION_META, DIMENSION_ORDER } from "@/app/lib/types";
 import type { ScoredRepo } from "@/app/lib/types";
-
-const AXES = [
-  { key: "stars", label: "Stars", help: "Higher = more popular." },
-  { key: "forks", label: "Forks", help: "Higher = more adoption." },
-  { key: "speed", label: "Speed", help: "Higher = faster to ship." },
-  { key: "ui", label: "UI", help: "Higher = more polished UI surface." },
-  { key: "complexity", label: "Depth", help: "Higher = more substantive codebase." },
-  { key: "community", label: "Comm", help: "Higher = more active community." },
-] as const;
-
-const log10n = (n: number, ceiling: number) =>
-  Math.max(0, Math.min(100, (Math.log10(Math.max(1, n)) / Math.log10(ceiling)) * 100));
-
-function profile(r: ScoredRepo) {
-  return {
-    stars: log10n(r.stars, 100000),
-    forks: log10n(r.forks, 20000),
-    speed: r.scores.speedToBuild * 100,
-    ui: r.scores.uiPotential * 10,
-    complexity: r.scores.complexity * 10,
-    community: r.scores.communityEngagement * 100,
-  };
-}
 
 export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
   const top = repos[0];
-  const data = AXES.map((axis) => ({
-    axis: axis.label,
-    value: top ? profile(top)[axis.key] : 0,
+  const data = DIMENSION_ORDER.map((dim) => ({
+    axis: DIMENSION_META[dim].short,
+    fullName: DIMENSION_META[dim].label,
+    value: top ? top.dimensions[dim] : 0,
     fullMark: 100,
   }));
 
@@ -48,7 +27,11 @@ export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
         style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-          <RadarChart data={data} outerRadius="72%" margin={{ top: 4, right: 12, bottom: 4, left: 12 }}>
+          <RadarChart
+            data={data}
+            outerRadius="70%"
+            margin={{ top: 6, right: 14, bottom: 6, left: 14 }}
+          >
             <PolarGrid
               stroke="rgba(255,255,255,0.18)"
               strokeDasharray="2 3"
@@ -57,17 +40,18 @@ export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
             />
             <PolarAngleAxis
               dataKey="axis"
-              tick={{ fill: "#b3b1c0", fontSize: 9, fontFamily: "ui-monospace, monospace" }}
+              tick={{ fill: "#b3b1c0", fontSize: 8.5, fontFamily: "ui-monospace, monospace" }}
             />
             <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
             <Radar
               dataKey="value"
               stroke="#f43f8a"
               fill="#f43f8a"
-              fillOpacity={0.30}
+              fillOpacity={0.32}
               strokeWidth={1.8}
               isAnimationActive
               animationDuration={500}
+              dot={{ r: 2, fill: "#f43f8a", stroke: "#08070d", strokeWidth: 1 }}
             />
           </RadarChart>
         </ResponsiveContainer>
@@ -79,7 +63,7 @@ export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
               className="inline-block h-2 w-2 rounded-full"
               style={{ background: "var(--primary)", boxShadow: "0 0 6px var(--primary-glow)" }}
             />
-            <span className="truncate" style={{ color: "var(--fg-muted)" }}>
+            <span className="truncate" style={{ color: "var(--fg-muted)" }} title={top.fullName}>
               {top.fullName}
             </span>
           </div>
@@ -89,7 +73,7 @@ export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
           </span>
         )}
         <span className="text-[9px] leading-tight" style={{ color: "var(--fg-dim)" }}>
-          higher = better on every axis
+          10 axes · higher = better
         </span>
       </div>
     </div>

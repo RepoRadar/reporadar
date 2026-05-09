@@ -96,6 +96,7 @@ export async function fetchRepo(fullName: string): Promise<Repo> {
     language: m.language,
     htmlUrl: m.html_url,
     pushedAt: m.pushed_at ?? new Date().toISOString(),
+    createdAt: m.created_at ?? undefined,
   };
 }
 
@@ -107,6 +108,7 @@ function toRepo(item: {
   open_issues_count: number;
   topics?: string[];
   language: string | null;
+  created_at?: string | null;
   html_url: string;
   pushed_at: string | null;
 }): Repo {
@@ -122,5 +124,6 @@ function toRepo(item: {
     language: item.language,
     htmlUrl: item.html_url,
     pushedAt: item.pushed_at ?? new Date().toISOString(),
+    createdAt: item.created_at ?? undefined,
   };
 }
