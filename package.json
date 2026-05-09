@@ -9,11 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
+    "@copilotkit/react-core": "^1.57.1",
+    "@copilotkit/react-ui": "^1.57.1",
+    "@copilotkit/runtime": "^1.57.1",
     "next": "16.2.6",
+    "octokit": "^5.0.5",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260509.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

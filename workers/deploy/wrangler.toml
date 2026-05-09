@@ -1,0 +1,23 @@
+name = "reporadar-deploy"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Public endpoint for the Next.js app to POST deploy requests to.
+# We'll also serve build-step events from this worker via SSE / D1 polling.
+workers_dev = true
+
+[vars]
+GITHUB_API_BASE = "https://api.github.com"
+
+# Set via: wrangler secret put ANTHROPIC_API_KEY --config workers/deploy/wrangler.toml
+# Set via: wrangler secret put GITHUB_TOKEN --config workers/deploy/wrangler.toml (optional)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "reporadar"
+database_id = "REPLACE_AFTER_wrangler_d1_create"
+
+[[r2_buckets]]
+binding = "SURFACES"
+bucket_name = "reporadar-surfaces"
