@@ -1,0 +1,68 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - heading "RepoRadar" [level=1] [ref=e6]
+        - generic [ref=e7]: agent-rendered repo radar · deploy custom surfaces on demand
+      - generic [ref=e8]: v0.1 · gen-ui hackathon
+    - main [ref=e9]:
+      - complementary [ref=e10]:
+        - heading "Tune your radar" [level=2] [ref=e11]
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - generic [ref=e14]: Speed to build
+            - generic [ref=e15]: "50"
+          - slider "Speed to build 50" [ref=e16] [cursor=pointer]: "0.5"
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: Community engagement
+            - generic [ref=e20]: "50"
+          - slider "Community engagement 50" [ref=e21] [cursor=pointer]: "0.5"
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]: Job potential
+            - generic [ref=e25]: "50"
+          - slider "Job potential 50" [ref=e26] [cursor=pointer]: "0.5"
+        - generic [ref=e27]:
+          - heading "Quick scans" [level=3] [ref=e28]
+          - generic [ref=e29]:
+            - button "AI agent frameworks" [disabled] [ref=e30]
+            - button "RAG / retrieval" [disabled] [ref=e31]
+            - button "Rust infra" [disabled] [ref=e32]
+            - button "IoT / hardware" [disabled] [ref=e33]
+        - generic [ref=e34]: Open the chat dock and ask for repos in any flavor. The agent calls rankRepos; cards land on the radar, ranked by your sliders. Click Deploy on any card to materialize a bespoke generative-UI surface.
+      - generic [ref=e38]:
+        - generic [ref=e39]: "Ask the agent: \"show me LangChain repos for a weekend project\""
+        - generic [ref=e40]: Repo cards will materialize here, agent-summarized and ranked by your sliders.
+    - generic [ref=e41]:
+      - button "Close Chat" [ref=e43] [cursor=pointer]:
+        - generic:
+          - img
+        - img [ref=e45]
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - generic [ref=e49]: RepoRadar
+          - button "Close" [ref=e51]:
+            - img [ref=e52]
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e57]:
+              - generic [ref=e59]: "Ask me to find you a repo. Try: 'Show me langchain repos for a weekend project' — I'll plot them and you can deploy any one as a custom interactive surface."
+              - generic [ref=e60]:
+                - button "Regenerate response" [ref=e61] [cursor=pointer]:
+                  - img
+                - button "Copy to clipboard" [ref=e62] [cursor=pointer]:
+                  - img
+                - button "Thumbs up" [ref=e63] [cursor=pointer]:
+                  - img
+                - button "Thumbs down" [ref=e64] [cursor=pointer]:
+                  - img
+            - contentinfo [ref=e65]
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - textbox "Type a message..."
+              - button "Send" [disabled] [ref=e70]:
+                - img [ref=e71]
+            - paragraph [ref=e74]: Powered by CopilotKit
+  - button "Open Next.js Dev Tools" [ref=e80] [cursor=pointer]:
+    - img [ref=e81]

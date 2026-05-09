@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { rankRepos } from "@/app/lib/scoring";
@@ -8,6 +8,13 @@ import type { AxisWeights, Repo, ScoredRepo } from "@/app/lib/types";
 import { RepoCard } from "@/app/components/RepoCard";
 import { RadarPlot } from "@/app/components/RadarPlot";
 import { DeployForm } from "@/app/components/DeployForm";
+
+const STARTER_QUERIES = [
+  { topic: "agent", label: "AI agent frameworks" },
+  { topic: "rag", label: "RAG / retrieval" },
+  { topic: "rust", label: "Rust infra" },
+  { topic: "iot", label: "IoT / hardware" },
+];
 
 export function RepoRadarApp() {
   const [weights, setWeights] = useState<AxisWeights>({
@@ -19,6 +26,43 @@ export function RepoRadarApp() {
   const [lastQuery, setLastQuery] = useState<string>("");
   const [selected, setSelected] = useState<string | undefined>(undefined);
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
+
+  // Auto-populate the radar on mount so the page is never empty in screenshots
+  // and the demo lands hot. Pure /api/repos + local scoring — no LLM call.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/repos?topic=ai&limit=8`);
+        if (!res.ok) return;
+        const data = (await res.json()) as Repo[];
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setRepos(rankRepos(data, weights));
+        setLastQuery("trending: AI");
+      } finally {
+        if (!cancelled) setBootstrapping(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const runStarter = async (topic: string, label: string) => {
+    setBootstrapping(true);
+    try {
+      const res = await fetch(`/api/repos?topic=${encodeURIComponent(topic)}&limit=8`);
+      if (res.ok) {
+        const data = (await res.json()) as Repo[];
+        setRepos(rankRepos(data, weights));
+        setLastQuery(`trending: ${label}`);
+      }
+    } finally {
+      setBootstrapping(false);
+    }
+  };
 
   // Re-rank locally whenever sliders move — instant feedback, no LLM call.
   const ranked = useMemo(() => {
@@ -159,6 +203,25 @@ export function RepoRadarApp() {
             value={weights.jobPotential}
             onChange={(v) => setWeights((w) => ({ ...w, jobPotential: v }))}
           />
+
+          <div className="flex flex-col gap-2 pt-2">
+            <h3 className="text-xs uppercase tracking-wider text-zinc-500">
+              Quick scans
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {STARTER_QUERIES.map((q) => (
+                <button
+                  key={q.topic}
+                  disabled={bootstrapping}
+                  onClick={() => runStarter(q.topic, q.label)}
+                  className="rounded-md border border-white/10 bg-black/40 px-2.5 py-1 text-[11px] font-mono text-zinc-300 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-2 rounded-md border border-white/10 bg-black/40 p-3 text-xs leading-5 text-zinc-400">
             Open the chat dock and ask for repos in any flavor. The agent calls{" "}
             <span className="font-mono text-emerald-400">rankRepos</span>; cards

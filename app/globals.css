@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Hide the CopilotKit dev Web Inspector floating button + promo banner. */
+cpk-web-inspector,
+[aria-label="Web Inspector"],
+[data-copilotkit-dev-console] {
+  display: none !important;
+}
+
+/* Tone the CopilotKit chat to match our dark hackathon palette. */
+.copilotKitChat,
+.copilotKitWindow {
+  --copilot-kit-primary-color: #34d399;
+  --copilot-kit-contrast-color: #0a0a0a;
+}
