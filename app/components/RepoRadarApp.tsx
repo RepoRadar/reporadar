@@ -183,13 +183,18 @@ export function RepoRadarApp() {
       { name: "repoFullName", type: "string", description: "The owner/repo to deploy a generative surface for", required: true },
       { name: "hint", type: "string", description: "Optional pre-filled user hint about what kind of surface to make", required: false },
     ],
-    renderAndWaitForResponse: ({ args, respond }) => (
-      <DeployForm
-        repo={args.repoFullName ?? ""}
-        onResolved={(result) => respond?.(JSON.stringify(result))}
-        onCancel={() => respond?.(JSON.stringify({ deployed: false }))}
-      />
-    ),
+    renderAndWaitForResponse: ({ args, respond }) => {
+      const fullName = args.repoFullName ?? "";
+      const known = ranked.find((r) => r.fullName === fullName);
+      return (
+        <DeployForm
+          repo={fullName}
+          description={known?.description ?? null}
+          onResolved={(result) => respond?.(JSON.stringify(result))}
+          onCancel={() => respond?.(JSON.stringify({ deployed: false }))}
+        />
+      );
+    },
   });
 
   return (
@@ -332,6 +337,7 @@ export function RepoRadarApp() {
       {activeDeploy && (
         <DeployModal
           repo={activeDeploy.repo.fullName}
+          description={activeDeploy.repo.description}
           onClose={() => setActiveDeploy(null)}
         />
       )}
@@ -385,9 +391,11 @@ function SliderControl({
 
 function DeployModal({
   repo,
+  description,
   onClose,
 }: {
   repo: string;
+  description?: string | null;
   onClose: () => void;
 }) {
   return (
@@ -405,6 +413,7 @@ function DeployModal({
         </button>
         <DeployForm
           repo={repo}
+          description={description}
           onResolved={(result) => {
             if (result.deployed && result.url) {
               window.open(result.url, "_blank", "noopener,noreferrer");

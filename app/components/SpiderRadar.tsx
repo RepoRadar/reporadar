@@ -3,6 +3,7 @@
 import {
   PolarAngleAxis,
   PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
   ResponsiveContainer,
@@ -10,19 +11,13 @@ import {
 import type { ScoredRepo } from "@/app/lib/types";
 
 const AXES = [
-  { key: "stars", label: "Stars" },
-  { key: "forks", label: "Forks" },
-  { key: "speed", label: "Speed" },
-  { key: "ui", label: "UI" },
-  { key: "complexity", label: "Complex" },
-  { key: "community", label: "Comm" },
+  { key: "stars", label: "Stars", help: "Higher = more popular." },
+  { key: "forks", label: "Forks", help: "Higher = more adoption." },
+  { key: "speed", label: "Speed", help: "Higher = faster to ship." },
+  { key: "ui", label: "UI", help: "Higher = more polished UI surface." },
+  { key: "complexity", label: "Depth", help: "Higher = more substantive codebase." },
+  { key: "community", label: "Comm", help: "Higher = more active community." },
 ] as const;
-
-const COLORS = [
-  { stroke: "#f43f8a", fill: "#f43f8a" }, // primary pink
-  { stroke: "#22d3ee", fill: "#22d3ee" }, // secondary cyan
-  { stroke: "#fbbf24", fill: "#fbbf24" }, // accent amber
-];
 
 const log10n = (n: number, ceiling: number) =>
   Math.max(0, Math.min(100, (Math.log10(Math.max(1, n)) / Math.log10(ceiling)) * 100));
@@ -39,14 +34,12 @@ function profile(r: ScoredRepo) {
 }
 
 export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
-  const slice = repos.slice(0, 3);
-  const data = AXES.map((axis) => {
-    const row: Record<string, number | string> = { axis: axis.label };
-    slice.forEach((r, i) => {
-      row[`r${i}`] = profile(r)[axis.key];
-    });
-    return row;
-  });
+  const top = repos[0];
+  const data = AXES.map((axis) => ({
+    axis: axis.label,
+    value: top ? profile(top)[axis.key] : 0,
+    fullMark: 100,
+  }));
 
   return (
     <div className="flex flex-col gap-2">
@@ -56,43 +49,48 @@ export function SpiderRadar({ repos }: { repos: ScoredRepo[] }) {
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <RadarChart data={data} outerRadius="72%" margin={{ top: 4, right: 12, bottom: 4, left: 12 }}>
-            <PolarGrid stroke="rgba(255,255,255,0.10)" />
+            <PolarGrid
+              stroke="rgba(255,255,255,0.18)"
+              strokeDasharray="2 3"
+              gridType="polygon"
+              radialLines
+            />
             <PolarAngleAxis
               dataKey="axis"
               tick={{ fill: "#b3b1c0", fontSize: 9, fontFamily: "ui-monospace, monospace" }}
             />
-            {slice.map((_, i) => (
-              <Radar
-                key={i}
-                dataKey={`r${i}`}
-                stroke={COLORS[i].stroke}
-                fill={COLORS[i].fill}
-                fillOpacity={0.18}
-                strokeWidth={1.5}
-                isAnimationActive
-                animationDuration={400}
-              />
-            ))}
+            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+            <Radar
+              dataKey="value"
+              stroke="#f43f8a"
+              fill="#f43f8a"
+              fillOpacity={0.30}
+              strokeWidth={1.8}
+              isAnimationActive
+              animationDuration={500}
+            />
           </RadarChart>
         </ResponsiveContainer>
       </div>
       <div className="flex flex-col gap-1">
-        {slice.map((r, i) => (
-          <div key={r.fullName} className="flex items-center gap-2 text-[10px] font-mono">
+        {top ? (
+          <div className="flex items-center gap-2 text-[10px] font-mono">
             <span
               className="inline-block h-2 w-2 rounded-full"
-              style={{ background: COLORS[i].stroke, boxShadow: `0 0 6px ${COLORS[i].stroke}` }}
+              style={{ background: "var(--primary)", boxShadow: "0 0 6px var(--primary-glow)" }}
             />
             <span className="truncate" style={{ color: "var(--fg-muted)" }}>
-              {r.fullName}
+              {top.fullName}
             </span>
           </div>
-        ))}
-        {slice.length === 0 && (
+        ) : (
           <span className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
             no repos yet
           </span>
         )}
+        <span className="text-[9px] leading-tight" style={{ color: "var(--fg-dim)" }}>
+          higher = better on every axis
+        </span>
       </div>
     </div>
   );

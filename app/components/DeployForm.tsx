@@ -1,45 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type DeployStage =
   | { kind: "form" }
-  | { kind: "running"; log: string[] }
+  | { kind: "running"; log: string[]; progress: number; milestoneIdx: number }
   | { kind: "done"; url: string; slug: string; formFactor: string; log: string[] }
   | { kind: "error"; message: string; log: string[] };
 
+const MILESTONES = [
+  "Reading repo",
+  "Asking Gemini for the right form factor",
+  "Emitting A2UI components",
+  "Persisting to R2 + D1",
+  "Going live at .reporadar.io",
+] as const;
+
 export function DeployForm({
   repo,
+  description,
   onResolved,
   onCancel,
 }: {
   repo: string;
+  description?: string | null;
   onResolved: (result: { deployed: boolean; url?: string; slug?: string; hint?: string }) => void;
   onCancel: () => void;
 }) {
   const [hint, setHint] = useState("");
+  const [contact, setContact] = useState("");
   const [stage, setStage] = useState<DeployStage>({ kind: "form" });
-  const [tickStartedAt, setTickStartedAt] = useState<number | null>(null);
+  const tickStartedAt = useRef<number | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (progressTimer.current) clearInterval(progressTimer.current);
+    };
+  }, []);
 
   const submit = async () => {
     const log: string[] = [`launching deploy for ${repo}`];
-    setStage({ kind: "running", log });
-    setTickStartedAt(Date.now());
+    tickStartedAt.current = Date.now();
+    setStage({ kind: "running", log, progress: 4, milestoneIdx: 0 });
+
+    // Animate progress + milestones based on elapsed time. Caps at 92% until
+    // the real fetch resolves, then jumps to 100% in the done state.
+    progressTimer.current = setInterval(() => {
+      const elapsed = (Date.now() - (tickStartedAt.current ?? Date.now())) / 1000;
+      const fakePct = Math.min(92, 4 + Math.round((1 - Math.exp(-elapsed / 6)) * 92));
+      const idx = Math.min(MILESTONES.length - 1, Math.floor(elapsed / 2.4));
+      setStage((s) => (s.kind === "running" ? { ...s, progress: fakePct, milestoneIdx: idx } : s));
+    }, 250);
 
     try {
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ repo, hint: hint.trim() || undefined }),
+        body: JSON.stringify({
+          repo,
+          hint: hint.trim() || undefined,
+          contact: contact.trim() || undefined,
+        }),
       });
       const j = await res.json();
+      if (progressTimer.current) clearInterval(progressTimer.current);
       if (!res.ok || !j.ok) {
         setStage({ kind: "error", message: j.error ?? "deploy failed", log: j.buildLog ?? log });
         return;
       }
       const merged = [...log, ...(j.buildLog ?? [])];
-      setStage({ kind: "done", url: j.url, slug: j.slug, formFactor: j.surface?.formFactor ?? "?", log: merged });
+      setStage({
+        kind: "done",
+        url: j.url,
+        slug: j.slug,
+        formFactor: j.surface?.formFactor ?? "?",
+        log: merged,
+      });
     } catch (err) {
+      if (progressTimer.current) clearInterval(progressTimer.current);
       const msg = err instanceof Error ? err.message : String(err);
       setStage({ kind: "error", message: msg, log: [...log, `error: ${msg}`] });
     }
@@ -59,9 +98,17 @@ export function DeployForm({
             ·.reporadar.io
           </span>
         </div>
-        <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+        <div className="flex flex-col gap-1">
+          <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+          {description && (
+            <p className="text-xs leading-5" style={{ color: "var(--fg-muted)" }}>
+              {description}
+            </p>
+          )}
+        </div>
+
         <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--fg-muted)" }}>
-          What kind of surface? (optional)
+          What kind of surface? <span style={{ color: "var(--fg-dim)" }}>(optional)</span>
           <input
             type="text"
             value={hint}
@@ -83,6 +130,31 @@ export function DeployForm({
             }}
           />
         </label>
+
+        <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--fg-muted)" }}>
+          Notify me when ready <span style={{ color: "var(--fg-dim)" }}>(email or phone — optional)</span>
+          <input
+            type="text"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            placeholder="you@example.com or +14155551234"
+            className="rounded-md border px-3 py-2 text-sm outline-none"
+            style={{
+              borderColor: "var(--border-strong)",
+              background: "rgba(0,0,0,0.40)",
+              color: "var(--fg)",
+            }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
+            }}
+            onBlur={(e) => {
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
+            }}
+          />
+        </label>
+
         <div className="flex justify-end gap-2 pt-1">
           <button
             onClick={() => {
@@ -111,7 +183,7 @@ export function DeployForm({
   }
 
   if (stage.kind === "running") {
-    const seconds = tickStartedAt ? Math.floor((Date.now() - tickStartedAt) / 1000) : 0;
+    const seconds = tickStartedAt.current ? Math.floor((Date.now() - tickStartedAt.current) / 1000) : 0;
     return (
       <div
         className="flex flex-col gap-3 rounded-xl border p-4"
@@ -121,9 +193,55 @@ export function DeployForm({
           <div className="text-[10px] uppercase tracking-[0.18em] rr-blink" style={{ color: "var(--primary)" }}>
             ● Building…
           </div>
-          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{seconds}s</div>
+          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{seconds}s · {stage.progress}%</div>
         </div>
-        <BuildLog lines={stage.log} />
+
+        <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+          <div
+            className="h-full transition-all duration-300"
+            style={{
+              width: `${stage.progress}%`,
+              background: "linear-gradient(90deg, var(--primary), var(--accent), var(--secondary))",
+              boxShadow: "0 0 12px var(--primary-glow)",
+            }}
+          />
+        </div>
+
+        <ul className="flex flex-col gap-1">
+          {MILESTONES.map((m, i) => {
+            const done = i < stage.milestoneIdx;
+            const active = i === stage.milestoneIdx;
+            return (
+              <li key={m} className="flex items-center gap-2 text-[11px]">
+                <span
+                  className={active ? "rr-blink" : ""}
+                  style={{
+                    color: done ? "var(--secondary)" : active ? "var(--primary)" : "var(--fg-dim)",
+                    fontFamily: "ui-monospace, monospace",
+                    width: 12,
+                  }}
+                >
+                  {done ? "✓" : active ? "●" : "○"}
+                </span>
+                <span
+                  style={{
+                    color: done ? "var(--fg)" : active ? "var(--fg)" : "var(--fg-dim)",
+                  }}
+                >
+                  {m}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        {contact && (
+          <div className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
+            We&apos;ll ping <span style={{ color: "var(--secondary)" }}>{contact}</span> when it&apos;s ready.
+          </div>
+        )}
+
+        <BuildLog lines={stage.log} compact />
       </div>
     );
   }
@@ -137,7 +255,14 @@ export function DeployForm({
         <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--secondary)" }}>
           ✓ Deployed
         </div>
-        <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+        <div className="flex flex-col gap-1">
+          <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+          {description && (
+            <p className="text-xs leading-5" style={{ color: "var(--fg-muted)" }}>
+              {description}
+            </p>
+          )}
+        </div>
         <div
           className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
           style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.40)" }}
@@ -162,6 +287,11 @@ export function DeployForm({
         >
           Open ↗ {stage.url.replace(/^https?:\/\//, "")}
         </a>
+        {contact && (
+          <div className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
+            (Notification queued for <span style={{ color: "var(--secondary)" }}>{contact}</span> — wired up post-hackathon.)
+          </div>
+        )}
         <BuildLog lines={stage.log} compact />
         <button
           onClick={() => onResolved({ deployed: true, url: stage.url, slug: stage.slug, hint })}

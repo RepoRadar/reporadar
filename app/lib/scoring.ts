@@ -23,10 +23,17 @@ export function scoreRepo(repo: Repo, weights: AxisWeights): ScoredRepo {
   const langBonus = repo.language && trendyLanguages.has(repo.language) ? 1 : 0.6;
   const jobPotential = clamp01(0.6 * starScore + 0.4 * langBonus);
 
-  const overall =
-    weights.speedToBuild * speedToBuild +
-    weights.communityEngagement * communityEngagement +
-    weights.jobPotential * jobPotential;
+  // Weighted average — divide by Σ(weights) so overall stays in [0, 1] no
+  // matter how the user tunes the sliders. Without this, three sliders at 1.0
+  // would push overall to 3.0 (the old "150/100" bug).
+  const weightSum =
+    weights.speedToBuild + weights.communityEngagement + weights.jobPotential;
+  const overall = weightSum > 0
+    ? (weights.speedToBuild * speedToBuild +
+        weights.communityEngagement * communityEngagement +
+        weights.jobPotential * jobPotential) /
+      weightSum
+    : (speedToBuild + communityEngagement + jobPotential) / 3;
 
   // Display metrics (0..10) for the radar/card UI.
   const complexity = Math.round(
