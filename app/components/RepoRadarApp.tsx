@@ -3,41 +3,47 @@
 import { useEffect, useMemo, useState } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
-import { rankRepos } from "@/app/lib/scoring";
-import type { AxisWeights, Repo, ScoredRepo } from "@/app/lib/types";
+import { DEFAULT_WEIGHTS, rankRepos } from "@/app/lib/scoring";
+import {
+  DIMENSION_META,
+  DIMENSION_ORDER,
+  type Dimension,
+  type DimensionWeights,
+  type Repo,
+  type ScoredRepo,
+} from "@/app/lib/types";
 import { RepoCard } from "@/app/components/RepoCard";
-import { SpiderRadar } from "@/app/components/SpiderRadar";
+import { InteractiveRadar } from "@/app/components/InteractiveRadar";
+import { PriorityBar } from "@/app/components/PriorityBar";
 import { DeployForm } from "@/app/components/DeployForm";
 
-const CATEGORIES = [
+const QUICK_SCANS = [
   { topic: "agent", label: "Agents", glyph: "◈" },
   { topic: "rag", label: "RAG", glyph: "◇" },
   { topic: "llm", label: "LLM Apps", glyph: "◆" },
   { topic: "rust", label: "Rust", glyph: "▲" },
   { topic: "iot", label: "IoT", glyph: "⚡" },
   { topic: "security", label: "Security", glyph: "✦" },
-  { topic: "developer-tools", label: "Devtools", glyph: "▣" },
-  { topic: "frontend", label: "Frontend", glyph: "◐" },
-  { topic: "machine-learning", label: "ML", glyph: "✸" },
-  { topic: "web3", label: "Web3", glyph: "✺" },
 ];
 
+const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
+const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
+
 export function RepoRadarApp() {
-  const [weights, setWeights] = useState<AxisWeights>({
-    speedToBuild: 0.5,
-    communityEngagement: 0.5,
-    jobPotential: 0.5,
-  });
+  const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
+  const [priorities, setPriorities] = useState<Dimension[]>([]);
   const [repos, setRepos] = useState<ScoredRepo[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("agent");
   const [lastQuery, setLastQuery] = useState<string>("");
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   const ranked = useMemo(() => {
     if (repos.length === 0) return [] as ScoredRepo[];
-    return rankRepos(repos as Repo[], weights);
-  }, [repos, weights]);
+    return rankRepos(repos as Repo[], weights, priorities);
+  }, [repos, weights, priorities]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +53,7 @@ export function RepoRadarApp() {
         if (!res.ok) return;
         const data = (await res.json()) as Repo[];
         if (cancelled || !Array.isArray(data) || data.length === 0) return;
-        setRepos(rankRepos(data, weights));
+        setRepos(rankRepos(data, weights, priorities));
         setLastQuery("trending: agents");
       } finally {
         if (!cancelled) setBootstrapping(false);
@@ -59,15 +65,20 @@ export function RepoRadarApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runStarter = async (topic: string, label: string) => {
+  const runQuery = async ({ topic, query, label }: { topic?: string; query?: string; label: string }) => {
     setBootstrapping(true);
-    setActiveCategory(topic);
+    if (topic) setActiveCategory(topic);
+    else setActiveCategory("");
     try {
-      const res = await fetch(`/api/repos?topic=${encodeURIComponent(topic)}&limit=10`);
+      const params = new URLSearchParams();
+      if (topic) params.set("topic", topic);
+      if (query) params.set("q", query);
+      params.set("limit", "10");
+      const res = await fetch(`/api/repos?${params}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
-        setRepos(rankRepos(data, weights));
-        setLastQuery(`trending: ${label.toLowerCase()}`);
+        setRepos(rankRepos(data, weights, priorities));
+        setLastQuery(label);
       }
     } finally {
       setBootstrapping(false);
@@ -76,17 +87,18 @@ export function RepoRadarApp() {
 
   useCopilotReadable({
     description:
-      "The user's current radar tuning weights (speedToBuild, communityEngagement, jobPotential), each in 0..1.",
-    value: weights,
+      "The user's per-dimension slider weights (10 PRD dims, each 0..1) plus their click-ordered sort priorities (subset of dims).",
+    value: { weights, priorities },
   });
   useCopilotReadable({
     description:
       "The repos currently visible on the radar with their scored axes. Use the fullName when calling deployRepo.",
-    value: ranked.map((r) => ({
+    value: ranked.slice(0, 12).map((r) => ({
       fullName: r.fullName,
       stars: r.stars,
       language: r.language,
       topics: r.topics,
+      dimensions: r.dimensions,
       scores: r.scores,
     })),
   });
@@ -96,8 +108,8 @@ export function RepoRadarApp() {
     description:
       "Find trending GitHub repos and surface them on the radar. Call this any time the user asks for repos, examples, or projects — even loose phrases like 'a podcast platform' or 'something for travel'. ALWAYS provide a 'query' (freeform keywords) and OPTIONALLY a 'topic' (single GitHub topic slug). The backend tries the topic first then falls back to keyword search, so it's better to over-call this with both than to refuse.",
     parameters: [
-      { name: "query", type: "string", description: "Freeform search keywords. Spaces OK. e.g. 'podcast', 'image generation', 'low effort weekend project'. Pull this from the user's message.", required: false },
-      { name: "topic", type: "string", description: "OPTIONAL single GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent'. Skip if no obvious slug fits.", required: false },
+      { name: "query", type: "string", description: "Freeform search keywords. Spaces OK. e.g. 'podcast', 'image generation', 'low effort weekend project'.", required: false },
+      { name: "topic", type: "string", description: "OPTIONAL single GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent'.", required: false },
       { name: "limit", type: "number", description: "How many repos to surface (1-12)", required: false },
       { name: "summary", type: "string", description: "A one-sentence framing for the user about what you found", required: false },
     ],
@@ -108,7 +120,6 @@ export function RepoRadarApp() {
         .replace(/\s+/g, "-")
         .replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, "");
       const trimmedQuery = (query ?? "").trim();
-
       setLastQuery(summary ?? trimmedQuery ?? normalizedTopic ?? "");
       if (normalizedTopic) setActiveCategory(normalizedTopic);
       else if (trimmedQuery) setActiveCategory("");
@@ -124,7 +135,7 @@ export function RepoRadarApp() {
         return { ok: false, error: `repo fetch failed: ${t}` };
       }
       const baseRepos = (await res.json()) as Repo[];
-      const scored = rankRepos(baseRepos, weights);
+      const scored = rankRepos(baseRepos, weights, priorities);
       if (scored.length > 0) setRepos(scored);
       return {
         ok: true,
@@ -134,7 +145,7 @@ export function RepoRadarApp() {
           stars: r.stars,
           language: r.language,
           description: r.description,
-          scores: r.scores,
+          dimensions: r.dimensions,
         })),
       };
     },
@@ -146,7 +157,7 @@ export function RepoRadarApp() {
             style={{ borderColor: "var(--border-strong)", background: "var(--surface)", color: "var(--fg-muted)" }}
           >
             <span style={{ color: "var(--primary)" }}>›</span> scanning GitHub for{" "}
-            <span style={{ color: "var(--fg)" }}>{args?.topic ?? "trending"}</span>…
+            <span style={{ color: "var(--fg)" }}>{args?.topic ?? args?.query ?? "trending"}</span>…
           </div>
         );
       }
@@ -197,6 +208,13 @@ export function RepoRadarApp() {
     },
   });
 
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchInput.trim();
+    if (!q) return;
+    runQuery({ query: q, label: `search: ${q}` });
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <header
@@ -218,12 +236,15 @@ export function RepoRadarApp() {
         </div>
         <div className="flex items-center gap-3 text-xs font-mono" style={{ color: "var(--fg-dim)" }}>
           <span className="rr-blink" style={{ color: "var(--accent)" }}>● LIVE</span>
-          <span>v0.1 · gen-ui hackathon</span>
+          <span>v0.2 · gen-ui hackathon</span>
         </div>
       </header>
 
+      <PriorityBar priorities={priorities} onChange={setPriorities} />
+
       <main className="grid flex-1 grid-cols-12 gap-5 p-5">
-        <aside className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
+        <aside
+          className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
           <div className="flex flex-col gap-3">
@@ -231,19 +252,20 @@ export function RepoRadarApp() {
               Quick scans
             </h2>
             <div className="grid grid-cols-2 gap-1.5">
-              {CATEGORIES.map((q) => {
+              {QUICK_SCANS.map((q) => {
                 const active = activeCategory === q.topic;
                 return (
                   <button
                     key={q.topic}
                     disabled={bootstrapping}
-                    onClick={() => runStarter(q.topic, q.label)}
-                    className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-mono transition disabled:opacity-50`}
+                    onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
+                    title={`Search GitHub topic: ${q.topic}`}
+                    className="flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
                     style={{
                       borderColor: active ? "var(--primary)" : "var(--border)",
                       background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
                       color: active ? "var(--primary)" : "var(--fg-muted)",
-                      boxShadow: active ? `0 0 12px var(--primary-glow)` : "none",
+                      boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
                     }}
                   >
                     <span style={{ color: active ? "var(--primary)" : "var(--accent)" }}>{q.glyph}</span>
@@ -252,47 +274,109 @@ export function RepoRadarApp() {
                 );
               })}
             </div>
+
+            <form onSubmit={submitSearch} className="relative">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="or type your own idea…"
+                disabled={bootstrapping}
+                className="w-full rounded-md border px-3 py-2 pr-9 text-xs outline-none transition"
+                style={{
+                  background: "#fafafa",
+                  color: "#0a0a0a",
+                  borderColor: "var(--border-strong)",
+                }}
+                onFocus={(e) => {
+                  (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
+                  (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
+                }}
+                onBlur={(e) => {
+                  (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
+                  (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
+                }}
+              />
+              <button
+                type="submit"
+                disabled={bootstrapping || !searchInput.trim()}
+                aria-label="Search"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-mono disabled:opacity-40"
+                style={{ color: "var(--primary)" }}
+              >
+                ↵
+              </button>
+            </form>
           </div>
 
           <div
-            className="flex flex-col gap-4 rounded-xl border p-4"
+            className="flex flex-col gap-3 rounded-xl border p-4"
             style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
           >
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-              Tune your radar
-            </h2>
-            <SliderControl
-              label="Speed to build"
-              help="How much you weight repos that are quick to ship. Higher = bias toward shorter READMEs and fewer open issues."
-              value={weights.speedToBuild}
-              onChange={(v) => setWeights((w) => ({ ...w, speedToBuild: v }))}
-            />
-            <SliderControl
-              label="Community engagement"
-              help="How much you weight repos with active community signals. Higher = bias toward more stars, forks, and recent commits."
-              value={weights.communityEngagement}
-              onChange={(v) => setWeights((w) => ({ ...w, communityEngagement: v }))}
-            />
-            <SliderControl
-              label="Job potential"
-              help="How much you weight repos with strong career upside. Higher = bias toward trending languages and high-star projects."
-              value={weights.jobPotential}
-              onChange={(v) => setWeights((w) => ({ ...w, jobPotential: v }))}
-            />
+            <div className="flex items-center justify-between">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
+                Tune your radar
+              </h2>
+              <button
+                onClick={() => setWeights(DEFAULT_WEIGHTS)}
+                className="text-[10px] underline-offset-2 hover:underline"
+                style={{ color: "var(--fg-dim)" }}
+                title="Reset all weights to default"
+              >
+                reset
+              </button>
+            </div>
+
+            {TOP3.map((dim) => (
+              <DimSlider
+                key={dim}
+                dim={dim}
+                value={weights[dim]}
+                onChange={(v) => setWeights({ ...weights, [dim]: v })}
+              />
+            ))}
+
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center justify-center gap-1 rounded-md border py-1 text-[10px] font-mono transition"
+              style={{
+                borderColor: "var(--border)",
+                background: "transparent",
+                color: "var(--fg-muted)",
+              }}
+            >
+              <span>{expanded ? "fewer dimensions" : `+${REST.length} more dimensions`}</span>
+              <span style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+                ▼
+              </span>
+            </button>
+
+            {expanded && (
+              <div className="flex flex-col gap-3 pt-1 rr-fade-up">
+                {REST.map((dim) => (
+                  <DimSlider
+                    key={dim}
+                    dim={dim}
+                    value={weights[dim]}
+                    onChange={(v) => setWeights({ ...weights, [dim]: v })}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-              Top profile
+              Drag to tune
             </h2>
-            <SpiderRadar repos={ranked.slice(0, 3)} />
+            <InteractiveRadar weights={weights} onChange={setWeights} />
           </div>
 
           <div
             className="rounded-md border p-3 text-[11px] leading-5"
             style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.30)", color: "var(--fg-muted)" }}
           >
-            Open the chat dock and ask for repos in any flavor. Click{" "}
+            Sliders, hex, and chat all share the same state. Click{" "}
             <span style={{ color: "var(--primary)" }} className="font-mono">Deploy</span>{" "}
             on any card to materialize a bespoke generative-UI surface at{" "}
             <span style={{ color: "var(--secondary)" }} className="font-mono">·.reporadar.io</span>.
@@ -306,25 +390,41 @@ export function RepoRadarApp() {
               style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
             >
               <span className="text-sm" style={{ color: "var(--fg)" }}>
-                Ask the agent:{" "}
+                Ask the agent or use the search box:{" "}
                 <span className="font-mono" style={{ color: "var(--primary)" }}>
-                  &quot;show me security repos for a weekend project&quot;
+                  &quot;something for podcasts&quot;
                 </span>
               </span>
               <span className="mt-2 text-xs" style={{ color: "var(--fg-dim)" }}>
-                Repo cards will materialize here, agent-summarized and ranked by your sliders.
+                Repo cards will materialize here, agent-summarized and ranked by your sliders + sort priorities.
               </span>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {lastQuery && (
-                <div className="text-xs font-mono flex items-center gap-2" style={{ color: "var(--fg-dim)" }}>
-                  <span style={{ color: "var(--primary)" }}>›</span>
-                  {lastQuery}
-                  <span style={{ color: "var(--fg-dim)" }}>·</span>
-                  <span>{ranked.length} repos · ranked by sliders</span>
-                </div>
-              )}
+              <div className="text-xs font-mono flex items-center gap-2 flex-wrap" style={{ color: "var(--fg-dim)" }}>
+                {lastQuery && (
+                  <>
+                    <span style={{ color: "var(--primary)" }}>›</span>
+                    {lastQuery}
+                    <span style={{ color: "var(--fg-dim)" }}>·</span>
+                  </>
+                )}
+                <span>{ranked.length} repos</span>
+                {priorities.length > 0 && (
+                  <>
+                    <span style={{ color: "var(--fg-dim)" }}>·</span>
+                    <span>
+                      sorted by{" "}
+                      {priorities.map((p, i) => (
+                        <span key={p}>
+                          {i > 0 && <span style={{ color: "var(--fg-dim)" }}>, then </span>}
+                          <span style={{ color: "var(--secondary)" }}>{DIMENSION_META[p].label}</span>
+                        </span>
+                      ))}
+                    </span>
+                  </>
+                )}
+              </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {ranked.map((r, i) => (
                   <div key={r.fullName} className="rr-card" style={{ animationDelay: `${i * 0.04}s` }}>
@@ -347,12 +447,12 @@ export function RepoRadarApp() {
 
       <CopilotPopup
         instructions={
-          "You are RepoRadar, an agent that surfaces trending GitHub repos as interactive UI cards and deploys bespoke generative-UI variants of them on demand. When the user asks about repos, projects, or examples, ALWAYS call rankRepos with a SINGLE GitHub topic slug — never multi-word phrases. When the user asks to deploy, run, build, or explore a repo, call deployRepo with that repo's fullName. After tool calls, give a short conversational summary in 1-2 sentences."
+          "You are RepoRadar, an agent that surfaces trending GitHub repos as interactive UI cards and deploys bespoke generative-UI variants of them on demand. When the user asks about repos, projects, or examples, ALWAYS call rankRepos with a query (and a topic slug if one fits). When the user asks to deploy, run, build, or explore a repo, call deployRepo with that repo's fullName. After tool calls, give a short conversational summary in 1-2 sentences."
         }
         labels={{
           title: "RepoRadar",
           initial:
-            "Hey — ask me to find you a repo. Try 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface at <slug>.reporadar.io.",
+            "Hey — ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface at <slug>.reporadar.io.",
         }}
         defaultOpen={true}
         clickOutsideToClose={false}
@@ -361,23 +461,22 @@ export function RepoRadarApp() {
   );
 }
 
-function SliderControl({
-  label,
-  help,
+function DimSlider({
+  dim,
   value,
   onChange,
 }: {
-  label: string;
-  help?: string;
+  dim: Dimension;
   value: number;
   onChange: (v: number) => void;
 }) {
+  const meta = DIMENSION_META[dim];
   const pct = Math.round(value * 100);
   return (
-    <label className="flex flex-col gap-2" title={help}>
+    <label className="flex flex-col gap-2" title={meta.help}>
       <div className="flex items-center justify-between text-xs">
         <span className="cursor-help" style={{ color: "var(--fg-muted)" }}>
-          {label}
+          {meta.label}
         </span>
         <span className="font-mono" style={{ color: "var(--primary)" }}>
           {pct.toString().padStart(2, "0")}

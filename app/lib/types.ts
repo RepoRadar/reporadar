@@ -13,11 +13,22 @@ export type Repo = {
   createdAt?: string;      // ISO, when available
 };
 
-export type AxisWeights = {
-  speedToBuild: number;        // 0..1
-  communityEngagement: number; // 0..1
-  jobPotential: number;        // 0..1
-};
+// Per-dimension slider weights, each 0..1. The user tunes these via the
+// "Tune your radar" sliders + the interactive hex. They drive scoreRepo's
+// weighted average over each repo's 0..100 dimensions.
+export type DimensionWeights = Record<
+  | "momentum"
+  | "velocity"
+  | "maturity"
+  | "community"
+  | "recency"
+  | "heat"
+  | "productionReadiness"
+  | "licenseSafety"
+  | "documentation"
+  | "ecosystemPull",
+  number
+>;
 
 // The 10 PRD dimensions, each 0..100, higher = better for the user.
 // See PRD §7. These are what the SpiderRadar renders, what the filter

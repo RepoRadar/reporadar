@@ -1,4 +1,11 @@
-import type { AxisWeights, Dimensions, Repo, ScoredRepo } from "./types";
+import type {
+  Dimension,
+  DimensionWeights,
+  Dimensions,
+  Repo,
+  ScoredRepo,
+} from "./types";
+import { DIMENSION_ORDER } from "./types";
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
@@ -12,6 +19,22 @@ const daysSince = (iso: string | undefined): number => {
   return (Date.now() - t) / (1000 * 60 * 60 * 24);
 };
 
+// Default weights — top 3 (Momentum/Velocity/Maturity) at 0.7, rest at 0.3.
+// User tunes these via the sliders + interactive hex; scoreRepo computes a
+// weighted average over each repo's 0..100 dimensions.
+export const DEFAULT_WEIGHTS: DimensionWeights = {
+  momentum: 0.7,
+  velocity: 0.7,
+  maturity: 0.7,
+  community: 0.3,
+  recency: 0.3,
+  heat: 0.3,
+  productionReadiness: 0.3,
+  licenseSafety: 0.3,
+  documentation: 0.3,
+  ecosystemPull: 0.3,
+};
+
 // Heuristic 10-axis dimensions derived from the GitHub data we already pull.
 // Each axis is 0..100, higher = better for the user, per PRD §7.
 export function computeDimensions(repo: Repo): Dimensions {
@@ -21,21 +44,15 @@ export function computeDimensions(repo: Repo): Dimensions {
   const stars = logNormalize(repo.stars, 100000) * 100;
   const forks = logNormalize(repo.forks, 20000) * 100;
 
-  // Momentum — how fast it's gaining traction. Higher stars + younger age = hotter.
-  // (Without a real "stars in the last 60 days" series we fake it from age.)
-  const ageNormalized = clamp01(1 - logNormalize(Math.max(1, ageDays), 1825)); // 5y ceiling
+  const ageNormalized = clamp01(1 - logNormalize(Math.max(1, ageDays), 1825));
   const momentum = Math.round(0.65 * stars + 0.35 * ageNormalized * 100);
 
-  // Velocity — commits in last 30d. Without enrichment this is 0 → fall back
-  // to "pushed within the last week" as a weak proxy.
   const commitVelocity = logNormalize(repo.recentCommits, 200) * 100;
   const pushedRecently = clamp01(1 - sincePush / 14) * 100;
   const velocity = Math.round(
     repo.recentCommits > 0 ? commitVelocity : 0.6 * pushedRecently,
   );
 
-  // Maturity — older, established, lots of forks. Tag-based bonuses for
-  // explicit "stable" or "v1"-flavored topics.
   const stableBonus = repo.topics.some((t) =>
     /(stable|production|enterprise|library|sdk)/i.test(t),
   )
@@ -44,21 +61,16 @@ export function computeDimensions(repo: Repo): Dimensions {
   const maturityBase = 0.55 * forks + 0.30 * (100 - ageNormalized * 100) + stableBonus;
   const maturity = Math.round(clamp01(maturityBase / 100) * 100);
 
-  // Community — stars × forks × engagement. Open issues are double-edged
-  // (more issues = more engagement, but also more bug volume), so we damp.
   const issueSignal = logNormalize(repo.openIssues, 1000) * 100;
   const community = Math.round(
     clamp01((0.45 * stars + 0.35 * forks + 0.20 * issueSignal) / 100) * 100,
   );
 
-  // Recency — pushed-recently is a clean signal.
-  const recency = Math.round(clamp01(1 - sincePush / 30) * 100); // 0 if >30d stale
+  const recency = Math.round(clamp01(1 - sincePush / 30) * 100);
 
-  // Heat — fork rate (forks per star) and PR-ish bias from issue volume.
   const forkRate = repo.stars > 0 ? clamp01(repo.forks / Math.max(50, repo.stars * 0.2)) : 0;
   const heat = Math.round(0.6 * forkRate * 100 + 0.4 * recency);
 
-  // Production readiness — proxy from topic tags.
   const prodTags = repo.topics.filter((t) =>
     /(testing|ci|tested|production|enterprise|stable)/i.test(t),
   ).length;
@@ -66,18 +78,14 @@ export function computeDimensions(repo: Repo): Dimensions {
     clamp01((prodTags * 25 + maturity * 0.5 + (repo.openIssues > 0 ? 10 : 0)) / 100) * 100,
   );
 
-  // License safety — we don't fetch the license; default 70 (most popular
-  // repos use permissive licenses) and dock for "GPL"/"AGPL" topic markers.
   const copyleft = repo.topics.some((t) => /(gpl|agpl|copyleft)/i.test(t));
   const licenseSafety = copyleft ? 35 : 70;
 
-  // Documentation — README length is a coarse but useful proxy.
   const docs = repo.readmeLength > 0
     ? logNormalize(repo.readmeLength, 30000) * 100
-    : 50; // unknown → neutral
+    : 50;
   const documentation = Math.round(docs);
 
-  // Ecosystem pull — proxy from stars (real implementation would use npm/pypi).
   const ecosystemPull = Math.round(stars);
 
   return {
@@ -94,43 +102,36 @@ export function computeDimensions(repo: Repo): Dimensions {
   };
 }
 
-export function scoreRepo(repo: Repo, weights: AxisWeights): ScoredRepo {
-  // Heuristic scoring axes (higher = better on that axis).
-  const readmeShort = clamp01(1 - logNormalize(repo.readmeLength || 1, 30000));
-  const fewOpenIssues = clamp01(1 - logNormalize(repo.openIssues, 500));
-  const speedToBuild = clamp01(0.6 * readmeShort + 0.4 * fewOpenIssues);
+export function scoreRepo(repo: Repo, weights: DimensionWeights): ScoredRepo {
+  const dims = computeDimensions(repo);
 
-  const starScore = logNormalize(repo.stars, 100000);
-  const forkScore = logNormalize(repo.forks, 20000);
-  const recentScore = logNormalize(repo.recentCommits, 200);
-  const communityEngagement = clamp01(
-    0.5 * starScore + 0.25 * forkScore + 0.25 * recentScore,
+  // Weighted average over the 10 PRD dimensions. Σ(weight × dim) / Σ(weight)
+  // keeps the result in [0, 100] regardless of slider configuration.
+  let weighted = 0;
+  let totalWeight = 0;
+  for (const k of DIMENSION_ORDER) {
+    const w = weights[k];
+    weighted += w * dims[k];
+    totalWeight += w;
+  }
+  const overall100 = totalWeight > 0 ? weighted / totalWeight : 50; // neutral fallback
+  const overall = clamp01(overall100 / 100);
+
+  // Legacy 3-bucket scores for backward compat with the SpiderRadar legend
+  // and the cards' "depth/ui" pills (kept until they migrate to dimensions).
+  const speedToBuild = clamp01(
+    (dims.documentation * 0.4 + (100 - dims.maturity) * 0.6) / 100,
+  );
+  const communityEngagement = clamp01(dims.community / 100);
+  const jobPotential = clamp01(
+    (dims.momentum * 0.5 + dims.ecosystemPull * 0.5) / 100,
   );
 
-  const trendyLanguages = new Set(["TypeScript", "Python", "Rust", "Go", "Swift"]);
-  const langBonus = repo.language && trendyLanguages.has(repo.language) ? 1 : 0.6;
-  const jobPotential = clamp01(0.6 * starScore + 0.4 * langBonus);
-
-  // Weighted average — divide by Σ(weights) so overall stays in [0, 1].
-  const weightSum =
-    weights.speedToBuild + weights.communityEngagement + weights.jobPotential;
-  const overall =
-    weightSum > 0
-      ? (weights.speedToBuild * speedToBuild +
-          weights.communityEngagement * communityEngagement +
-          weights.jobPotential * jobPotential) /
-        weightSum
-      : (speedToBuild + communityEngagement + jobPotential) / 3;
-
-  const complexity = Math.round(
-    (logNormalize(repo.readmeLength, 50000) * 0.5 +
-      logNormalize(repo.openIssues, 1000) * 0.5) *
-      10,
-  );
+  const complexity = Math.round(dims.maturity / 10);
   const uiPotential = Math.round(
-    (logNormalize(repo.stars, 50000) * 0.6 +
-      (repo.topics.some((t) => /(ui|frontend|design|component)/i.test(t)) ? 1 : 0.4) *
-        0.4) *
+    (dims.documentation * 0.6 +
+      (repo.topics.some((t) => /(ui|frontend|design|component)/i.test(t)) ? 100 : 40) *
+        0.4) /
       10,
   );
 
@@ -144,12 +145,24 @@ export function scoreRepo(repo: Repo, weights: AxisWeights): ScoredRepo {
       uiPotential,
       overall,
     },
-    dimensions: computeDimensions(repo),
+    dimensions: dims,
   };
 }
 
-export function rankRepos(repos: Repo[], weights: AxisWeights): ScoredRepo[] {
-  return repos
-    .map((r) => scoreRepo(r, weights))
-    .sort((a, b) => b.scores.overall - a.scores.overall);
+// Sort priority — when the user clicks a chip, that dimension takes priority.
+// We re-rank by a tiered comparison: priority 1 first (descending), priority
+// 2 as tie-breaker, etc. Falls back to overall score.
+export function rankRepos(
+  repos: Repo[],
+  weights: DimensionWeights,
+  priorities: Dimension[] = [],
+): ScoredRepo[] {
+  const scored = repos.map((r) => scoreRepo(r, weights));
+  return scored.sort((a, b) => {
+    for (const dim of priorities) {
+      const diff = b.dimensions[dim] - a.dimensions[dim];
+      if (diff !== 0) return diff;
+    }
+    return b.scores.overall - a.scores.overall;
+  });
 }
