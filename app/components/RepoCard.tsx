@@ -88,9 +88,28 @@ export function RepoCard({
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-3 text-[10px] font-mono">
-          <Pill label="cmplx" value={complexity} max={10} color="var(--secondary)" />
-          <Pill label="ui" value={uiPotential} max={10} color="var(--accent)" />
-          <Pill label="score" value={overallPct} max={100} color="var(--primary)" emphasized />
+          <Pill
+            label="depth"
+            value={complexity}
+            max={10}
+            color="var(--secondary)"
+            help="Depth (0-10): how substantive the codebase is. Higher = more to dig into."
+          />
+          <Pill
+            label="ui"
+            value={uiPotential}
+            max={10}
+            color="var(--accent)"
+            help="UI potential (0-10): how rich a generative-UI surface this repo can support. Higher = better."
+          />
+          <Pill
+            label="score"
+            value={overallPct}
+            max={100}
+            color="var(--primary)"
+            emphasized
+            help="Overall match score (0-100): weighted by your sliders. Higher = better fit. Re-ranks live as you tune."
+          />
         </div>
         <div
           className="h-1 w-full overflow-hidden rounded-full"
@@ -138,15 +157,20 @@ function Pill({
   max,
   color,
   emphasized,
+  help,
 }: {
   label: string;
   value: number;
   max: number;
   color: string;
   emphasized?: boolean;
+  help?: string;
 }) {
   return (
-    <span className="flex items-center gap-1">
+    <span
+      className="flex cursor-help items-center gap-1"
+      title={help ?? `${label}: ${value} of ${max} (higher = better)`}
+    >
       <span style={{ color: "var(--fg-dim)" }}>{label}</span>
       <span
         style={{

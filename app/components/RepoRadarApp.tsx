@@ -263,16 +263,19 @@ export function RepoRadarApp() {
             </h2>
             <SliderControl
               label="Speed to build"
+              help="How much you weight repos that are quick to ship. Higher = bias toward shorter READMEs and fewer open issues."
               value={weights.speedToBuild}
               onChange={(v) => setWeights((w) => ({ ...w, speedToBuild: v }))}
             />
             <SliderControl
               label="Community engagement"
+              help="How much you weight repos with active community signals. Higher = bias toward more stars, forks, and recent commits."
               value={weights.communityEngagement}
               onChange={(v) => setWeights((w) => ({ ...w, communityEngagement: v }))}
             />
             <SliderControl
               label="Job potential"
+              help="How much you weight repos with strong career upside. Higher = bias toward trending languages and high-star projects."
               value={weights.jobPotential}
               onChange={(v) => setWeights((w) => ({ ...w, jobPotential: v }))}
             />
@@ -280,7 +283,7 @@ export function RepoRadarApp() {
 
           <div className="flex flex-col gap-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-              Top profiles
+              Top profile
             </h2>
             <SpiderRadar repos={ranked.slice(0, 3)} />
           </div>
@@ -360,18 +363,22 @@ export function RepoRadarApp() {
 
 function SliderControl({
   label,
+  help,
   value,
   onChange,
 }: {
   label: string;
+  help?: string;
   value: number;
   onChange: (v: number) => void;
 }) {
   const pct = Math.round(value * 100);
   return (
-    <label className="flex flex-col gap-2">
+    <label className="flex flex-col gap-2" title={help}>
       <div className="flex items-center justify-between text-xs">
-        <span style={{ color: "var(--fg-muted)" }}>{label}</span>
+        <span className="cursor-help" style={{ color: "var(--fg-muted)" }}>
+          {label}
+        </span>
         <span className="font-mono" style={{ color: "var(--primary)" }}>
           {pct.toString().padStart(2, "0")}
         </span>
