@@ -41,7 +41,7 @@ Output a single JSON object with this shape:
 
 Make the surface USEFUL and INTERESTING for that specific repo. Populate sample data, examples, and inputs that demonstrate what the repo does. Avoid lorem ipsum. Take the user's hint seriously if provided.`;
 
-type DeployBody = { repo: string; hint?: string };
+type DeployBody = { repo: string; hint?: string; contact?: string };
 
 export async function POST(req: NextRequest) {
   let body: DeployBody;
@@ -92,12 +92,94 @@ export async function POST(req: NextRequest) {
     }
 
     log(`deploy complete → ${url}`);
-    return NextResponse.json({ ok: true, slug, url, surface, buildLog });
+
+    let notified: "sent" | "queued" | undefined;
+    if (body.contact) {
+      notified = await notifyContact({
+        contact: body.contact,
+        repo: body.repo,
+        url: url.startsWith("/") ? `${req.nextUrl.origin}${url}` : url,
+        formFactor: surface.formFactor,
+        log,
+      });
+    }
+
+    return NextResponse.json({ ok: true, slug, url, surface, buildLog, notified });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log(`error: ${msg}`);
     return NextResponse.json({ ok: false, error: msg, buildLog }, { status: 500 });
   }
+}
+
+async function notifyContact({
+  contact,
+  repo,
+  url,
+  formFactor,
+  log,
+}: {
+  contact: string;
+  repo: string;
+  url: string;
+  formFactor: string;
+  log: (m: string) => void;
+}): Promise<"sent" | "queued"> {
+  const isEmail = /@/.test(contact);
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!isEmail) {
+    log(`SMS notify queued for ${contact} (Twilio not wired)`);
+    return "queued";
+  }
+  if (!apiKey) {
+    log(`email notify queued for ${contact} (RESEND_API_KEY not set)`);
+    return "queued";
+  }
+  const from = process.env.RESEND_FROM || "RepoRadar <onboarding@resend.dev>";
+  const html = `<!doctype html><html><body style="margin:0;background:#08070d;color:#fafafa;font-family:ui-sans-serif,system-ui">
+  <div style="max-width:520px;margin:32px auto;padding:24px;background:#14121e;border-radius:12px;border:1px solid rgba(255,255,255,0.08)">
+    <h2 style="margin:0 0 12px 0;font-size:18px">Your RepoRadar surface is live</h2>
+    <p style="color:#b3b1c0;line-height:1.6;font-size:14px;margin:0 0 16px 0">
+      A generative-UI surface for <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px">${escapeHtml(repo)}</code> is now live as a <strong style="color:#22d3ee">${escapeHtml(formFactor)}</strong>.
+    </p>
+    <p style="margin:0 0 8px 0">
+      <a href="${escapeHtml(url)}" style="display:inline-block;background:#f43f8a;color:#08070d;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
+        Open ${escapeHtml(url.replace(/^https?:\/\//, ""))} →
+      </a>
+    </p>
+    <p style="color:#6b6878;font-size:11px;margin:24px 0 0 0">
+      Sent by RepoRadar · <a href="https://reporadar.io" style="color:#22d3ee;text-decoration:none">reporadar.io</a>
+    </p>
+  </div></body></html>`;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: contact,
+        subject: `${repo} → ${formFactor} live at ${url.replace(/^https?:\/\//, "")}`,
+        html,
+      }),
+    });
+    if (res.ok) {
+      log(`email sent via Resend to ${contact}`);
+      return "sent";
+    }
+    const t = await res.text();
+    log(`Resend send failed (${res.status}): ${t.slice(0, 120)}`);
+    return "queued";
+  } catch (err) {
+    log(`Resend exception: ${err instanceof Error ? err.message : String(err)}`);
+    return "queued";
+  }
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
 }
 
 async function generateSurface(

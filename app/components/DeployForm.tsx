@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 type DeployStage =
   | { kind: "form" }
   | { kind: "running"; log: string[]; progress: number; milestoneIdx: number }
-  | { kind: "done"; url: string; slug: string; formFactor: string; log: string[] }
+  | { kind: "done"; url: string; slug: string; formFactor: string; log: string[]; notified?: "sent" | "queued" }
   | { kind: "error"; message: string; log: string[] };
 
 const MILESTONES = [
@@ -76,6 +76,7 @@ export function DeployForm({
         slug: j.slug,
         formFactor: j.surface?.formFactor ?? "?",
         log: merged,
+        notified: j.notified,
       });
     } catch (err) {
       if (progressTimer.current) clearInterval(progressTimer.current);
@@ -289,7 +290,16 @@ export function DeployForm({
         </a>
         {contact && (
           <div className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
-            (Notification queued for <span style={{ color: "var(--secondary)" }}>{contact}</span> — wired up post-hackathon.)
+            {stage.notified === "sent" ? (
+              <>
+                ✓ Email sent to <span style={{ color: "var(--secondary)" }}>{contact}</span>
+              </>
+            ) : (
+              <>
+                Notification queued for <span style={{ color: "var(--secondary)" }}>{contact}</span>
+                {" "}<span style={{ color: "var(--fg-dim)" }}>· will fire once RESEND_API_KEY lands</span>
+              </>
+            )}
           </div>
         )}
         <BuildLog lines={stage.log} compact />

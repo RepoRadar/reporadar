@@ -54,12 +54,15 @@ export interface Env {
   GEMINI_MODEL?: string;
   GITHUB_TOKEN?: string;
   GITHUB_API_BASE: string;
-  PUBLIC_HOST?: string; // e.g. "reporadar.io" — appended to slugs to form deploy URL
+  PUBLIC_HOST?: string;     // e.g. "reporadar.io" — appended to slugs to form deploy URL
+  RESEND_API_KEY?: string;  // optional; when set, real email send via Resend
+  RESEND_FROM?: string;     // e.g. "RepoRadar <noreply@reporadar.io>"
 }
 
 type DeployRequest = {
   repo: string;
   hint?: string;
+  contact?: string;         // email or phone — Resend send for emails
 };
 
 type Surface = {
@@ -125,7 +128,82 @@ async function deploy(body: DeployRequest, env: Env) {
   const url = `https://${slug}.${host}`;
   log(`deploy complete → ${url}`);
 
-  return { ok: true, slug, url, formFactor: surface.formFactor, surface, buildLog };
+  let notified: "sent" | "skipped" | "queued" | undefined;
+  if (body.contact) {
+    notified = await notifyContact(body.contact, body.repo, url, surface.formFactor, env, log);
+  }
+
+  return {
+    ok: true,
+    slug,
+    url,
+    formFactor: surface.formFactor,
+    surface,
+    buildLog,
+    notified,
+  };
+}
+
+async function notifyContact(
+  contact: string,
+  repo: string,
+  url: string,
+  formFactor: string,
+  env: Env,
+  log: (m: string) => void,
+): Promise<"sent" | "skipped" | "queued"> {
+  const isEmail = /@/.test(contact);
+  if (!isEmail) {
+    log(`SMS notify queued for ${contact} (Twilio not wired this milestone)`);
+    return "queued";
+  }
+  if (!env.RESEND_API_KEY) {
+    log(`email notify queued for ${contact} (RESEND_API_KEY not set yet)`);
+    return "queued";
+  }
+  const from = env.RESEND_FROM || "RepoRadar <onboarding@resend.dev>";
+  const html = `
+    <div style="font-family:ui-sans-serif,system-ui;background:#08070d;color:#fafafa;padding:24px;border-radius:12px">
+      <h2 style="margin:0 0 12px 0">Your RepoRadar surface is live</h2>
+      <p style="color:#b3b1c0;line-height:1.6">
+        Just deployed a generative-UI surface for <code>${repo}</code> as a
+        <strong style="color:#22d3ee">${formFactor}</strong>.
+      </p>
+      <p>
+        <a href="${url}" style="display:inline-block;background:#f43f8a;color:#08070d;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600">
+          Open ${url.replace(/^https?:\/\//, "")} →
+        </a>
+      </p>
+      <p style="color:#6b6878;font-size:11px">
+        Sent by RepoRadar · <a href="https://reporadar.io" style="color:#22d3ee">reporadar.io</a>
+      </p>
+    </div>
+  `;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: contact,
+        subject: `${repo} → ${formFactor} live at ${url.replace(/^https?:\/\//, "")}`,
+        html,
+      }),
+    });
+    if (res.ok) {
+      log(`email sent via Resend to ${contact}`);
+      return "sent";
+    }
+    const t = await res.text();
+    log(`Resend send failed (${res.status}): ${t.slice(0, 120)}`);
+    return "queued";
+  } catch (err) {
+    log(`Resend exception: ${err instanceof Error ? err.message : String(err)}`);
+    return "queued";
+  }
 }
 
 async function persist(slug: string, surface: Surface, env: Env): Promise<void> {
