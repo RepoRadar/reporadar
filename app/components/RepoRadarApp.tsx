@@ -92,18 +92,24 @@ export function RepoRadarApp() {
   useCopilotAction({
     name: "rankRepos",
     description:
-      "Find trending GitHub repos that match a topic or theme and surface them on the radar. Always call this when the user asks for repos, examples, or projects.",
+      "Find trending GitHub repos that match a topic or theme and surface them on the radar. Always call this when the user asks for repos, examples, or projects. The 'topic' parameter MUST be a single GitHub topic slug — lowercase, hyphenated, no spaces. Examples: 'rust', 'iot', 'agent', 'rag', 'langchain', 'cli', 'machine-learning'. Pick ONE single-word slug. Never pass multi-word phrases like 'rust infra' or 'AI agents'.",
     parameters: [
-      { name: "topic", type: "string", description: "GitHub topic or keyword (e.g. 'langchain', 'rust', 'rag')", required: false },
+      { name: "topic", type: "string", description: "ONE GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent', 'rag', 'langchain'.", required: false },
       { name: "limit", type: "number", description: "How many repos to surface (1-12)", required: false },
       { name: "summary", type: "string", description: "A one-sentence framing for the user about what you found", required: false },
     ],
     handler: async ({ topic, limit, summary }: { topic?: string; limit?: number; summary?: string }) => {
-      setLastQuery(summary ?? topic ?? "");
+      // Be permissive: collapse a multi-word topic to its first slug-shaped token.
+      const normalizedTopic = topic
+        ?.toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, "");
+
+      setLastQuery(summary ?? normalizedTopic ?? "");
       const params = new URLSearchParams();
-      if (topic) params.set("topic", topic);
+      if (normalizedTopic) params.set("topic", normalizedTopic);
       params.set("limit", String(Math.min(12, Math.max(3, limit ?? 6))));
-      params.set("enrich", "1");
 
       const res = await fetch(`/api/repos?${params}`);
       if (!res.ok) {
@@ -112,7 +118,9 @@ export function RepoRadarApp() {
       }
       const baseRepos = (await res.json()) as Repo[];
       const scored = rankRepos(baseRepos, weights);
-      setRepos(scored);
+      // Don't clear the radar if the topic returned 0 — keep existing cards
+      // and let the agent retry with a different slug.
+      if (scored.length > 0) setRepos(scored);
       return {
         ok: true,
         count: scored.length,
