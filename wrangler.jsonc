@@ -7,6 +7,14 @@
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	"routes": [
+		{ "pattern": "reporadar.io", "custom_domain": true }
+	],
+	"vars": {
+		"GEMINI_MODEL": "gemini-2.5-flash",
+		"DEPLOY_WORKER_URL": "https://reporadar-deploy.let-s-go-christo.workers.dev",
+		"NEXT_PUBLIC_DEPLOY_WORKER_URL": "https://reporadar-deploy.let-s-go-christo.workers.dev"
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"

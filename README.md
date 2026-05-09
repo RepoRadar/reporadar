@@ -2,6 +2,10 @@
 
 > **Tune your radar. Surface trending repos as agent-rendered cards. Click Deploy on any one and an agent emits a bespoke interactive surface for that repo, served at its own URL.**
 
+🌐 **Live demo**: [reporadar.io](https://reporadar.io)
+📡 **Sample deploy**: [vercel-ai-ei0s.reporadar.io](https://vercel-ai-ei0s.reporadar.io) — an agent-generated playground for the `vercel/ai` SDK
+🔁 **Repo**: [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar)
+
 Built for the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026** (presented by AI Tinkerers · Google DeepMind · CopilotKit).
 
 ## Why this isn't a chatbot
