@@ -1,20 +1,15 @@
 import {
   CopilotRuntime,
-  AnthropicAdapter,
+  GoogleGenerativeAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
-import Anthropic from "@anthropic-ai/sdk";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const serviceAdapter = new AnthropicAdapter({
-  anthropic,
-  model: "claude-opus-4-7",
+const serviceAdapter = new GoogleGenerativeAIAdapter({
+  apiKey: process.env.GOOGLE_API_KEY,
+  model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 });
 
 const runtimeInstance = new CopilotRuntime();

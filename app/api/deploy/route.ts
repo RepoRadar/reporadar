@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { fetchRepo } from "@/app/lib/github";
 import type { A2UISurface } from "@/app/lib/a2ui-types";
 import { A2UI_FORM_FACTORS } from "@/app/lib/a2ui-types";
@@ -16,12 +16,25 @@ Form factors you can choose from: ${A2UI_FORM_FACTORS.join(", ")}.
 - "widget-grid" — for UI component libraries
 - "reader" — for content / docs / educational repos
 
-Available components: Layout (direction row|column, gap, children), Container (padding, tone, children), Heading (level 1-3), Text (tone), Button (label, action), TextField (id, label, placeholder, defaultValue), CheckBox (id, label), Slider (id, label, min, max, step, defaultValue), List (items: title, subtitle, meta), Tabs (tabs: label, content), ProgressBar (label, value, max), Image, Code (language, code).
+Available components (each node has a "type" string, listed):
+- Layout { direction: "row"|"column", gap?: number, children: A2UINode[] }
+- Container { padding?: number, tone?: "default"|"subtle"|"highlight", children: A2UINode[] }
+- Heading { level: 1|2|3, text: string }
+- Text { text: string, tone?: "default"|"muted"|"danger"|"success" }
+- Button { label: string, action: string, variant?: "primary"|"secondary"|"ghost" }
+- TextField { id: string, label: string, placeholder?: string, defaultValue?: string }
+- CheckBox { id: string, label: string, defaultChecked?: boolean }
+- Slider { id: string, label: string, min: number, max: number, step?: number, defaultValue: number }
+- List { items: { title: string, subtitle?: string, meta?: string }[] }
+- Tabs { tabs: { label: string, content: A2UINode }[] }
+- ProgressBar { label?: string, value: number, max: number }
+- Image { src: string, alt: string, width?: number, height?: number }
+- Code { language?: string, code: string }
 
-Your output MUST be a single JSON object matching this schema:
+Output a single JSON object with this shape:
 {
   "title": string,
-  "formFactor": one of the above,
+  "formFactor": one of: ${A2UI_FORM_FACTORS.map((f) => `"${f}"`).join(", ")},
   "root": A2UINode (a Layout or Container with children),
   "meta": { "repo": string, "hint": string|null }
 }
@@ -55,7 +68,7 @@ export async function POST(req: NextRequest) {
       return null;
     });
 
-    log("calling Anthropic to emit A2UI surface");
+    log("calling Gemini to emit A2UI surface");
     const surface = await generateSurface(body.repo, body.hint, ctx?.description ?? null, ctx?.topics ?? []);
     log(`form factor: ${surface.formFactor}`);
 
@@ -93,13 +106,24 @@ async function generateSurface(
   description: string | null,
   topics: string[],
 ): Promise<A2UISurface> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    // Stub for local dev without a key — returns a minimal valid surface.
     return stubSurface(repo, hint, description);
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new GoogleGenerativeAI(apiKey);
+  const model = client.getGenerativeModel({
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    systemInstruction: SYSTEM_PROMPT,
+    generationConfig: {
+      responseMimeType: "application/json",
+      // We give the model a loose schema hint via the prompt — the renderer
+      // is forgiving enough that a strict JSON-schema response would over-
+      // constrain creative form-factor choices.
+      temperature: 0.7,
+    },
+  });
+
   const userMessage = `Repo: ${repo}
 Description: ${description ?? "(none)"}
 Topics: ${topics.join(", ") || "(none)"}
@@ -107,18 +131,8 @@ User hint: ${hint ?? "(none)"}
 
 Emit an A2UI JSON surface that best demonstrates this repo. Output ONLY the JSON object, no prose.`;
 
-  const resp = await client.messages.create({
-    model: "claude-opus-4-7",
-    max_tokens: 4000,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userMessage }],
-  });
-
-  const text = resp.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n")
-    .trim();
+  const result = await model.generateContent(userMessage);
+  const text = result.response.text();
 
   const jsonStr = extractJson(text);
   const parsed = JSON.parse(jsonStr) as A2UISurface;
@@ -126,11 +140,13 @@ Emit an A2UI JSON surface that best demonstrates this repo. Output ONLY the JSON
   return parsed;
 }
 
+// Suppress unused import warning — SchemaType is exported for future structured
+// output if we tighten the schema later.
+void SchemaType;
+
 function extractJson(text: string): string {
-  // The model may wrap JSON in fences. Strip them.
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenced) return fenced[1].trim();
-  // Or it may emit prose then JSON. Find the first { and last }.
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
   if (first >= 0 && last > first) return text.slice(first, last + 1);
@@ -148,7 +164,7 @@ function stubSurface(repo: string, hint: string | undefined, description: string
         { type: "Heading", level: 1, text: repo },
         {
           type: "Text",
-          text: description ?? "Stub surface (set ANTHROPIC_API_KEY to generate real ones).",
+          text: description ?? "Stub surface (set GOOGLE_API_KEY to generate real ones).",
         },
         { type: "Text", tone: "muted", text: `Hint: ${hint ?? "(none)"}` },
       ],
@@ -163,6 +179,4 @@ function makeSlug(repo: string): string {
   return `${base.slice(0, 32)}-${suffix}`;
 }
 
-// Module-level in-memory store for surfaces during local dev.
-// Survives across requests within the same Next.js server process.
 export const surfaceStore: Map<string, A2UISurface> = ((globalThis as unknown as { __reporadar_surfaces?: Map<string, A2UISurface> }).__reporadar_surfaces ??= new Map());
