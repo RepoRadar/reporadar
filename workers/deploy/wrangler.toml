@@ -16,7 +16,7 @@ GITHUB_API_BASE = "https://api.github.com"
 [[d1_databases]]
 binding = "DB"
 database_name = "reporadar"
-database_id = "REPLACE_AFTER_wrangler_d1_create"
+database_id = "ba6ce5a3-54e5-449a-9371-178eda6de8a3"
 
 [[r2_buckets]]
 binding = "SURFACES"

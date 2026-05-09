@@ -3,16 +3,15 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 
 # Wildcard subdomain routing — every <slug>.reporadar.io request lands here.
-# (Activate after the reporadar.io zone is added to the Cloudflare account.)
-# routes = [
-#   { pattern = "*.reporadar.io/*", zone_name = "reporadar.io" },
-# ]
+routes = [
+  { pattern = "*.reporadar.io/*", zone_name = "reporadar.io" },
+]
 workers_dev = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "reporadar"
-database_id = "REPLACE_AFTER_wrangler_d1_create"
+database_id = "ba6ce5a3-54e5-449a-9371-178eda6de8a3"
 
 [[r2_buckets]]
 binding = "SURFACES"
