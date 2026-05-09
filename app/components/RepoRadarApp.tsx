@@ -6,14 +6,20 @@ import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { rankRepos } from "@/app/lib/scoring";
 import type { AxisWeights, Repo, ScoredRepo } from "@/app/lib/types";
 import { RepoCard } from "@/app/components/RepoCard";
-import { RadarPlot } from "@/app/components/RadarPlot";
+import { SpiderRadar } from "@/app/components/SpiderRadar";
 import { DeployForm } from "@/app/components/DeployForm";
 
-const STARTER_QUERIES = [
-  { topic: "agent", label: "AI agent frameworks" },
-  { topic: "rag", label: "RAG / retrieval" },
-  { topic: "rust", label: "Rust infra" },
-  { topic: "iot", label: "IoT / hardware" },
+const CATEGORIES = [
+  { topic: "agent", label: "Agents", glyph: "◈" },
+  { topic: "rag", label: "RAG", glyph: "◇" },
+  { topic: "llm", label: "LLM Apps", glyph: "◆" },
+  { topic: "rust", label: "Rust", glyph: "▲" },
+  { topic: "iot", label: "IoT", glyph: "⚡" },
+  { topic: "security", label: "Security", glyph: "✦" },
+  { topic: "developer-tools", label: "Devtools", glyph: "▣" },
+  { topic: "frontend", label: "Frontend", glyph: "◐" },
+  { topic: "machine-learning", label: "ML", glyph: "✸" },
+  { topic: "web3", label: "Web3", glyph: "✺" },
 ];
 
 export function RepoRadarApp() {
@@ -23,23 +29,26 @@ export function RepoRadarApp() {
     jobPotential: 0.5,
   });
   const [repos, setRepos] = useState<ScoredRepo[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("agent");
   const [lastQuery, setLastQuery] = useState<string>("");
-  const [selected, setSelected] = useState<string | undefined>(undefined);
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
 
-  // Auto-populate the radar on mount so the page is never empty in screenshots
-  // and the demo lands hot. Pure /api/repos + local scoring — no LLM call.
+  const ranked = useMemo(() => {
+    if (repos.length === 0) return [] as ScoredRepo[];
+    return rankRepos(repos as Repo[], weights);
+  }, [repos, weights]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/repos?topic=ai&limit=8`);
+        const res = await fetch(`/api/repos?topic=agent&limit=10`);
         if (!res.ok) return;
         const data = (await res.json()) as Repo[];
         if (cancelled || !Array.isArray(data) || data.length === 0) return;
         setRepos(rankRepos(data, weights));
-        setLastQuery("trending: AI");
+        setLastQuery("trending: agents");
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
@@ -52,25 +61,19 @@ export function RepoRadarApp() {
 
   const runStarter = async (topic: string, label: string) => {
     setBootstrapping(true);
+    setActiveCategory(topic);
     try {
-      const res = await fetch(`/api/repos?topic=${encodeURIComponent(topic)}&limit=8`);
+      const res = await fetch(`/api/repos?topic=${encodeURIComponent(topic)}&limit=10`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         setRepos(rankRepos(data, weights));
-        setLastQuery(`trending: ${label}`);
+        setLastQuery(`trending: ${label.toLowerCase()}`);
       }
     } finally {
       setBootstrapping(false);
     }
   };
 
-  // Re-rank locally whenever sliders move — instant feedback, no LLM call.
-  const ranked = useMemo(() => {
-    if (repos.length === 0) return [] as ScoredRepo[];
-    return rankRepos(repos as Repo[], weights);
-  }, [repos, weights]);
-
-  // Share slider state + repo set with the agent so it can reason over them.
   useCopilotReadable({
     description:
       "The user's current radar tuning weights (speedToBuild, communityEngagement, jobPotential), each in 0..1.",
@@ -78,7 +81,7 @@ export function RepoRadarApp() {
   });
   useCopilotReadable({
     description:
-      "The repos currently visible on the radar, with their scored axes. Use the fullName when calling deployRepo.",
+      "The repos currently visible on the radar with their scored axes. Use the fullName when calling deployRepo.",
     value: ranked.map((r) => ({
       fullName: r.fullName,
       stars: r.stars,
@@ -88,18 +91,16 @@ export function RepoRadarApp() {
     })),
   });
 
-  // Action: rankRepos — agent calls this to surface trending repos.
   useCopilotAction({
     name: "rankRepos",
     description:
-      "Find trending GitHub repos that match a topic or theme and surface them on the radar. Always call this when the user asks for repos, examples, or projects. The 'topic' parameter MUST be a single GitHub topic slug — lowercase, hyphenated, no spaces. Examples: 'rust', 'iot', 'agent', 'rag', 'langchain', 'cli', 'machine-learning'. Pick ONE single-word slug. Never pass multi-word phrases like 'rust infra' or 'AI agents'.",
+      "Find trending GitHub repos that match a topic or theme and surface them on the radar. Always call this when the user asks for repos, examples, or projects. The 'topic' parameter MUST be a single GitHub topic slug — lowercase, hyphenated, no spaces. Examples: 'rust', 'iot', 'agent', 'rag', 'langchain', 'cli', 'machine-learning', 'security', 'web3'. Pick ONE single-word slug. Never pass multi-word phrases.",
     parameters: [
-      { name: "topic", type: "string", description: "ONE GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent', 'rag', 'langchain'.", required: false },
+      { name: "topic", type: "string", description: "ONE GitHub topic slug. Lowercase, hyphenated, no spaces. e.g. 'rust', 'iot', 'agent', 'rag', 'langchain', 'security'.", required: false },
       { name: "limit", type: "number", description: "How many repos to surface (1-12)", required: false },
       { name: "summary", type: "string", description: "A one-sentence framing for the user about what you found", required: false },
     ],
     handler: async ({ topic, limit, summary }: { topic?: string; limit?: number; summary?: string }) => {
-      // Be permissive: collapse a multi-word topic to its first slug-shaped token.
       const normalizedTopic = topic
         ?.toLowerCase()
         .trim()
@@ -107,9 +108,11 @@ export function RepoRadarApp() {
         .replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, "");
 
       setLastQuery(summary ?? normalizedTopic ?? "");
+      if (normalizedTopic) setActiveCategory(normalizedTopic);
+
       const params = new URLSearchParams();
       if (normalizedTopic) params.set("topic", normalizedTopic);
-      params.set("limit", String(Math.min(12, Math.max(3, limit ?? 6))));
+      params.set("limit", String(Math.min(12, Math.max(3, limit ?? 8))));
 
       const res = await fetch(`/api/repos?${params}`);
       if (!res.ok) {
@@ -118,8 +121,6 @@ export function RepoRadarApp() {
       }
       const baseRepos = (await res.json()) as Repo[];
       const scored = rankRepos(baseRepos, weights);
-      // Don't clear the radar if the topic returned 0 — keep existing cards
-      // and let the agent retry with a different slug.
       if (scored.length > 0) setRepos(scored);
       return {
         ok: true,
@@ -136,9 +137,12 @@ export function RepoRadarApp() {
     render: ({ status, args, result }) => {
       if (status === "executing") {
         return (
-          <div className="rounded-md border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-mono text-zinc-400">
-            <span className="text-emerald-400">›</span> scanning GitHub for{" "}
-            <span className="text-zinc-200">{args?.topic ?? "trending"}</span>…
+          <div
+            className="rounded-md border px-3 py-2 text-xs font-mono"
+            style={{ borderColor: "var(--border-strong)", background: "var(--surface)", color: "var(--fg-muted)" }}
+          >
+            <span style={{ color: "var(--primary)" }}>›</span> scanning GitHub for{" "}
+            <span style={{ color: "var(--fg)" }}>{args?.topic ?? "trending"}</span>…
           </div>
         );
       }
@@ -146,13 +150,19 @@ export function RepoRadarApp() {
         const r = result as { ok: boolean; count?: number; error?: string } | undefined;
         if (!r?.ok) {
           return (
-            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            <div
+              className="rounded-md border px-3 py-2 text-xs"
+              style={{ borderColor: "var(--danger)", background: "rgba(248,113,113,0.1)", color: "var(--danger)" }}
+            >
               {r?.error ?? "rank failed"}
             </div>
           );
         }
         return (
-          <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+          <div
+            className="rounded-md border px-3 py-2 text-xs font-mono"
+            style={{ borderColor: "var(--secondary)", background: "rgba(34,211,238,0.1)", color: "var(--secondary)" }}
+          >
             ✓ surfaced {r.count} repos on the radar
           </div>
         );
@@ -161,8 +171,6 @@ export function RepoRadarApp() {
     },
   });
 
-  // Action: deployRepo — agent calls with a repoFullName + optional hint, we
-  // render the form, the user fills/confirms, and we POST to /api/deploy.
   useCopilotAction({
     name: "deployRepo",
     description:
@@ -182,93 +190,134 @@ export function RepoRadarApp() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+      <header
+        className="flex items-center justify-between px-6 py-4 border-b"
+        style={{ borderColor: "var(--border)" }}
+      >
         <div className="flex items-center gap-3">
-          <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_12px_2px] shadow-emerald-400/60" />
-          <h1 className="font-mono text-lg tracking-tight">RepoRadar</h1>
-          <span className="hidden text-xs text-zinc-500 sm:inline">
-            agent-rendered repo radar · deploy custom surfaces on demand
+          <span
+            className="inline-block h-3 w-3 rounded-full rr-pulse"
+            style={{ background: "var(--primary)" }}
+          />
+          <h1 className="font-mono text-lg tracking-tight rr-grad-text">RepoRadar</h1>
+          <span
+            className="hidden text-xs sm:inline"
+            style={{ color: "var(--fg-dim)" }}
+          >
+            agent-rendered repos · generative-UI deploys at <span style={{ color: "var(--secondary)" }}>·.reporadar.io</span>
           </span>
         </div>
-        <span className="text-xs text-zinc-500 font-mono">v0.1 · gen-ui hackathon</span>
+        <div className="flex items-center gap-3 text-xs font-mono" style={{ color: "var(--fg-dim)" }}>
+          <span className="rr-blink" style={{ color: "var(--accent)" }}>● LIVE</span>
+          <span>v0.1 · gen-ui hackathon</span>
+        </div>
       </header>
 
-      <main className="grid flex-1 grid-cols-12 gap-6 p-6">
-        <aside className="col-span-12 flex flex-col gap-5 rounded-xl border border-white/10 bg-zinc-900/50 p-5 lg:col-span-3">
-          <h2 className="text-sm font-semibold text-zinc-300">Tune your radar</h2>
-          <SliderControl
-            label="Speed to build"
-            value={weights.speedToBuild}
-            onChange={(v) => setWeights((w) => ({ ...w, speedToBuild: v }))}
-          />
-          <SliderControl
-            label="Community engagement"
-            value={weights.communityEngagement}
-            onChange={(v) => setWeights((w) => ({ ...w, communityEngagement: v }))}
-          />
-          <SliderControl
-            label="Job potential"
-            value={weights.jobPotential}
-            onChange={(v) => setWeights((w) => ({ ...w, jobPotential: v }))}
-          />
-
-          <div className="flex flex-col gap-2 pt-2">
-            <h3 className="text-xs uppercase tracking-wider text-zinc-500">
+      <main className="grid flex-1 grid-cols-12 gap-5 p-5">
+        <aside className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
+          style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+        >
+          <div className="flex flex-col gap-3">
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
               Quick scans
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {STARTER_QUERIES.map((q) => (
-                <button
-                  key={q.topic}
-                  disabled={bootstrapping}
-                  onClick={() => runStarter(q.topic, q.label)}
-                  className="rounded-md border border-white/10 bg-black/40 px-2.5 py-1 text-[11px] font-mono text-zinc-300 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
-                >
-                  {q.label}
-                </button>
-              ))}
+            </h2>
+            <div className="grid grid-cols-2 gap-1.5">
+              {CATEGORIES.map((q) => {
+                const active = activeCategory === q.topic;
+                return (
+                  <button
+                    key={q.topic}
+                    disabled={bootstrapping}
+                    onClick={() => runStarter(q.topic, q.label)}
+                    className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-mono transition disabled:opacity-50`}
+                    style={{
+                      borderColor: active ? "var(--primary)" : "var(--border)",
+                      background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
+                      color: active ? "var(--primary)" : "var(--fg-muted)",
+                      boxShadow: active ? `0 0 12px var(--primary-glow)` : "none",
+                    }}
+                  >
+                    <span style={{ color: active ? "var(--primary)" : "var(--accent)" }}>{q.glyph}</span>
+                    {q.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="mt-2 rounded-md border border-white/10 bg-black/40 p-3 text-xs leading-5 text-zinc-400">
-            Open the chat dock and ask for repos in any flavor. The agent calls{" "}
-            <span className="font-mono text-emerald-400">rankRepos</span>; cards
-            land on the radar, ranked by your sliders. Click{" "}
-            <span className="font-mono text-emerald-400">Deploy</span> on any
-            card to materialize a bespoke generative-UI surface.
+          <div
+            className="flex flex-col gap-4 rounded-xl border p-4"
+            style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+          >
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
+              Tune your radar
+            </h2>
+            <SliderControl
+              label="Speed to build"
+              value={weights.speedToBuild}
+              onChange={(v) => setWeights((w) => ({ ...w, speedToBuild: v }))}
+            />
+            <SliderControl
+              label="Community engagement"
+              value={weights.communityEngagement}
+              onChange={(v) => setWeights((w) => ({ ...w, communityEngagement: v }))}
+            />
+            <SliderControl
+              label="Job potential"
+              value={weights.jobPotential}
+              onChange={(v) => setWeights((w) => ({ ...w, jobPotential: v }))}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
+              Top profiles
+            </h2>
+            <SpiderRadar repos={ranked.slice(0, 3)} />
+          </div>
+
+          <div
+            className="rounded-md border p-3 text-[11px] leading-5"
+            style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.30)", color: "var(--fg-muted)" }}
+          >
+            Open the chat dock and ask for repos in any flavor. Click{" "}
+            <span style={{ color: "var(--primary)" }} className="font-mono">Deploy</span>{" "}
+            on any card to materialize a bespoke generative-UI surface at{" "}
+            <span style={{ color: "var(--secondary)" }} className="font-mono">·.reporadar.io</span>.
           </div>
         </aside>
 
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
-          <RadarPlot repos={ranked} selected={selected} onSelect={setSelected} />
-
           {ranked.length === 0 ? (
-            <div className="flex min-h-[20rem] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-zinc-900/30 p-6 text-center">
-              <span className="text-sm text-zinc-300">
+            <div
+              className="flex min-h-[28rem] flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center rr-fade-up"
+              style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
+            >
+              <span className="text-sm" style={{ color: "var(--fg)" }}>
                 Ask the agent:{" "}
-                <span className="font-mono text-emerald-400">
-                  &quot;show me LangChain repos for a weekend project&quot;
+                <span className="font-mono" style={{ color: "var(--primary)" }}>
+                  &quot;show me security repos for a weekend project&quot;
                 </span>
               </span>
-              <span className="mt-2 text-xs text-zinc-500">
-                Repo cards will materialize here, agent-summarized and ranked by
-                your sliders.
+              <span className="mt-2 text-xs" style={{ color: "var(--fg-dim)" }}>
+                Repo cards will materialize here, agent-summarized and ranked by your sliders.
               </span>
             </div>
           ) : (
-            <div>
+            <div className="flex flex-col gap-3">
               {lastQuery && (
-                <div className="mb-3 text-xs font-mono text-zinc-500">
-                  <span className="text-emerald-400">›</span> {lastQuery}
+                <div className="text-xs font-mono flex items-center gap-2" style={{ color: "var(--fg-dim)" }}>
+                  <span style={{ color: "var(--primary)" }}>›</span>
+                  {lastQuery}
+                  <span style={{ color: "var(--fg-dim)" }}>·</span>
+                  <span>{ranked.length} repos · ranked by sliders</span>
                 </div>
               )}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {ranked.map((r) => (
-                  <RepoCard
-                    key={r.fullName}
-                    repo={r}
-                    onDeploy={(repo) => setActiveDeploy({ repo })}
-                  />
+                {ranked.map((r, i) => (
+                  <div key={r.fullName} className="rr-card" style={{ animationDelay: `${i * 0.04}s` }}>
+                    <RepoCard repo={r} onDeploy={(repo) => setActiveDeploy({ repo })} rank={i + 1} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -285,12 +334,12 @@ export function RepoRadarApp() {
 
       <CopilotPopup
         instructions={
-          "You are RepoRadar, an agent that surfaces trending GitHub repos as interactive UI cards and deploys bespoke generative-UI variants of them on demand. When the user asks about repos, projects, or examples, ALWAYS call rankRepos — never list repos in plain text. When the user asks to deploy, run, build, or explore a repo, call deployRepo with that repo's fullName. After tool calls, give a short conversational summary in 1-2 sentences."
+          "You are RepoRadar, an agent that surfaces trending GitHub repos as interactive UI cards and deploys bespoke generative-UI variants of them on demand. When the user asks about repos, projects, or examples, ALWAYS call rankRepos with a SINGLE GitHub topic slug — never multi-word phrases. When the user asks to deploy, run, build, or explore a repo, call deployRepo with that repo's fullName. After tool calls, give a short conversational summary in 1-2 sentences."
         }
         labels={{
           title: "RepoRadar",
           initial:
-            "Ask me to find you a repo. Try: 'Show me langchain repos for a weekend project' — I'll plot them and you can deploy any one as a custom interactive surface.",
+            "Hey — ask me to find you a repo. Try 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface at <slug>.reporadar.io.",
         }}
         defaultOpen={true}
         clickOutsideToClose={false}
@@ -308,11 +357,14 @@ function SliderControl({
   value: number;
   onChange: (v: number) => void;
 }) {
+  const pct = Math.round(value * 100);
   return (
     <label className="flex flex-col gap-2">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-zinc-300">{label}</span>
-        <span className="font-mono text-zinc-500">{(value * 100).toFixed(0)}</span>
+        <span style={{ color: "var(--fg-muted)" }}>{label}</span>
+        <span className="font-mono" style={{ color: "var(--primary)" }}>
+          {pct.toString().padStart(2, "0")}
+        </span>
       </div>
       <input
         type="range"
@@ -321,7 +373,7 @@ function SliderControl({
         step={0.01}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-emerald-400"
+        className="w-full cursor-pointer"
       />
     </label>
   );
@@ -335,11 +387,14 @@ function DeployModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md"
+      style={{ background: "rgba(8,7,13,0.75)" }}
+    >
+      <div className="relative w-full max-w-md rr-fade-up">
         <button
           onClick={onClose}
-          className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+          className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-sm transition hover:scale-110"
+          style={{ borderColor: "var(--border-strong)", background: "var(--surface-2)", color: "var(--fg)" }}
           aria-label="Close"
         >
           ×

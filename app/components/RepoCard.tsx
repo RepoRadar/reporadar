@@ -6,51 +6,125 @@ export function RepoCard({
   repo,
   onDeploy,
   isDeploying = false,
+  rank,
 }: {
   repo: ScoredRepo;
   onDeploy: (repo: ScoredRepo) => void;
   isDeploying?: boolean;
+  rank?: number;
 }) {
   const { complexity, uiPotential, overall } = repo.scores;
+  const overallPct = Math.round(overall * 100);
+
   return (
-    <div className="group flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-900/60 p-4 transition hover:border-emerald-500/40 hover:bg-zinc-900">
+    <div
+      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl border p-4 transition"
+      style={{
+        borderColor: "var(--border)",
+        background:
+          "linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(600px 200px at top right, rgba(244,63,138,0.08), transparent 60%)",
+        }}
+      />
+
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col">
-          <a
-            href={repo.htmlUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-sm font-medium text-zinc-100 hover:text-emerald-400"
-          >
-            {repo.fullName}
-          </a>
+          <div className="flex items-center gap-2">
+            {rank != null && (
+              <span
+                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-mono"
+                style={{
+                  background: "var(--surface-3)",
+                  color: rank <= 3 ? "var(--accent)" : "var(--fg-dim)",
+                  border: `1px solid ${rank <= 3 ? "var(--accent)" : "var(--border)"}`,
+                }}
+              >
+                {String(rank).padStart(2, "0")}
+              </span>
+            )}
+            <a
+              href={repo.htmlUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-sm font-medium transition"
+              style={{ color: "var(--fg)" }}
+            >
+              {repo.fullName}
+            </a>
+          </div>
           {repo.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-zinc-400">{repo.description}</p>
+            <p
+              className="mt-1.5 line-clamp-2 text-xs leading-relaxed"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              {repo.description}
+            </p>
           )}
         </div>
-        <div className="flex flex-col items-end text-right text-[10px] font-mono text-zinc-500">
-          <span>★ {format(repo.stars)}</span>
+        <div
+          className="flex flex-col items-end gap-0.5 text-right text-[10px] font-mono"
+          style={{ color: "var(--fg-dim)" }}
+        >
+          <span style={{ color: "var(--accent)" }}>★ {format(repo.stars)}</span>
           {repo.language && <span>{repo.language}</span>}
         </div>
       </div>
 
       {repo.agentSummary && (
-        <p className="text-xs leading-5 text-zinc-300">
-          <span className="mr-1 text-emerald-400">›</span>
+        <p
+          className="text-xs leading-5"
+          style={{ color: "var(--fg)" }}
+        >
+          <span className="mr-1" style={{ color: "var(--primary)" }}>›</span>
           {repo.agentSummary}
         </p>
       )}
 
-      <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-500">
-        <Pill label="complexity" value={complexity} max={10} />
-        <Pill label="ui" value={uiPotential} max={10} />
-        <Pill label="score" value={Math.round(overall * 100)} max={100} accent />
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-3 text-[10px] font-mono">
+          <Pill label="cmplx" value={complexity} max={10} color="var(--secondary)" />
+          <Pill label="ui" value={uiPotential} max={10} color="var(--accent)" />
+          <Pill label="score" value={overallPct} max={100} color="var(--primary)" emphasized />
+        </div>
+        <div
+          className="h-1 w-full overflow-hidden rounded-full"
+          style={{ background: "var(--surface-3)" }}
+        >
+          <div
+            className="h-full"
+            style={{
+              width: `${overallPct}%`,
+              background:
+                "linear-gradient(90deg, var(--primary), var(--accent), var(--secondary))",
+              boxShadow: "0 0 8px var(--primary-glow)",
+            }}
+          />
+        </div>
       </div>
 
       <button
         onClick={() => onDeploy(repo)}
         disabled={isDeploying}
-        className="mt-auto inline-flex items-center justify-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
+        className="mt-auto inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-medium tracking-wide transition disabled:opacity-50"
+        style={{
+          borderColor: "var(--primary)",
+          background: "rgba(244,63,138,0.08)",
+          color: "var(--primary)",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(244,63,138,0.18)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px var(--primary-glow)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(244,63,138,0.08)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+        }}
       >
         {isDeploying ? "deploying…" : "Deploy →"}
       </button>
@@ -62,18 +136,24 @@ function Pill({
   label,
   value,
   max,
-  accent,
+  color,
+  emphasized,
 }: {
   label: string;
   value: number;
   max: number;
-  accent?: boolean;
+  color: string;
+  emphasized?: boolean;
 }) {
-  const color = accent ? "text-emerald-400" : "text-zinc-300";
   return (
     <span className="flex items-center gap-1">
-      <span className="text-zinc-500">{label}</span>
-      <span className={`font-medium ${color}`}>
+      <span style={{ color: "var(--fg-dim)" }}>{label}</span>
+      <span
+        style={{
+          color: emphasized ? color : "var(--fg)",
+          fontWeight: emphasized ? 600 : 500,
+        }}
+      >
         {value}/{max}
       </span>
     </span>

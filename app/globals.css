@@ -1,40 +1,157 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #08070d;
+  --surface: #14121e;
+  --surface-2: #1c1a28;
+  --surface-3: #25223a;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --fg: #fafafa;
+  --fg-muted: #b3b1c0;
+  --fg-dim: #6b6878;
+  --primary: #f43f8a;       /* hot pink */
+  --primary-glow: rgba(244, 63, 138, 0.45);
+  --secondary: #22d3ee;     /* cyan */
+  --secondary-glow: rgba(34, 211, 238, 0.45);
+  --accent: #fbbf24;        /* amber */
+  --accent-glow: rgba(251, 191, 36, 0.40);
+  --danger: #f87171;
+  --success: #22d3ee;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-dim: var(--fg-dim);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-image:
+      radial-gradient(ellipse 800px 600px at 0% 0%, rgba(244, 63, 138, 0.08), transparent 60%),
+      radial-gradient(ellipse 800px 600px at 100% 100%, rgba(34, 211, 238, 0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+  ::selection { background: var(--primary-glow); color: var(--fg); }
+}
+
+/* ---- animations ---- */
+@keyframes rr-fade-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes rr-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes rr-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--primary-glow); }
+  50% { box-shadow: 0 0 20px 4px var(--primary-glow); }
+}
+@keyframes rr-radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes rr-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.35; }
+}
+
+@layer utilities {
+  .rr-fade-up   { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .rr-pulse     { animation: rr-pulse-glow 2.4s ease-in-out infinite; }
+  .rr-blink     { animation: rr-blink 1.6s ease-in-out infinite; }
+  .rr-card      { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .rr-card:nth-child(1) { animation-delay: 0.02s; }
+  .rr-card:nth-child(2) { animation-delay: 0.06s; }
+  .rr-card:nth-child(3) { animation-delay: 0.10s; }
+  .rr-card:nth-child(4) { animation-delay: 0.14s; }
+  .rr-card:nth-child(5) { animation-delay: 0.18s; }
+  .rr-card:nth-child(6) { animation-delay: 0.22s; }
+  .rr-card:nth-child(7) { animation-delay: 0.26s; }
+  .rr-card:nth-child(8) { animation-delay: 0.30s; }
+  .rr-card:nth-child(9) { animation-delay: 0.34s; }
+  .rr-card:nth-child(10) { animation-delay: 0.38s; }
+  .rr-card:nth-child(11) { animation-delay: 0.42s; }
+  .rr-card:nth-child(12) { animation-delay: 0.46s; }
+
+  .rr-grad-text {
+    background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .rr-grad-border {
+    position: relative;
+  }
+  .rr-grad-border::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--primary), transparent 40%, var(--secondary));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.6;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---- form chrome ---- */
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  height: 4px; background: var(--surface-2); border-radius: 9999px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+  border: 2px solid var(--bg); cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 18px var(--primary-glow);
+}
+input[type="range"]:focus { outline: none; }
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 24px var(--primary-glow);
 }
 
-/* Hide the CopilotKit dev Web Inspector floating button + promo banner. */
+/* ---- chrome cleanup ---- */
 cpk-web-inspector,
 [aria-label="Web Inspector"],
 [data-copilotkit-dev-console] {
   display: none !important;
 }
 
-/* Tone the CopilotKit chat to match our dark hackathon palette. */
+/* Style CopilotKit chat to match the synthwave palette. */
 .copilotKitChat,
 .copilotKitWindow {
-  --copilot-kit-primary-color: #34d399;
-  --copilot-kit-contrast-color: #0a0a0a;
+  --copilot-kit-primary-color: var(--primary);
+  --copilot-kit-contrast-color: #08070d;
+  --copilot-kit-background-color: var(--surface);
+  --copilot-kit-secondary-color: var(--surface-2);
+  --copilot-kit-secondary-contrast-color: var(--fg);
+  --copilot-kit-separator-color: var(--border);
+  --copilot-kit-muted-color: var(--fg-muted);
 }

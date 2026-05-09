@@ -47,17 +47,40 @@ export function DeployForm({
 
   if (stage.kind === "form") {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-900/80 p-4">
-        <div className="text-xs uppercase tracking-wider text-emerald-400">Deploy a generative surface</div>
-        <div className="font-mono text-sm">{repo}</div>
-        <label className="flex flex-col gap-1 text-xs text-zinc-400">
-          Anything to optimize for? (optional)
+      <div
+        className="flex flex-col gap-3 rounded-xl border p-4"
+        style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--primary)" }}>
+            Deploy a generative surface
+          </div>
+          <span className="text-[10px] font-mono" style={{ color: "var(--secondary)" }}>
+            ·.reporadar.io
+          </span>
+        </div>
+        <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+        <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--fg-muted)" }}>
+          What kind of surface? (optional)
           <input
             type="text"
             value={hint}
             onChange={(e) => setHint(e.target.value)}
-            placeholder="e.g. 'control panel for IoT', 'dashboard with charts'"
-            className="rounded-md border border-white/10 bg-black/60 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-500/60"
+            placeholder="e.g. 'control panel for IoT', 'dashboard with charts', 'wizard'"
+            className="rounded-md border px-3 py-2 text-sm outline-none"
+            style={{
+              borderColor: "var(--border-strong)",
+              background: "rgba(0,0,0,0.40)",
+              color: "var(--fg)",
+            }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
+            }}
+            onBlur={(e) => {
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
+            }}
           />
         </label>
         <div className="flex justify-end gap-2 pt-1">
@@ -66,13 +89,19 @@ export function DeployForm({
               onCancel();
               onResolved({ deployed: false });
             }}
-            className="rounded-md px-3 py-2 text-xs text-zinc-400 hover:bg-white/5"
+            className="rounded-md px-3 py-2 text-xs transition"
+            style={{ color: "var(--fg-muted)" }}
           >
             Cancel
           </button>
           <button
             onClick={submit}
-            className="rounded-md bg-emerald-500 px-3 py-2 text-xs font-medium text-black hover:bg-emerald-400"
+            className="rounded-md px-3 py-2 text-xs font-medium transition"
+            style={{
+              background: "var(--primary)",
+              color: "#08070d",
+              boxShadow: "0 0 16px var(--primary-glow)",
+            }}
           >
             Deploy →
           </button>
@@ -84,10 +113,15 @@ export function DeployForm({
   if (stage.kind === "running") {
     const seconds = tickStartedAt ? Math.floor((Date.now() - tickStartedAt) / 1000) : 0;
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-emerald-500/40 bg-zinc-900/80 p-4">
+      <div
+        className="flex flex-col gap-3 rounded-xl border p-4"
+        style={{ borderColor: "var(--primary)", background: "var(--surface)" }}
+      >
         <div className="flex items-center justify-between">
-          <div className="text-xs uppercase tracking-wider text-emerald-400">Building…</div>
-          <div className="font-mono text-xs text-zinc-500">{seconds}s</div>
+          <div className="text-[10px] uppercase tracking-[0.18em] rr-blink" style={{ color: "var(--primary)" }}>
+            ● Building…
+          </div>
+          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{seconds}s</div>
         </div>
         <BuildLog lines={stage.log} />
       </div>
@@ -96,25 +130,43 @@ export function DeployForm({
 
   if (stage.kind === "done") {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4">
-        <div className="text-xs uppercase tracking-wider text-emerald-400">Deployed</div>
-        <div className="font-mono text-sm text-zinc-100">{repo}</div>
-        <div className="flex flex-col gap-1 rounded-md border border-white/10 bg-black/40 p-3">
-          <span className="text-xs text-zinc-500">form factor</span>
-          <span className="font-mono text-sm text-zinc-200">{stage.formFactor}</span>
+      <div
+        className="flex flex-col gap-3 rounded-xl border p-4"
+        style={{ borderColor: "var(--secondary)", background: "rgba(34,211,238,0.06)" }}
+      >
+        <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--secondary)" }}>
+          ✓ Deployed
+        </div>
+        <div className="font-mono text-sm" style={{ color: "var(--fg)" }}>{repo}</div>
+        <div
+          className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+          style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.40)" }}
+        >
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--fg-dim)" }}>
+            form factor
+          </span>
+          <span className="font-mono text-xs" style={{ color: "var(--accent)" }}>
+            {stage.formFactor}
+          </span>
         </div>
         <a
           href={stage.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-md bg-emerald-500 px-3 py-2 text-xs font-medium text-black hover:bg-emerald-400"
+          className="inline-flex items-center justify-center rounded-md px-3 py-2 text-xs font-medium tracking-wide"
+          style={{
+            background: "var(--secondary)",
+            color: "#08070d",
+            boxShadow: "0 0 16px var(--secondary-glow)",
+          }}
         >
-          Open {stage.url} ↗
+          Open ↗ {stage.url.replace(/^https?:\/\//, "")}
         </a>
         <BuildLog lines={stage.log} compact />
         <button
           onClick={() => onResolved({ deployed: true, url: stage.url, slug: stage.slug, hint })}
-          className="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/5"
+          className="rounded-md border px-3 py-2 text-xs transition"
+          style={{ borderColor: "var(--border-strong)", color: "var(--fg-muted)" }}
         >
           Acknowledge
         </button>
@@ -123,14 +175,20 @@ export function DeployForm({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-red-500/40 bg-red-500/5 p-4">
-      <div className="text-xs uppercase tracking-wider text-red-400">Deploy failed</div>
-      <div className="text-sm text-zinc-200">{stage.message}</div>
+    <div
+      className="flex flex-col gap-3 rounded-xl border p-4"
+      style={{ borderColor: "var(--danger)", background: "rgba(248,113,113,0.06)" }}
+    >
+      <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--danger)" }}>
+        Deploy failed
+      </div>
+      <div className="text-sm" style={{ color: "var(--fg)" }}>{stage.message}</div>
       <BuildLog lines={stage.log} compact />
       <div className="flex justify-end gap-2">
         <button
           onClick={() => onResolved({ deployed: false })}
-          className="rounded-md px-3 py-2 text-xs text-zinc-400 hover:bg-white/5"
+          className="rounded-md px-3 py-2 text-xs"
+          style={{ color: "var(--fg-muted)" }}
         >
           Dismiss
         </button>
@@ -142,13 +200,17 @@ export function DeployForm({
 function BuildLog({ lines, compact = false }: { lines: string[]; compact?: boolean }) {
   return (
     <pre
-      className={`overflow-auto rounded-md border border-white/10 bg-black/60 p-3 font-mono text-[11px] text-zinc-400 ${
-        compact ? "max-h-24" : "max-h-40"
-      }`}
+      className="overflow-auto rounded-md border p-3 font-mono text-[11px] leading-5"
+      style={{
+        borderColor: "var(--border)",
+        background: "rgba(0,0,0,0.50)",
+        color: "var(--fg-muted)",
+        maxHeight: compact ? "6rem" : "10rem",
+      }}
     >
       {lines.map((l, i) => (
         <div key={i}>
-          <span className="text-zinc-600">›</span> {l}
+          <span style={{ color: "var(--fg-dim)" }}>›</span> {l}
         </div>
       ))}
     </pre>
