@@ -110,8 +110,8 @@ export const DIMENSION_META: Record<
     help: "Documentation quality. Higher = long README, examples, docs site.",
   },
   ecosystemPull: {
-    label: "Ecosystem",
-    short: "Eco",
+    label: "Ecosystem Pull",
+    short: "Ecosystem",
     help: "Downstream pull. Higher = lots of dependents, downloads, wide adoption.",
   },
 };
