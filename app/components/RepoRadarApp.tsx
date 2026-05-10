@@ -242,73 +242,72 @@ export function RepoRadarApp() {
 
       <PriorityBar priorities={priorities} onChange={setPriorities} />
 
+      <div
+        className="flex items-center gap-3 border-b px-6 py-3 flex-wrap"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {QUICK_SCANS.map((q) => {
+            const active = activeCategory === q.topic;
+            return (
+              <button
+                key={q.topic}
+                disabled={bootstrapping}
+                onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
+                title={`Search GitHub topic: ${q.topic}`}
+                className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-mono transition disabled:opacity-50"
+                style={{
+                  borderColor: active ? "var(--primary)" : "var(--border)",
+                  background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
+                  color: active ? "var(--primary)" : "var(--fg-muted)",
+                  boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
+                }}
+              >
+                <span style={{ color: active ? "var(--primary)" : "var(--accent)" }}>{q.glyph}</span>
+                {q.label}
+              </button>
+            );
+          })}
+        </div>
+        <form onSubmit={submitSearch} className="relative ml-auto flex-1 min-w-[280px] max-w-md">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="✦ or type your own idea — 'something for podcasts', 'rust cli that's fun this weekend'…"
+            disabled={bootstrapping}
+            className="w-full rounded-md border px-3 py-1.5 pr-9 text-xs outline-none transition"
+            style={{
+              background: "#fafafa",
+              color: "#0a0a0a",
+              borderColor: "var(--border-strong)",
+            }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
+            }}
+            onBlur={(e) => {
+              (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
+              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
+            }}
+          />
+          <button
+            type="submit"
+            disabled={bootstrapping || !searchInput.trim()}
+            aria-label="Search"
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-2 py-0.5 text-[11px] font-mono disabled:opacity-40"
+            style={{ color: "var(--primary)" }}
+          >
+            ↵
+          </button>
+        </form>
+      </div>
+
       <main className="grid flex-1 grid-cols-12 gap-5 p-5">
         <aside
           className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
-          <div className="flex flex-col gap-3">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-              Quick scans
-            </h2>
-            <div className="grid grid-cols-2 gap-1.5">
-              {QUICK_SCANS.map((q) => {
-                const active = activeCategory === q.topic;
-                return (
-                  <button
-                    key={q.topic}
-                    disabled={bootstrapping}
-                    onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
-                    title={`Search GitHub topic: ${q.topic}`}
-                    className="flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
-                    style={{
-                      borderColor: active ? "var(--primary)" : "var(--border)",
-                      background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
-                      color: active ? "var(--primary)" : "var(--fg-muted)",
-                      boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
-                    }}
-                  >
-                    <span style={{ color: active ? "var(--primary)" : "var(--accent)" }}>{q.glyph}</span>
-                    {q.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <form onSubmit={submitSearch} className="relative">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="or type your own idea…"
-                disabled={bootstrapping}
-                className="w-full rounded-md border px-3 py-2 pr-9 text-xs outline-none transition"
-                style={{
-                  background: "#fafafa",
-                  color: "#0a0a0a",
-                  borderColor: "var(--border-strong)",
-                }}
-                onFocus={(e) => {
-                  (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
-                  (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
-                }}
-                onBlur={(e) => {
-                  (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
-                  (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
-                }}
-              />
-              <button
-                type="submit"
-                disabled={bootstrapping || !searchInput.trim()}
-                aria-label="Search"
-                className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-mono disabled:opacity-40"
-                style={{ color: "var(--primary)" }}
-              >
-                ↵
-              </button>
-            </form>
-          </div>
-
           <div
             className="flex flex-col gap-3 rounded-xl border p-4"
             style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
@@ -454,7 +453,7 @@ export function RepoRadarApp() {
           initial:
             "Hey — ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface at <slug>.reporadar.io.",
         }}
-        defaultOpen={true}
+        defaultOpen={false}
         clickOutsideToClose={false}
       />
     </div>
