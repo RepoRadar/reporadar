@@ -43,9 +43,29 @@ export function RepoRadarApp() {
   const [activeCategory, setActiveCategory] = useState<string>("agent");
   const [lastQuery, setLastQuery] = useState<string>("");
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+
+  // Click a card → snap weights to that repo's dimensional profile so the
+  // hex polygon morphs and every slider animates to match. Side effect:
+  // the ranking re-orders to put similar repos near the top.
+  const selectRepoProfile = (r: ScoredRepo) => {
+    setSelectedRepo(r.fullName);
+    setWeights({
+      momentum: r.dimensions.momentum / 100,
+      velocity: r.dimensions.velocity / 100,
+      maturity: r.dimensions.maturity / 100,
+      community: r.dimensions.community / 100,
+      recency: r.dimensions.recency / 100,
+      heat: r.dimensions.heat / 100,
+      productionReadiness: r.dimensions.productionReadiness / 100,
+      licenseSafety: r.dimensions.licenseSafety / 100,
+      documentation: r.dimensions.documentation / 100,
+      ecosystemPull: r.dimensions.ecosystemPull / 100,
+    });
+  };
 
   const ranked = useMemo(() => {
     if (repos.length === 0) return [] as ScoredRepo[];
@@ -453,7 +473,13 @@ export function RepoRadarApp() {
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {ranked.map((r, i) => (
                   <div key={r.fullName} className="rr-card" style={{ animationDelay: `${i * 0.04}s` }}>
-                    <RepoCard repo={r} onDeploy={(repo) => setActiveDeploy({ repo })} rank={i + 1} />
+                    <RepoCard
+                      repo={r}
+                      onDeploy={(repo) => setActiveDeploy({ repo })}
+                      onSelect={selectRepoProfile}
+                      selected={selectedRepo === r.fullName}
+                      rank={i + 1}
+                    />
                   </div>
                 ))}
               </div>

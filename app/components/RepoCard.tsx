@@ -5,11 +5,15 @@ import type { ScoredRepo } from "@/app/lib/types";
 export function RepoCard({
   repo,
   onDeploy,
+  onSelect,
+  selected = false,
   isDeploying = false,
   rank,
 }: {
   repo: ScoredRepo;
   onDeploy: (repo: ScoredRepo) => void;
+  onSelect?: (repo: ScoredRepo) => void;
+  selected?: boolean;
   isDeploying?: boolean;
   rank?: number;
 }) {
@@ -18,13 +22,32 @@ export function RepoCard({
 
   return (
     <div
-      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl border p-4 transition"
+      onClick={() => onSelect?.(repo)}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (onSelect && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onSelect(repo);
+        }
+      }}
+      title={onSelect ? "Click to load this repo's profile into the radar + sliders" : undefined}
+      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl border p-4 transition cursor-pointer outline-none focus-visible:ring-2"
       style={{
-        borderColor: "var(--border)",
+        borderColor: selected ? "var(--primary)" : "var(--border)",
         background:
           "linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)",
+        boxShadow: selected ? "0 0 24px var(--primary-glow)" : "none",
       }}
     >
+      <div
+        className="pointer-events-none absolute inset-0 transition"
+        style={{
+          opacity: selected ? 1 : 0,
+          background:
+            "radial-gradient(600px 200px at top right, rgba(34,197,94,0.12), transparent 60%)",
+        }}
+      />
       <div
         className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100"
         style={{
@@ -52,7 +75,8 @@ export function RepoCard({
               href={repo.htmlUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-sm font-medium transition"
+              onClick={(e) => e.stopPropagation()}
+              className="font-mono text-sm font-medium transition hover:underline"
               style={{ color: "var(--fg)" }}
             >
               {repo.fullName}
@@ -128,7 +152,10 @@ export function RepoCard({
       </div>
 
       <button
-        onClick={() => onDeploy(repo)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDeploy(repo);
+        }}
         disabled={isDeploying}
         className="mt-auto inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-medium tracking-wide transition disabled:opacity-50"
         style={{
