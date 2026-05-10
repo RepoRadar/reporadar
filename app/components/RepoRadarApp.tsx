@@ -388,12 +388,14 @@ export function RepoRadarApp() {
             className="inline-block h-3 w-3 rounded-full rr-pulse"
             style={{ background: "var(--primary)" }}
           />
-          <h1 className="font-mono text-lg tracking-tight rr-grad-text">RepoRadar</h1>
+          <h1 className="font-mono text-xl tracking-tight rr-grad-text leading-none">
+            RepoRadar
+          </h1>
           <span
-            className="hidden text-xs sm:inline italic"
+            className="hidden text-base italic leading-none sm:inline"
             style={{ color: "var(--fg-muted)" }}
           >
-            Quickly find the right repo for you right now.
+            Find the most meaningful repo to build upon as efficiently as possible.
           </span>
         </div>
         <div
