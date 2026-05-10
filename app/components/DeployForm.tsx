@@ -288,6 +288,21 @@ export function DeployForm({
         >
           Open ↗ {stage.url.replace(/^https?:\/\//, "")}
         </a>
+        <div
+          className="rounded-md border p-3 text-[11px] leading-relaxed"
+          style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.30)", color: "var(--fg-muted)" }}
+        >
+          <div className="mb-1.5 font-mono uppercase tracking-[0.18em]" style={{ color: "var(--accent)", fontSize: "9px" }}>
+            How to test
+          </div>
+          <ol className="ml-4 list-decimal space-y-0.5">
+            <li>Open the URL above — it&apos;s a real interactive app, not a screenshot.</li>
+            <li>Fill in any text fields and click <span style={{ color: "var(--primary)" }}>Save</span>. The record persists in this deploy&apos;s own Cloudflare D1 table.</li>
+            <li>Click <span style={{ color: "var(--secondary)" }}>Refresh</span> (or reload the page) — your records reappear.</li>
+            <li>Click <span style={{ color: "var(--fg)" }}>×</span> next to any saved record to delete it.</li>
+            <li>Share the URL — anyone visiting sees the same persisted data.</li>
+          </ol>
+        </div>
         {contact && (
           <div className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
             {stage.notified === "sent" ? (
