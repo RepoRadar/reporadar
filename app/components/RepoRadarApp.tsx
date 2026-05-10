@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { DEFAULT_WEIGHTS, rankRepos } from "@/app/lib/scoring";
@@ -18,16 +19,16 @@ import { PriorityBar, type SortKey } from "@/app/components/PriorityBar";
 import { DeployForm } from "@/app/components/DeployForm";
 
 const QUICK_SCANS = [
-  { topic: "hermes", label: "Hermes", glyph: "◈" },
-  { topic: "openclaw", label: "OpenClaw", glyph: "◇" },
-  { topic: "ag-ui", label: "AG-UI", glyph: "◆" },
-  { topic: "a2ui", label: "A2UI", glyph: "✸" },
-  { topic: "claude-code", label: "Claude Code", glyph: "✦" },
-  { topic: "cloudflare", label: "Cloudflare", glyph: "⬢" },
-  { topic: "generative-ui", label: "Generative UI", glyph: "▦" },
-  { topic: "mcp", label: "MCP", glyph: "◫" },
-  { topic: "langchain", label: "LangChain", glyph: "⌬" },
-  { topic: "gemini", label: "Gemini", glyph: "✧" },
+  { topic: "hermes", label: "Hermes" },
+  { topic: "openclaw", label: "OpenClaw" },
+  { topic: "ag-ui", label: "AG-UI" },
+  { topic: "a2ui", label: "A2UI" },
+  { topic: "claude-code", label: "Claude Code" },
+  { topic: "cloudflare", label: "Cloudflare" },
+  { topic: "generative-ui", label: "Generative UI" },
+  { topic: "mcp", label: "MCP" },
+  { topic: "langchain", label: "LangChain" },
+  { topic: "gemini", label: "Gemini" },
 ];
 
 const TAG_HELP: Record<string, string> = {
@@ -54,18 +55,31 @@ const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
   { key: "365", label: "1y", help: "Pushed in the last year. Default — broad enough for most queries." },
   { key: "all", label: "All", help: "No time filter — surfaces classic + long-tail repos too." },
 ];
+
+const ABSOLUTE_TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
 function formatTime(iso?: string): string {
   if (!iso) return "(unknown)";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "(unknown)";
-  return d.toLocaleString();
+  return `${ABSOLUTE_TIME_FORMAT.format(d)} UTC`;
 }
 
-function formatRelativeTime(iso?: string): string {
+function formatRelativeTime(iso?: string, now?: number | null): string {
   if (!iso) return "(unknown)";
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "(unknown)";
-  const sec = Math.floor((Date.now() - t) / 1000);
+  if (now == null) return "just now";
+  const sec = Math.max(0, Math.floor((now - t) / 1000));
   if (sec < 5) return "just now";
   if (sec < 60) return `${sec}s ago`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
@@ -73,6 +87,27 @@ function formatRelativeTime(iso?: string): string {
   if (sec < 86400 * 30) return `${Math.floor(sec / 86400)}d ago`;
   if (sec < 86400 * 365) return `${Math.floor(sec / (86400 * 30))}mo ago`;
   return `${Math.floor(sec / (86400 * 365))}y ago`;
+}
+
+function RelativeTime({ iso, pendingLabel = "(unknown)" }: { iso?: string; pendingLabel?: string }) {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!iso) {
+      const timeout = setTimeout(() => setNow(null), 0);
+      return () => clearTimeout(timeout);
+    }
+    const update = () => setNow(Date.now());
+    const timeout = setTimeout(update, 0);
+    const interval = setInterval(update, 30_000);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [iso]);
+
+  if (!iso) return <>{pendingLabel}</>;
+  return <>{formatRelativeTime(iso, now)}</>;
 }
 
 function sinceIsoFor(w: TimeWindow): string | undefined {
@@ -96,13 +131,31 @@ export function RepoRadarApp() {
   const [expanded, setExpanded] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
-  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
+  const [lastRefresh, setLastRefresh] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   // Stash the last successful query so infinite-scroll knows what to fetch next.
   const queryRef = useRef<{ topic?: string; query?: string }>({ topic: "hermes", query: "hermes" });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef(1);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const bootstrappingRef = useRef(true);
+
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+  useEffect(() => {
+    loadingMoreRef.current = loadingMore;
+  }, [loadingMore]);
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+  useEffect(() => {
+    bootstrappingRef.current = bootstrapping;
+  }, [bootstrapping]);
 
   // Click a card → snap weights to that repo's dimensional profile so the
   // hex polygon morphs and every slider animates to match. Side effect:
@@ -159,6 +212,7 @@ export function RepoRadarApp() {
         setLastRefresh(Date.now());
         setLastQuery("trending: hermes");
         setPage(1);
+        pageRef.current = 1;
         setHasMore(data.length >= 12);
       } finally {
         if (!cancelled) setBootstrapping(false);
@@ -172,6 +226,7 @@ export function RepoRadarApp() {
 
   const runQuery = async ({ topic, query, label }: { topic?: string; query?: string; label: string }) => {
     setBootstrapping(true);
+    setLoadMoreError(null);
     setSelectedRepo(null);
     if (topic) setActiveCategory(topic);
     else setActiveCategory("");
@@ -184,6 +239,7 @@ export function RepoRadarApp() {
         setLastRefresh(Date.now());
         setLastQuery(label);
         setPage(1);
+        pageRef.current = 1;
         setHasMore(data.length >= 12);
       }
     } finally {
@@ -194,29 +250,43 @@ export function RepoRadarApp() {
   // Infinite-scroll: fetch the next page and append. De-dupes by fullName so
   // overlap between pages doesn't cause repeats.
   const loadMore = async () => {
-    if (loadingMore || !hasMore || bootstrapping) return;
+    if (loadingMoreRef.current || !hasMoreRef.current || bootstrappingRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
+    setLoadMoreError(null);
     try {
-      const nextPage = page + 1;
+      const nextPage = pageRef.current + 1;
       const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 12 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         if (data.length === 0) {
           setHasMore(false);
+          hasMoreRef.current = false;
         } else {
+          let addedCount = 0;
           setRepos((prev) => {
             const seen = new Set(prev.map((r) => r.fullName));
             const additions = data.filter((r) => !seen.has(r.fullName));
+            addedCount = additions.length;
             return rankRepos([...prev, ...additions], weights, priorities);
           });
           setPage(nextPage);
+          pageRef.current = nextPage;
           setHasMore(data.length >= 12);
+          hasMoreRef.current = data.length >= 12;
+          if (addedCount === 0 && data.length < 12) {
+            setHasMore(false);
+            hasMoreRef.current = false;
+          }
         }
       } else {
-        setHasMore(false);
+        setLoadMoreError("Could not load more repos");
       }
+    } catch {
+      setLoadMoreError("Could not load more repos");
     } finally {
       setLoadingMore(false);
+      loadingMoreRef.current = false;
     }
   };
 
@@ -238,14 +308,14 @@ export function RepoRadarApp() {
     if (!node) return;
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
       },
-      { rootMargin: "300px" },
+      { rootMargin: "500px 0px 700px", threshold: 0.01 },
     );
     obs.observe(node);
     return () => obs.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, hasMore, loadingMore, bootstrapping, timeWindow]);
+  }, [timeWindow, lastQuery]);
 
   useCopilotReadable({
     description:
@@ -377,6 +447,9 @@ export function RepoRadarApp() {
     runQuery({ query: q, label: `search: ${q}` });
   };
 
+  const buildTimeIso = process.env.NEXT_PUBLIC_BUILD_TIME;
+  const lastRefreshIso = lastRefresh == null ? undefined : new Date(lastRefresh).toISOString();
+
   return (
     <div className="flex flex-1 flex-col">
       <header
@@ -384,12 +457,17 @@ export function RepoRadarApp() {
         style={{ borderColor: "var(--border)" }}
       >
         <div className="flex items-center gap-3">
-          <span
-            className="inline-block h-3 w-3 rounded-full rr-pulse"
-            style={{ background: "var(--primary)" }}
+          <Image
+            src="/reporadar-mark.svg"
+            alt=""
+            aria-hidden="true"
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0"
           />
-          <h1 className="font-mono text-xl tracking-tight rr-grad-text leading-none">
-            RepoRadar
+          <h1 className="text-2xl font-black leading-none tracking-normal">
+            <span style={{ color: "var(--fg)" }}>Repo</span>
+            <span style={{ color: "var(--primary)" }}>Radar</span>
           </h1>
           <span
             className="hidden text-base italic leading-none sm:inline"
@@ -419,17 +497,17 @@ export function RepoRadarApp() {
             · 5/10/26
           </span>
           <span>·</span>
-          <span title={`Code last updated: ${formatTime(process.env.NEXT_PUBLIC_BUILD_TIME)}`}>
+          <span title={`Code last updated: ${formatTime(buildTimeIso)}`}>
             code{" "}
             <span style={{ color: "var(--fg-muted)" }}>
-              {formatRelativeTime(process.env.NEXT_PUBLIC_BUILD_TIME)}
+              <RelativeTime iso={buildTimeIso} />
             </span>
           </span>
           <span>·</span>
-          <span title={`Data last refreshed: ${formatTime(new Date(lastRefresh).toISOString())}`}>
+          <span title={`Data last refreshed: ${formatTime(lastRefreshIso)}`}>
             data{" "}
             <span style={{ color: "var(--fg-muted)" }}>
-              {formatRelativeTime(new Date(lastRefresh).toISOString())}
+              <RelativeTime iso={lastRefreshIso} pendingLabel="pending" />
             </span>
             <button
               onClick={() => {
@@ -484,7 +562,7 @@ export function RepoRadarApp() {
                 disabled={bootstrapping}
                 onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
                 title={TAG_HELP[q.topic] ?? `Search GitHub topic: ${q.topic}`}
-                className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
+                className="flex items-center rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
                 style={{
                   borderColor: active ? "var(--primary)" : "var(--border)",
                   background: active ? "rgba(34,197,94,0.10)" : "var(--surface-2)",
@@ -492,7 +570,6 @@ export function RepoRadarApp() {
                   boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
                 }}
               >
-                <span style={{ color: active ? "var(--primary)" : "var(--accent)" }}>{q.glyph}</span>
                 {q.label}
               </button>
             );
@@ -702,15 +779,62 @@ export function RepoRadarApp() {
               </div>
               <div
                 ref={sentinelRef}
-                className="flex items-center justify-center py-6 text-xs font-mono"
-                style={{ color: "var(--fg-dim)" }}
+                className="flex items-center justify-center py-7 text-xs font-mono"
               >
                 {loadingMore ? (
-                  <span className="rr-blink">loading more…</span>
+                  <div
+                    className="rr-load-more rr-fade-up inline-flex items-center gap-3 rounded-md border px-4 py-3"
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: "var(--surface-2)",
+                      color: "var(--fg-muted)",
+                    }}
+                  >
+                    <span className="rr-spinner" aria-hidden />
+                    <span className="flex flex-col gap-0.5">
+                      <span style={{ color: "var(--fg)" }}>Loading more repos</span>
+                      <span className="rr-slide-text" style={{ color: "var(--fg-dim)" }}>
+                        Pulling the next page from GitHub…
+                      </span>
+                    </span>
+                  </div>
+                ) : loadMoreError ? (
+                  <button
+                    onClick={loadMore}
+                    className="inline-flex items-center gap-2 rounded-md border px-4 py-2 transition"
+                    style={{
+                      borderColor: "var(--danger)",
+                      background: "rgba(239,68,68,0.08)",
+                      color: "var(--danger)",
+                    }}
+                  >
+                    retry loading more
+                  </button>
                 ) : hasMore ? (
-                  <span>scroll for more</span>
+                  <div
+                    className="inline-flex items-center gap-2 rounded-md border px-4 py-2"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: "var(--surface)",
+                      color: "var(--fg-dim)",
+                    }}
+                  >
+                    <span className="rr-scroll-cue" aria-hidden>↓</span>
+                    <span>scroll for more repos</span>
+                  </div>
                 ) : (
-                  <span>· end of results ·</span>
+                  <div
+                    className="rounded-md border px-4 py-2"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: "var(--surface)",
+                      color: "var(--fg-dim)",
+                    }}
+                  >
+                    end of results
+                  </div>
                 )}
               </div>
             </div>
@@ -733,7 +857,7 @@ export function RepoRadarApp() {
         labels={{
           title: "RepoRadar",
           initial:
-            "Hey — ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface at <slug>.reporadar.io.",
+            "Hey — ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface on a reporadar.io subdomain.",
         }}
         defaultOpen={false}
         clickOutsideToClose={false}
@@ -771,6 +895,9 @@ function DimSlider({
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full cursor-pointer"
+        style={{
+          background: `linear-gradient(90deg, var(--primary) 0%, var(--secondary) ${Math.max(1, pct * 0.35)}%, var(--accent) ${Math.max(2, pct * 0.7)}%, var(--danger) ${pct}%, var(--surface-3) ${pct}%, var(--surface-3) 100%)`,
+        }}
       />
     </label>
   );

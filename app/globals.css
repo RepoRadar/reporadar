@@ -72,11 +72,35 @@
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0.35; }
 }
+@keyframes rr-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes rr-slide-text {
+  0% { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes rr-scroll-cue {
+  0%, 100% { transform: translateY(-1px); opacity: 0.55; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
 
 @layer utilities {
   .rr-fade-up   { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .rr-pulse     { animation: rr-pulse-glow 2.4s ease-in-out infinite; }
   .rr-blink     { animation: rr-blink 1.6s ease-in-out infinite; }
+  .rr-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    border: 2px solid var(--surface-3);
+    border-top-color: var(--primary);
+    border-right-color: var(--secondary);
+    border-bottom-color: var(--accent);
+    animation: rr-spin 0.85s linear infinite;
+    box-shadow: 0 0 14px var(--primary-glow);
+  }
+  .rr-slide-text { animation: rr-slide-text 0.35s ease-out both; }
+  .rr-scroll-cue { animation: rr-scroll-cue 1.2s ease-in-out infinite; }
   .rr-card      { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .rr-card:nth-child(1) { animation-delay: 0.02s; }
   .rr-card:nth-child(2) { animation-delay: 0.06s; }
@@ -119,11 +143,29 @@
 /* ---- form chrome ---- */
 input[type="range"] {
   -webkit-appearance: none; appearance: none;
-  height: 4px; background: var(--surface-2); border-radius: 9999px;
+  height: 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--surface-3);
+}
+input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 16px; height: 16px; border-radius: 9999px;
+  margin-top: -6px;
   background: var(--primary);
   box-shadow: 0 0 12px var(--primary-glow);
   border: 2px solid var(--bg); cursor: pointer;
@@ -136,6 +178,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
 input[type="range"]:focus { outline: none; }
 input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: 0 0 24px var(--primary-glow);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+  border: 2px solid var(--bg); cursor: pointer;
 }
 
 /* ---- chrome cleanup ---- */

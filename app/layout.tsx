@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   title: "RepoRadar — Generative UI for trending repos",
   description:
     "Tune sliders, surface trending GitHub repos as agent-rendered cards, and deploy a unique interactive surface for any repo on demand.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({
