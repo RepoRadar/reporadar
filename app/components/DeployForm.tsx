@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 type DeployStage =
   | { kind: "form" }
-  | { kind: "running"; log: string[]; progress: number; milestoneIdx: number }
+  | { kind: "running"; log: string[]; progress: number; milestoneIdx: number; seconds: number }
   | { kind: "done"; url: string; slug: string; formFactor: string; log: string[]; notified?: "sent" | "queued" }
   | { kind: "error"; message: string; log: string[] };
 
@@ -13,7 +13,7 @@ const MILESTONES = [
   "Asking Gemini 2.5 Flash to pick a form factor + emit A2UI surface JSON",
   "Validating components + writing surface to Cloudflare R2",
   "Recording the deploy in Cloudflare D1 (slug → repo mapping)",
-  "Going live at <slug>.reporadar.io via the serve worker",
+  "Going live at your reporadar.io subdomain via the serve worker",
 ] as const;
 
 export function DeployForm({
@@ -42,15 +42,16 @@ export function DeployForm({
   const submit = async () => {
     const log: string[] = [`launching deploy for ${repo}`];
     tickStartedAt.current = Date.now();
-    setStage({ kind: "running", log, progress: 4, milestoneIdx: 0 });
+    setStage({ kind: "running", log, progress: 4, milestoneIdx: 0, seconds: 0 });
 
     // Animate progress + milestones based on elapsed time. Caps at 92% until
     // the real fetch resolves, then jumps to 100% in the done state.
     progressTimer.current = setInterval(() => {
       const elapsed = (Date.now() - (tickStartedAt.current ?? Date.now())) / 1000;
+      const seconds = Math.floor(elapsed);
       const fakePct = Math.min(92, 4 + Math.round((1 - Math.exp(-elapsed / 6)) * 92));
       const idx = Math.min(MILESTONES.length - 1, Math.floor(elapsed / 2.4));
-      setStage((s) => (s.kind === "running" ? { ...s, progress: fakePct, milestoneIdx: idx } : s));
+      setStage((s) => (s.kind === "running" ? { ...s, progress: fakePct, milestoneIdx: idx, seconds } : s));
     }, 250);
 
     try {
@@ -184,7 +185,6 @@ export function DeployForm({
   }
 
   if (stage.kind === "running") {
-    const seconds = tickStartedAt.current ? Math.floor((Date.now() - tickStartedAt.current) / 1000) : 0;
     return (
       <div
         className="flex flex-col gap-3 rounded-xl border p-4"
@@ -194,7 +194,7 @@ export function DeployForm({
           <div className="text-[10px] uppercase tracking-[0.18em] rr-blink" style={{ color: "var(--primary)" }}>
             ● Building…
           </div>
-          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{seconds}s · {stage.progress}%</div>
+          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{stage.seconds}s · {stage.progress}%</div>
         </div>
 
         <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
