@@ -624,15 +624,6 @@ export function RepoRadarApp() {
             )}
           </div>
 
-          <div
-            className="rounded-md border p-3 text-[11px] leading-5"
-            style={{ borderColor: "var(--border)", background: "rgba(0,0,0,0.30)", color: "var(--fg-muted)" }}
-          >
-            Sliders, hex, and chat all share the same state. Click{" "}
-            <span style={{ color: "var(--primary)" }} className="font-mono">Deploy</span>{" "}
-            on any card to materialize a bespoke generative-UI surface at{" "}
-            <span style={{ color: "var(--secondary)" }} className="font-mono">·.reporadar.io</span>.
-          </div>
         </aside>
 
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
