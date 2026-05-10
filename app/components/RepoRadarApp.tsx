@@ -21,9 +21,18 @@ const QUICK_SCANS = [
   { topic: "agent", label: "Agents", glyph: "◈" },
   { topic: "rag", label: "RAG", glyph: "◇" },
   { topic: "llm", label: "LLM Apps", glyph: "◆" },
+  { topic: "machine-learning", label: "ML", glyph: "✸" },
   { topic: "rust", label: "Rust", glyph: "▲" },
-  { topic: "iot", label: "IoT", glyph: "⚡" },
+  { topic: "typescript", label: "TypeScript", glyph: "⌘" },
+  { topic: "python", label: "Python", glyph: "▽" },
+  { topic: "frontend", label: "Frontend", glyph: "◐" },
+  { topic: "devtools", label: "Devtools", glyph: "▣" },
+  { topic: "cli", label: "CLI", glyph: "▤" },
+  { topic: "api", label: "API", glyph: "▥" },
+  { topic: "iot", label: "IoT", glyph: "◬" },
   { topic: "security", label: "Security", glyph: "✦" },
+  { topic: "web3", label: "Web3", glyph: "✺" },
+  { topic: "gamedev", label: "Gaming", glyph: "◉" },
 ];
 
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
@@ -240,13 +249,24 @@ export function RepoRadarApp() {
         </div>
       </header>
 
-      <PriorityBar priorities={priorities} onChange={setPriorities} />
-
+      {/* Row 1 — TAGS (popular GitHub topics, click one to search) */}
       <div
-        className="flex items-center gap-3 border-b px-6 py-3 flex-wrap"
+        className="flex flex-wrap items-center gap-3 border-b px-6 py-3"
         style={{ borderColor: "var(--border)" }}
       >
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-baseline gap-2">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: "var(--fg-dim)" }}
+            title="Click a tag to surface trending repos with that GitHub topic. Pick one tag at a time."
+          >
+            Tags
+          </span>
+          <span className="text-[10px]" style={{ color: "var(--fg-dim)" }}>
+            click a tag to load trending repos
+          </span>
+        </div>
+        <div className="flex flex-1 flex-wrap items-center gap-1.5">
           {QUICK_SCANS.map((q) => {
             const active = activeCategory === q.topic;
             return (
@@ -269,14 +289,31 @@ export function RepoRadarApp() {
             );
           })}
         </div>
-        <form onSubmit={submitSearch} className="relative ml-auto flex-1 min-w-[280px] max-w-md">
+      </div>
+
+      {/* Row 2 — FILTERS / SORT BY (10 dimensions, click order = priority) */}
+      <PriorityBar priorities={priorities} onChange={setPriorities} />
+
+      {/* Row 3 — bigger free-text search bar */}
+      <div
+        className="flex items-center gap-3 border-b px-6 py-3"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <span
+          className="text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap"
+          style={{ color: "var(--fg-dim)" }}
+          title="Type any phrase — a topic, a project description, even a vibe. The agent runs a multi-tier search across GitHub topics + keywords."
+        >
+          Or describe it
+        </span>
+        <form onSubmit={submitSearch} className="relative flex-1">
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="✦ or type your own idea — 'something for podcasts', 'rust cli that's fun this weekend'…"
+            placeholder="✦ try: 'a podcast platform', 'rust cli that's fun this weekend', 'an iot temperature dashboard'…"
             disabled={bootstrapping}
-            className="w-full rounded-md border px-3 py-1.5 pr-9 text-xs outline-none transition"
+            className="w-full rounded-md border px-4 py-2.5 pr-12 text-sm outline-none transition"
             style={{
               background: "#fafafa",
               color: "#0a0a0a",
@@ -295,10 +332,10 @@ export function RepoRadarApp() {
             type="submit"
             disabled={bootstrapping || !searchInput.trim()}
             aria-label="Search"
-            className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-2 py-0.5 text-[11px] font-mono disabled:opacity-40"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-mono disabled:opacity-40"
             style={{ color: "var(--primary)" }}
           >
-            ↵
+            ↵ Enter
           </button>
         </form>
       </div>
