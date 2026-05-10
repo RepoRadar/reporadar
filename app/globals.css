@@ -138,6 +138,16 @@
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 24px rgba(34, 197, 94, 0.14);
   }
 
+  .rr-auth-input {
+    border-color: var(--border-strong);
+    background: #f8fafc;
+    color: #06080d;
+  }
+  .rr-auth-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+  }
+
   /* Four-stop gradient using the new palette: green → blue → yellow → red */
   .rr-grad-text {
     background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 35%, var(--accent) 70%, var(--danger) 100%);

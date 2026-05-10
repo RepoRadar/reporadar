@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { DEFAULT_WEIGHTS, rankRepos } from "@/app/lib/scoring";
@@ -532,6 +533,18 @@ export function RepoRadarApp() {
             </a>{" "}
             · 5/10/26
           </span>
+          <span>·</span>
+          <Link
+            href="/login"
+            className="rounded border px-2 py-1 transition"
+            style={{
+              borderColor: "var(--border)",
+              color: "var(--primary)",
+              textDecoration: "none",
+            }}
+          >
+            sign in
+          </Link>
           <span>·</span>
           <span title={`Code last updated: ${formatTime(buildTimeIso)}`}>
             code{" "}
