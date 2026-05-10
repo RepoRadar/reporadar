@@ -63,7 +63,7 @@ test.describe("home page", () => {
       "Project Maturity",
       "Community Engagement",
       "Activity Recency",
-      "Engagement Heat",
+      "Ease of Prototyping",
       "Production Readiness",
       "Security & Trust",
       "Documentation Quality",

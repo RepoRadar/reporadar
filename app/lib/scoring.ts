@@ -28,7 +28,7 @@ export const DEFAULT_WEIGHTS: DimensionWeights = {
   maturity: 0.7,
   community: 0.3,
   recency: 0.3,
-  heat: 0.3,
+  easeOfPrototyping: 0.6,
   productionReadiness: 0.3,
   security: 0.3,
   documentation: 0.3,
@@ -68,8 +68,22 @@ export function computeDimensions(repo: Repo): Dimensions {
 
   const recency = Math.round(clamp01(1 - sincePush / 30) * 100);
 
-  const forkRate = repo.stars > 0 ? clamp01(repo.forks / Math.max(50, repo.stars * 0.2)) : 0;
-  const heat = Math.round(0.6 * forkRate * 100 + 0.4 * recency);
+  // Ease of Prototyping — how fast you can spin up a working prototype
+  // without touching anything. Mix of explicit "starter / boilerplate /
+  // example / template / quickstart" topic signals + README presence +
+  // recent activity. Penalize if the repo signals "library/sdk/framework"
+  // (more glue work needed) and there's no offsetting starter signal.
+  const protoStarterTags = repo.topics.filter((t) =>
+    /(starter|boilerplate|template|example|examples|demo|demos|quickstart|cookbook|recipe|tutorial|getting-started)/i.test(t),
+  ).length;
+  const protoStarter = Math.min(40, protoStarterTags * 14);
+  const protoDocs = repo.readmeLength > 5000 ? 18 : repo.readmeLength > 0 ? 8 : 0;
+  const protoFresh = clamp01(1 - sincePush / 30) * 18;
+  const heavyOnly = repo.topics.some((t) => /(framework|sdk|library)/i.test(t));
+  const heaviness = heavyOnly && protoStarterTags === 0 ? -10 : 0;
+  const easeOfPrototyping = Math.round(
+    clamp01((35 + protoStarter + protoDocs + protoFresh + heaviness) / 100) * 100,
+  );
 
   const prodTags = repo.topics.filter((t) =>
     /(testing|ci|tested|production|enterprise|stable)/i.test(t),
@@ -105,7 +119,7 @@ export function computeDimensions(repo: Repo): Dimensions {
     maturity,
     community,
     recency,
-    heat,
+    easeOfPrototyping,
     productionReadiness,
     security,
     documentation,

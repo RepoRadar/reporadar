@@ -87,7 +87,7 @@ export async function rankRepos(input: RankReposInput, env: ToolEnv) {
           dimensions.recency * 0.1 +
           dimensions.documentation * 0.05 +
           dimensions.security * 0.05 +
-          dimensions.heat * 0.025 +
+          dimensions.easeOfPrototyping * 0.025 +
           dimensions.productionReadiness * 0.025) *
           10,
       ) / 10;
@@ -216,7 +216,18 @@ function computeDimensions(repo: RepoLike) {
   const forkRate = (repo.stars ?? 0) > 0
     ? clamp01((repo.forks ?? 0) / Math.max(50, (repo.stars ?? 0) * 0.2))
     : 0;
-  const heat = Math.round(0.6 * forkRate * 100 + 0.4 * recency);
+  // Mirror the easeOfPrototyping heuristic from app/lib/scoring.ts.
+  const protoStarterTags = topics.filter((t: string) =>
+    /(starter|boilerplate|template|example|examples|demo|demos|quickstart|cookbook|recipe|tutorial|getting-started)/i.test(t),
+  ).length;
+  const protoStarter = Math.min(40, protoStarterTags * 14);
+  const protoDocs = readmeLength > 5000 ? 18 : readmeLength > 0 ? 8 : 0;
+  const protoFresh = clamp01(1 - sincePush / 30) * 18;
+  const heavyOnly = topics.some((t: string) => /(framework|sdk|library)/i.test(t));
+  const heaviness = heavyOnly && protoStarterTags === 0 ? -10 : 0;
+  const easeOfPrototyping = Math.round(
+    clamp01((35 + protoStarter + protoDocs + protoFresh + heaviness) / 100) * 100,
+  );
 
   const prodTags = topics.filter((t) =>
     /(testing|ci|tested|production|enterprise|stable)/i.test(t),
@@ -240,7 +251,7 @@ function computeDimensions(repo: RepoLike) {
     maturity,
     community,
     recency,
-    heat,
+    easeOfPrototyping,
     productionReadiness,
     security,
     documentation,

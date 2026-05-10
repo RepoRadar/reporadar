@@ -115,7 +115,7 @@ export function RepoRadarApp() {
       maturity: r.dimensions.maturity / 100,
       community: r.dimensions.community / 100,
       recency: r.dimensions.recency / 100,
-      heat: r.dimensions.heat / 100,
+      easeOfPrototyping: r.dimensions.easeOfPrototyping / 100,
       productionReadiness: r.dimensions.productionReadiness / 100,
       security: r.dimensions.security / 100,
       documentation: r.dimensions.documentation / 100,

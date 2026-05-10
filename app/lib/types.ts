@@ -24,7 +24,7 @@ export type DimensionWeights = Record<
   | "maturity"
   | "community"
   | "recency"
-  | "heat"
+  | "easeOfPrototyping"
   | "productionReadiness"
   | "security"
   | "documentation"
@@ -41,7 +41,7 @@ export type Dimension =
   | "maturity"
   | "community"
   | "recency"
-  | "heat"
+  | "easeOfPrototyping"
   | "productionReadiness"
   | "security"
   | "documentation"
@@ -55,7 +55,7 @@ export const DIMENSION_ORDER: Dimension[] = [
   "maturity",
   "community",
   "recency",
-  "heat",
+  "easeOfPrototyping",
   "productionReadiness",
   "security",
   "documentation",
@@ -91,10 +91,10 @@ export const DIMENSION_META: Record<
     short: "Recency",
     help: "How recently anything happened. Higher = pushed within the last few days.",
   },
-  heat: {
-    label: "Engagement Heat",
-    short: "Heat",
-    help: "Engagement intensity. Higher = lots of forks + PRs relative to stars.",
+  easeOfPrototyping: {
+    label: "Ease of Prototyping",
+    short: "Prototype",
+    help: "How fast you can spin up a working prototype with this repo without touching configuration. Higher = more starter / boilerplate / example / template signals + recent activity + clear quickstart.",
   },
   productionReadiness: {
     label: "Production Readiness",
