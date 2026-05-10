@@ -63,9 +63,12 @@ export function RepoCard({
 
       {/* HERO ROW — medal/rank on the left, BIG star count on the right.
           Christo's rule: stars are the reward, make them huge. */}
-      <div className="relative flex items-center justify-between gap-3">
+      <div className="relative flex items-start justify-between gap-3">
         <RankMedal rank={rank} />
-        <StarBadge stars={repo.stars} rank={rank} />
+        <div className="flex flex-col items-end gap-0.5">
+          <StarBadge stars={repo.stars} rank={rank} />
+          <RepoTimeline createdAt={repo.createdAt} pushedAt={repo.pushedAt} />
+        </div>
       </div>
 
       {/* TAGS ROW — top 5 GitHub topics. Click any one to repopulate the
@@ -288,4 +291,54 @@ function formatStars(n: number): string {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
+}
+
+function RepoTimeline({ createdAt, pushedAt }: { createdAt?: string; pushedAt?: string }) {
+  // Two timestamps that together tell a velocity story at a glance:
+  //   "launched"  → repo's createdAt (when it was first pushed up)
+  //   "last star" → pushedAt is the closest signal GitHub exposes on
+  //                 the search endpoint; fork/star timestamps aren't
+  //                 included. Labelled "last update" so we don't lie.
+  const launched = formatDate(createdAt);
+  const lastUpdate = formatRelative(pushedAt);
+  if (!launched && !lastUpdate) return null;
+  return (
+    <div
+      className="flex items-baseline gap-2 text-[10px] font-mono"
+      style={{ color: "var(--fg-dim)" }}
+    >
+      {launched && (
+        <span title={`Launched ${createdAt ?? ""}`}>
+          launched <span style={{ color: "var(--fg-muted)" }}>{launched}</span>
+        </span>
+      )}
+      {launched && lastUpdate && <span style={{ color: "var(--fg-dim)" }}>·</span>}
+      {lastUpdate && (
+        <span title={`Most recent push ${pushedAt ?? ""}`}>
+          last update <span style={{ color: "var(--fg-muted)" }}>{lastUpdate}</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
+function formatDate(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  // e.g. "May 2024"
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function formatRelative(iso?: string): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const days = Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24));
+  if (days < 1) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 14) return `${days}d ago`;
+  if (days < 60) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }

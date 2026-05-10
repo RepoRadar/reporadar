@@ -24,7 +24,7 @@ export type DimensionWeights = Record<
   | "recency"
   | "heat"
   | "productionReadiness"
-  | "licenseSafety"
+  | "security"
   | "documentation"
   | "ecosystemPull",
   number
@@ -41,7 +41,7 @@ export type Dimension =
   | "recency"
   | "heat"
   | "productionReadiness"
-  | "licenseSafety"
+  | "security"
   | "documentation"
   | "ecosystemPull";
 
@@ -55,7 +55,7 @@ export const DIMENSION_ORDER: Dimension[] = [
   "recency",
   "heat",
   "productionReadiness",
-  "licenseSafety",
+  "security",
   "documentation",
   "ecosystemPull",
 ];
@@ -65,47 +65,47 @@ export const DIMENSION_META: Record<
   { label: string; short: string; help: string }
 > = {
   momentum: {
-    label: "Momentum",
-    short: "Mom",
+    label: "Trending Momentum",
+    short: "Momentum",
     help: "How fast this repo is gaining attention right now. Higher = stars climbing fast in the last weeks.",
   },
   velocity: {
-    label: "Velocity",
-    short: "Vel",
+    label: "Shipping Velocity",
+    short: "Velocity",
     help: "How actively the maintainers are shipping. Higher = more commits in the last 30 days.",
   },
   maturity: {
-    label: "Maturity",
-    short: "Mat",
+    label: "Project Maturity",
+    short: "Maturity",
     help: "How established + stable the project is. Higher = older, with more releases and adoption signals.",
   },
   community: {
-    label: "Community",
-    short: "Comm",
+    label: "Community Engagement",
+    short: "Community",
     help: "How alive the community is. Higher = more contributors, faster issue cadence.",
   },
   recency: {
-    label: "Recency",
-    short: "Rec",
+    label: "Activity Recency",
+    short: "Recency",
     help: "How recently anything happened. Higher = pushed within the last few days.",
   },
   heat: {
-    label: "Heat",
+    label: "Engagement Heat",
     short: "Heat",
     help: "Engagement intensity. Higher = lots of forks + PRs relative to stars.",
   },
   productionReadiness: {
-    label: "Prod",
-    short: "Prod",
+    label: "Production Readiness",
+    short: "Production",
     help: "Production readiness signals. Higher = tests, CI, docs, security policy present.",
   },
-  licenseSafety: {
-    label: "License",
-    short: "Lic",
-    help: "Permissive-license safety for commercial use. Higher = MIT/Apache-style; lower = copyleft or unclear.",
+  security: {
+    label: "Security & Trust",
+    short: "Security",
+    help: "Security signals — explicit security tooling, active maintenance, low open-vuln pressure. Higher = safer to adopt.",
   },
   documentation: {
-    label: "Docs",
+    label: "Documentation Quality",
     short: "Docs",
     help: "Documentation quality. Higher = long README, examples, docs site.",
   },

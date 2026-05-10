@@ -14,7 +14,7 @@ import {
 } from "@/app/lib/types";
 import { RepoCard } from "@/app/components/RepoCard";
 import { InteractiveRadar } from "@/app/components/InteractiveRadar";
-import { PriorityBar } from "@/app/components/PriorityBar";
+import { PriorityBar, type SortKey } from "@/app/components/PriorityBar";
 import { DeployForm } from "@/app/components/DeployForm";
 
 const QUICK_SCANS = [
@@ -23,6 +23,11 @@ const QUICK_SCANS = [
   { topic: "ag-ui", label: "AG-UI", glyph: "◆" },
   { topic: "a2ui", label: "A2UI", glyph: "✸" },
   { topic: "claude-code", label: "Claude Code", glyph: "✦" },
+  { topic: "cloudflare", label: "Cloudflare", glyph: "⬢" },
+  { topic: "generative-ui", label: "Generative UI", glyph: "▦" },
+  { topic: "mcp", label: "MCP", glyph: "◫" },
+  { topic: "langchain", label: "LangChain", glyph: "⌬" },
+  { topic: "gemini", label: "Gemini", glyph: "✧" },
 ];
 
 const TAG_HELP: Record<string, string> = {
@@ -31,6 +36,11 @@ const TAG_HELP: Record<string, string> = {
   "ag-ui": "AG-UI — CopilotKit's open transport protocol for fullstack agentic UI in React. Bidirectional state sync between agent + frontend.",
   a2ui: "A2UI — Google DeepMind's open protocol for agents to send fully interactive UI components instead of plain text. Apache 2.0.",
   "claude-code": "Claude Code — Anthropic's CLI agent for engineering workflows. Click to surface skills, plugins, and projects building on it.",
+  cloudflare: "Cloudflare — Workers, D1, R2, KV, Durable Objects, AI Gateway. Edge-deployed everything; the entire RepoRadar stack runs on it.",
+  "generative-ui": "Generative UI — agents that emit interactive UI at runtime instead of plain text. The whole point of this hackathon.",
+  mcp: "Model Context Protocol — the open standard for connecting AI assistants to tools, data, and live UI widgets. Manufact / mcp-use territory.",
+  langchain: "LangChain — the most-used framework for building production-grade LLM applications. Chains, agents, RAG, tool-use, memory.",
+  gemini: "Gemini — Google's multimodal model family. Powers RepoRadar's Gemini 2.5 Flash for both the chat agent and the A2UI deploy generator.",
 };
 
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
@@ -38,7 +48,8 @@ const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
 
 export function RepoRadarApp() {
   const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
-  const [priorities, setPriorities] = useState<Dimension[]>([]);
+  // Default sort priority is "Most Stars" — toggleable. Christo's spec.
+  const [priorities, setPriorities] = useState<SortKey[]>(["stars"]);
   const [repos, setRepos] = useState<ScoredRepo[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("hermes");
   const [lastQuery, setLastQuery] = useState<string>("");
@@ -61,7 +72,7 @@ export function RepoRadarApp() {
       recency: r.dimensions.recency / 100,
       heat: r.dimensions.heat / 100,
       productionReadiness: r.dimensions.productionReadiness / 100,
-      licenseSafety: r.dimensions.licenseSafety / 100,
+      security: r.dimensions.security / 100,
       documentation: r.dimensions.documentation / 100,
       ecosystemPull: r.dimensions.ecosystemPull / 100,
     });
@@ -466,7 +477,9 @@ export function RepoRadarApp() {
                       {priorities.map((p, i) => (
                         <span key={p}>
                           {i > 0 && <span style={{ color: "var(--fg-dim)" }}>, then </span>}
-                          <span style={{ color: "var(--secondary)" }}>{DIMENSION_META[p].label}</span>
+                          <span style={{ color: "var(--secondary)" }}>
+                            {p === "stars" ? "Most Stars" : DIMENSION_META[p].label}
+                          </span>
                         </span>
                       ))}
                     </span>

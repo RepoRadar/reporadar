@@ -8,24 +8,42 @@ import {
 
 const MAX_PRIORITIES = 3;
 
+// Sort key is either one of the 10 PRD dimensions, or the special "stars"
+// virtual key that sorts by raw GitHub stars (most-popular). "stars" is the
+// default first priority on page load per Christo's spec.
+export type SortKey = Dimension | "stars";
+
+const STARS_META = {
+  label: "Most Stars",
+  short: "Stars",
+  help: "Sort by raw GitHub stars, most-popular first. The default sort and the easiest one to reason about.",
+};
+
 export function PriorityBar({
   priorities,
   onChange,
 }: {
-  priorities: Dimension[];
-  onChange: (next: Dimension[]) => void;
+  priorities: SortKey[];
+  onChange: (next: SortKey[]) => void;
 }) {
-  const toggle = (dim: Dimension) => {
-    const idx = priorities.indexOf(dim);
+  const toggle = (key: SortKey) => {
+    const idx = priorities.indexOf(key);
     if (idx >= 0) {
-      onChange(priorities.filter((d) => d !== dim));
+      onChange(priorities.filter((d) => d !== key));
     } else if (priorities.length < MAX_PRIORITIES) {
-      onChange([...priorities, dim]);
+      onChange([...priorities, key]);
     } else {
-      // Already 3 selected — replace the oldest with the new one.
-      onChange([...priorities.slice(1), dim]);
+      onChange([...priorities.slice(1), key]);
     }
   };
+
+  // The chip ordering Christo specced: Stars first, then Velocity, then
+  // Security as the highlighted quick-picks; the rest follow in PRD order.
+  const HIGHLIGHTED: SortKey[] = ["stars", "velocity", "security"];
+  const REST: SortKey[] = DIMENSION_ORDER.filter(
+    (d) => !HIGHLIGHTED.includes(d as SortKey),
+  );
+  const ORDERED: SortKey[] = [...HIGHLIGHTED, ...REST];
 
   return (
     <div
@@ -39,7 +57,7 @@ export function PriorityBar({
         <span
           className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] cursor-help whitespace-nowrap"
           style={{ color: "var(--fg-dim)" }}
-          title="Click up to 3 of these dimensions in priority order. First click = primary sort, second click breaks ties, third refines further. Hover any chip to read what that dimension means."
+          title="Click up to 3 sort options in priority order. The first you click is the primary sort, second breaks ties, third refines further. 'Most Stars' is on by default — toggle it off if you want a different ranking."
         >
           Sort by
           <span
@@ -56,21 +74,21 @@ export function PriorityBar({
         <span
           className="text-[10px] font-mono"
           style={{ color: "var(--fg-dim)" }}
-          title="How many sort dimensions you've picked, out of the 3 max."
+          title="How many sort options you've picked, out of the 3 max."
         >
           ({priorities.length}/{MAX_PRIORITIES})
         </span>
       </div>
 
       <div className="flex flex-1 flex-wrap items-center gap-1.5 overflow-x-auto">
-        {DIMENSION_ORDER.map((dim) => {
-          const idx = priorities.indexOf(dim);
+        {ORDERED.map((key) => {
+          const idx = priorities.indexOf(key);
           const active = idx >= 0;
-          const meta = DIMENSION_META[dim];
+          const meta = key === "stars" ? STARS_META : DIMENSION_META[key];
           return (
             <button
-              key={dim}
-              onClick={() => toggle(dim)}
+              key={key}
+              onClick={() => toggle(key)}
               title={meta.help}
               className="group flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-mono transition"
               style={{
@@ -97,6 +115,7 @@ export function PriorityBar({
             onClick={() => onChange([])}
             className="ml-1 text-[10px] underline-offset-2 transition hover:underline"
             style={{ color: "var(--fg-dim)" }}
+            title="Clear all sort priorities"
           >
             clear
           </button>

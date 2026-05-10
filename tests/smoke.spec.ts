@@ -22,9 +22,20 @@ test.describe("home page", () => {
     await expect(page.locator("h1", { hasText: "RepoRadar" })).toBeVisible();
   });
 
-  test("the 5 quick-scan tag chips are rendered", async ({ page }) => {
+  test("the 10 quick-scan tag chips are rendered", async ({ page }) => {
     await page.goto("/");
-    for (const label of ["Hermes", "OpenClaw", "AG-UI", "A2UI", "Claude Code"]) {
+    for (const label of [
+      "Hermes",
+      "OpenClaw",
+      "AG-UI",
+      "A2UI",
+      "Claude Code",
+      "Cloudflare",
+      "Generative UI",
+      "MCP",
+      "LangChain",
+      "Gemini",
+    ]) {
       await expect(
         page.locator(`button:has-text("${label}")`).first(),
       ).toBeVisible();
@@ -38,19 +49,24 @@ test.describe("home page", () => {
     ).toBeVisible();
   });
 
-  test("all 10 sort-priority dimension chips are rendered", async ({ page }) => {
+  test("sort-priority chips are rendered (Stars first, plus the 10 dims)", async ({ page }) => {
     await page.goto("/");
+    // The "Most Stars" virtual sort priority sits first and is auto-selected
+    await expect(
+      page.locator('button:has-text("Most Stars")').first(),
+    ).toBeVisible();
+    // Each dimension chip uses its phrase-form label
     for (const label of [
-      "Momentum",
-      "Velocity",
-      "Maturity",
-      "Community",
-      "Recency",
-      "Heat",
-      "Prod",
-      "License",
-      "Docs",
-      "Ecosystem",
+      "Trending Momentum",
+      "Shipping Velocity",
+      "Project Maturity",
+      "Community Engagement",
+      "Activity Recency",
+      "Engagement Heat",
+      "Production Readiness",
+      "Security & Trust",
+      "Documentation Quality",
+      "Ecosystem Pull",
     ]) {
       await expect(
         page.locator(`button:has-text("${label}")`).first(),

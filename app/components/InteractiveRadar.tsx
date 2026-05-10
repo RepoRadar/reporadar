@@ -8,10 +8,12 @@ import {
   type DimensionWeights,
 } from "@/app/lib/types";
 
-const SIZE = 240;
+// Dimension labels grew to full phrases per design feedback — bumped the
+// canvas + padding so axis text doesn't clip at the edges.
+const SIZE = 320;
 const CENTER = SIZE / 2;
 const RING_COUNT = 4;
-const PADDING = 30; // headroom for axis labels around the polygon
+const PADDING = 70; // headroom for axis labels around the polygon
 const MAX_RADIUS = SIZE / 2 - PADDING;
 const HANDLE_RADIUS = 6;
 
@@ -80,7 +82,7 @@ export function InteractiveRadar({
           ref={svgRef}
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="h-full w-full"
-          style={{ touchAction: "none" }}
+          style={{ touchAction: "none", overflow: "visible" }}
         >
           {/* Concentric rings */}
           {Array.from({ length: RING_COUNT }, (_, i) => {

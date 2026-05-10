@@ -30,7 +30,7 @@ export const DEFAULT_WEIGHTS: DimensionWeights = {
   recency: 0.3,
   heat: 0.3,
   productionReadiness: 0.3,
-  licenseSafety: 0.3,
+  security: 0.3,
   documentation: 0.3,
   ecosystemPull: 0.3,
 };
@@ -78,8 +78,19 @@ export function computeDimensions(repo: Repo): Dimensions {
     clamp01((prodTags * 25 + maturity * 0.5 + (repo.openIssues > 0 ? 10 : 0)) / 100) * 100,
   );
 
-  const copyleft = repo.topics.some((t) => /(gpl|agpl|copyleft)/i.test(t));
-  const licenseSafety = copyleft ? 35 : 70;
+  // Security & Trust — heuristic from topics + open-vuln pressure + maintenance.
+  // Higher = safer to adopt. We don't have CVE data so this is approximate.
+  const securityTags = repo.topics.filter((t) =>
+    /(security|secure|vulnerab|cve|audit|scanner|firewall|sast|dast)/i.test(t),
+  ).length;
+  const trustBonus = securityTags > 0 ? 30 : 0;
+  // Healthy maintenance signal — recently active + few open issues per star
+  const issuesPerStar = repo.stars > 0 ? repo.openIssues / Math.max(1, repo.stars) : 1;
+  const lowIssuePressure = clamp01(1 - issuesPerStar * 50) * 25; // 0..25
+  const recentBonus = clamp01(1 - sincePush / 60) * 25; // 0..25
+  const security = Math.round(
+    clamp01((40 + trustBonus + lowIssuePressure + recentBonus) / 100) * 100,
+  );
 
   const docs = repo.readmeLength > 0
     ? logNormalize(repo.readmeLength, 30000) * 100
@@ -96,7 +107,7 @@ export function computeDimensions(repo: Repo): Dimensions {
     recency,
     heat,
     productionReadiness,
-    licenseSafety,
+    security,
     documentation,
     ecosystemPull,
   };
@@ -149,18 +160,22 @@ export function scoreRepo(repo: Repo, weights: DimensionWeights): ScoredRepo {
   };
 }
 
-// Sort priority — when the user clicks a chip, that dimension takes priority.
-// We re-rank by a tiered comparison: priority 1 first (descending), priority
-// 2 as tie-breaker, etc. Falls back to overall score.
+// Sort priority — click order = priority 1/2/3. Tiered comparison.
+// Accepts the 10 PRD dimensions plus the "stars" virtual key which sorts by
+// raw GitHub stars (the default first priority on page load).
+export type SortKey = Dimension | "stars";
 export function rankRepos(
   repos: Repo[],
   weights: DimensionWeights,
-  priorities: Dimension[] = [],
+  priorities: SortKey[] = [],
 ): ScoredRepo[] {
   const scored = repos.map((r) => scoreRepo(r, weights));
   return scored.sort((a, b) => {
-    for (const dim of priorities) {
-      const diff = b.dimensions[dim] - a.dimensions[dim];
+    for (const key of priorities) {
+      const diff =
+        key === "stars"
+          ? b.stars - a.stars
+          : b.dimensions[key] - a.dimensions[key];
       if (diff !== 0) return diff;
     }
     return b.scores.overall - a.scores.overall;

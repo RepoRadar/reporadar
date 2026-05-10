@@ -86,7 +86,7 @@ export async function rankRepos(input: RankReposInput, env: ToolEnv) {
           dimensions.community * 0.1 +
           dimensions.recency * 0.1 +
           dimensions.documentation * 0.05 +
-          dimensions.licenseSafety * 0.05 +
+          dimensions.security * 0.05 +
           dimensions.heat * 0.025 +
           dimensions.productionReadiness * 0.025) *
           10,
@@ -226,7 +226,7 @@ function computeDimensions(repo: RepoLike) {
   );
 
   const copyleft = topics.some((t) => /(gpl|agpl|copyleft)/i.test(t));
-  const licenseSafety = copyleft ? 35 : 70;
+  const security = copyleft ? 35 : 70;
 
   const documentation = Math.round(
     (repo.readmeLength ?? 0) > 0 ? logNormalize(repo.readmeLength ?? 0, 30000) * 100 : 50,
@@ -242,7 +242,7 @@ function computeDimensions(repo: RepoLike) {
     recency,
     heat,
     productionReadiness,
-    licenseSafety,
+    security,
     documentation,
     ecosystemPull,
   };
