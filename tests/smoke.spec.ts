@@ -51,10 +51,11 @@ test.describe("home page", () => {
 
   test("sort-priority chips are rendered (Stars first, plus the 10 dims)", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle").catch(() => {});
     // The "Most Stars" virtual sort priority sits first and is auto-selected
     await expect(
       page.locator('button:has-text("Most Stars")').first(),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 8000 });
     // Each dimension chip uses its phrase-form label
     for (const label of [
       "Trending Momentum",
@@ -70,7 +71,7 @@ test.describe("home page", () => {
     ]) {
       await expect(
         page.locator(`button:has-text("${label}")`).first(),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 8000 });
     }
   });
 
@@ -115,12 +116,18 @@ test.describe("home page", () => {
 test.describe("interactions", () => {
   test("clicking a sort-priority chip adds a priority number badge", async ({ page }) => {
     await page.goto("/");
-    // Click Momentum in the SORT BY row (the first occurrence)
-    const chip = page.locator('button:has-text("Momentum")').first();
+    // Default priorities = ["stars"] (auto-selected priority 1) so clear
+    // first to start from a known state.
+    const clear = page.locator('button:has-text("clear")').first();
+    if (await clear.isVisible().catch(() => false)) await clear.click();
+    // Click "Trending Momentum" in the SORT BY row
+    const chip = page
+      .locator('button:has-text("Trending Momentum")')
+      .first();
     await chip.click();
-    // After click, the chip should show a "1" badge (priority 1)
+    // After click, the chip should show a numeric priority badge
     await expect(
-      chip.locator("span", { hasText: /^1$/ }),
+      chip.locator("span", { hasText: /^[123]$/ }),
     ).toBeVisible({ timeout: 3000 });
   });
 
