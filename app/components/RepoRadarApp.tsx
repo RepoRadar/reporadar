@@ -54,6 +54,27 @@ const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
   { key: "365", label: "1y", help: "Pushed in the last year. Default — broad enough for most queries." },
   { key: "all", label: "All", help: "No time filter — surfaces classic + long-tail repos too." },
 ];
+function formatTime(iso?: string): string {
+  if (!iso) return "(unknown)";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "(unknown)";
+  return d.toLocaleString();
+}
+
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return "(unknown)";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "(unknown)";
+  const sec = Math.floor((Date.now() - t) / 1000);
+  if (sec < 5) return "just now";
+  if (sec < 60) return `${sec}s ago`;
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  if (sec < 86400 * 30) return `${Math.floor(sec / 86400)}d ago`;
+  if (sec < 86400 * 365) return `${Math.floor(sec / (86400 * 30))}mo ago`;
+  return `${Math.floor(sec / (86400 * 365))}y ago`;
+}
+
 function sinceIsoFor(w: TimeWindow): string | undefined {
   if (w === "all") return undefined;
   const days = parseInt(w, 10);
@@ -75,6 +96,7 @@ export function RepoRadarApp() {
   const [expanded, setExpanded] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -134,6 +156,7 @@ export function RepoRadarApp() {
           return;
         }
         setRepos(rankRepos(data, weights, priorities));
+        setLastRefresh(Date.now());
         setLastQuery("trending: hermes");
         setPage(1);
         setHasMore(data.length >= 12);
@@ -158,6 +181,7 @@ export function RepoRadarApp() {
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         setRepos(rankRepos(data, weights, priorities));
+        setLastRefresh(Date.now());
         setLastQuery(label);
         setPage(1);
         setHasMore(data.length >= 12);
@@ -366,15 +390,64 @@ export function RepoRadarApp() {
           />
           <h1 className="font-mono text-lg tracking-tight rr-grad-text">RepoRadar</h1>
           <span
-            className="hidden text-xs sm:inline"
-            style={{ color: "var(--fg-dim)" }}
+            className="hidden text-xs sm:inline italic"
+            style={{ color: "var(--fg-muted)" }}
           >
-            agent-rendered repos · generative-UI deploys at <span style={{ color: "var(--secondary)" }}>·.reporadar.io</span>
+            Quickly find the right repo for you right now.
           </span>
         </div>
-        <div className="flex items-center gap-3 text-xs font-mono" style={{ color: "var(--fg-dim)" }}>
-          <span className="rr-blink" style={{ color: "var(--accent)" }}>● LIVE</span>
-          <span>v0.2 · gen-ui hackathon</span>
+        <div
+          className="flex items-center gap-3 text-[11px] font-mono whitespace-nowrap"
+          style={{ color: "var(--fg-dim)" }}
+        >
+          <span style={{ color: "var(--accent)" }}>{process.env.NEXT_PUBLIC_APP_VERSION || "v0.4"}</span>
+          <span>·</span>
+          <span>
+            built at the{" "}
+            <a
+              href="https://sf.aitinkerers.org/hackathons/h_FZX7ihFWcHA/handbook"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open the AI Tinkerers Generative UI Hackathon handbook in a new tab ↗"
+              className="underline underline-offset-2 transition"
+              style={{ color: "var(--secondary)", textDecorationColor: "var(--secondary)" }}
+            >
+              AI Tinkerers Generative UI Hackathon
+            </a>{" "}
+            · 5/10/26
+          </span>
+          <span>·</span>
+          <span title={`Code last updated: ${formatTime(process.env.NEXT_PUBLIC_BUILD_TIME)}`}>
+            code{" "}
+            <span style={{ color: "var(--fg-muted)" }}>
+              {formatRelativeTime(process.env.NEXT_PUBLIC_BUILD_TIME)}
+            </span>
+          </span>
+          <span>·</span>
+          <span title={`Data last refreshed: ${formatTime(new Date(lastRefresh).toISOString())}`}>
+            data{" "}
+            <span style={{ color: "var(--fg-muted)" }}>
+              {formatRelativeTime(new Date(lastRefresh).toISOString())}
+            </span>
+            <button
+              onClick={() => {
+                const { topic, query } = queryRef.current;
+                runQuery({ topic, query, label: lastQuery || "trending" });
+              }}
+              title="Refresh the data — re-runs your current search and reloads the cards"
+              aria-label="Refresh data"
+              className="ml-1.5 rounded px-1 transition"
+              style={{ color: "var(--secondary)", border: "1px solid transparent" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--secondary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent";
+              }}
+            >
+              ↻
+            </button>
+          </span>
         </div>
       </header>
 
