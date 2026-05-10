@@ -582,7 +582,23 @@ export function RepoRadarApp() {
                 {lastQuery && (
                   <>
                     <span style={{ color: "var(--primary)" }}>›</span>
-                    {lastQuery}
+                    {(() => {
+                      // Format "tag: claude-code-memory" with the value in
+                      // accent yellow so the user always knows what's
+                      // currently filtering the radar.
+                      const m = lastQuery.match(/^([^:]+:)\s*(.+)$/);
+                      if (m) {
+                        return (
+                          <>
+                            <span style={{ color: "var(--fg-dim)" }}>{m[1]}</span>{" "}
+                            <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+                              {m[2]}
+                            </span>
+                          </>
+                        );
+                      }
+                      return <span style={{ color: "var(--accent)", fontWeight: 600 }}>{lastQuery}</span>;
+                    })()}
                     <span style={{ color: "var(--fg-dim)" }}>·</span>
                   </>
                 )}
