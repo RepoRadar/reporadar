@@ -1,6 +1,8 @@
 export type Repo = {
   fullName: string;        // owner/repo
   description: string | null;
+  descriptionEn?: string;  // English translation when description is non-English
+  descriptionLang?: string; // detected source language (e.g. "Chinese")
   stars: number;
   forks: number;
   openIssues: number;

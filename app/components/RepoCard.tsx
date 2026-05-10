@@ -112,13 +112,28 @@ export function RepoCard({
       </div>
 
       {/* DESCRIPTION — what does this repo actually do */}
-      {repo.description && (
-        <p
-          className="line-clamp-3 text-sm leading-relaxed"
-          style={{ color: "var(--fg)" }}
-        >
-          {repo.description}
-        </p>
+      {(repo.descriptionEn || repo.description) && (
+        <div className="flex flex-col gap-1.5">
+          {repo.descriptionEn && repo.descriptionLang && (
+            <span
+              className="inline-flex w-fit items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono"
+              style={{
+                borderColor: "var(--border)",
+                background: "rgba(234,179,8,0.08)",
+                color: "var(--accent)",
+              }}
+              title={`Original: ${repo.description ?? ""}`}
+            >
+              [Translated from {repo.descriptionLang} to English]
+            </span>
+          )}
+          <p
+            className="line-clamp-3 text-sm leading-relaxed"
+            style={{ color: "var(--fg)" }}
+          >
+            {repo.descriptionEn || repo.description}
+          </p>
+        </div>
       )}
 
       {repo.agentSummary && (

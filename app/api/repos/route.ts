@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchRepo, fetchTrending } from "@/app/lib/github";
+import { translateRepoDescriptions } from "@/app/lib/translate";
 import type { Repo } from "@/app/lib/types";
 
 export const runtime = "nodejs";
@@ -45,6 +46,11 @@ export async function GET(req: NextRequest) {
         }),
       );
     }
+    // Translate non-English descriptions to English (batched single Gemini
+    // call). Mutates repos in place; cached at module level so repeat hits
+    // are free.
+    await translateRepoDescriptions(data);
+
     cache.set(cacheKey, { at: Date.now(), data });
     return NextResponse.json(data);
   } catch (err) {
