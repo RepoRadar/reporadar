@@ -199,8 +199,53 @@ cpk-web-inspector,
   --copilot-kit-primary-color: var(--primary);
   --copilot-kit-contrast-color: #06080d;
   --copilot-kit-background-color: var(--surface);
+  --copilot-kit-input-background-color: #f8fafc;
   --copilot-kit-secondary-color: var(--surface-2);
   --copilot-kit-secondary-contrast-color: var(--fg);
   --copilot-kit-separator-color: var(--border);
   --copilot-kit-muted-color: var(--fg-muted);
+}
+
+.copilotKitChat .copilotKitHeader,
+.copilotKitWindow .copilotKitHeader {
+  background-color: #06080d;
+  color: var(--fg);
+}
+
+.copilotKitChat .copilotKitHeader > div:first-child,
+.copilotKitWindow .copilotKitHeader > div:first-child {
+  font-size: 0;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.copilotKitChat .copilotKitHeader > div:first-child::before,
+.copilotKitWindow .copilotKitHeader > div:first-child::before {
+  content: "Repo";
+  color: var(--fg);
+  font-size: 1rem;
+}
+
+.copilotKitChat .copilotKitHeader > div:first-child::after,
+.copilotKitWindow .copilotKitHeader > div:first-child::after {
+  content: "Radar";
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.copilotKitChat .copilotKitInput,
+.copilotKitWindow .copilotKitInput {
+  background-color: var(--copilot-kit-input-background-color);
+  border-color: rgba(6, 8, 13, 0.14);
+}
+
+.copilotKitChat .copilotKitInput > textarea,
+.copilotKitWindow .copilotKitInput > textarea {
+  color: #06080d;
+  caret-color: var(--primary);
+}
+
+.copilotKitChat .copilotKitInput > textarea::placeholder,
+.copilotKitWindow .copilotKitInput > textarea::placeholder {
+  color: #64748b;
 }
