@@ -115,6 +115,29 @@
   .rr-card:nth-child(11) { animation-delay: 0.42s; }
   .rr-card:nth-child(12) { animation-delay: 0.46s; }
 
+  .rr-notification-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .rr-notification-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(120deg, rgba(34, 197, 94, 0.12), transparent 34%),
+      linear-gradient(300deg, rgba(59, 130, 246, 0.10), transparent 38%);
+    opacity: 0.85;
+  }
+  .rr-notification-card > * {
+    position: relative;
+    z-index: 1;
+  }
+  .rr-notification-card:focus-within {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 24px rgba(34, 197, 94, 0.14);
+  }
+
   /* Four-stop gradient using the new palette: green → blue → yellow → red */
   .rr-grad-text {
     background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 35%, var(--accent) 70%, var(--danger) 100%);
