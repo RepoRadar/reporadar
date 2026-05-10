@@ -21,11 +21,13 @@ export function DeployForm({
   description,
   onResolved,
   onCancel,
+  onStatusChange,
 }: {
   repo: string;
   description?: string | null;
   onResolved: (result: { deployed: boolean; url?: string; slug?: string; hint?: string }) => void;
   onCancel: () => void;
+  onStatusChange?: (status: DeployStage["kind"]) => void;
 }) {
   const [hint, setHint] = useState("");
   const [contact, setContact] = useState("");
@@ -38,6 +40,10 @@ export function DeployForm({
       if (progressTimer.current) clearInterval(progressTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    onStatusChange?.(stage.kind);
+  }, [onStatusChange, stage.kind]);
 
   const submit = async () => {
     const log: string[] = [`launching deploy for ${repo}`];
@@ -163,14 +169,14 @@ export function DeployForm({
               onCancel();
               onResolved({ deployed: false });
             }}
-            className="rounded-md px-3 py-2 text-xs transition"
+            className="cursor-pointer rounded-md px-3 py-2 text-xs transition"
             style={{ color: "var(--fg-muted)" }}
           >
             Cancel
           </button>
           <button
             onClick={submit}
-            className="rounded-md px-3 py-2 text-xs font-medium transition"
+            className="cursor-pointer rounded-md px-3 py-2 text-xs font-medium transition"
             style={{
               background: "var(--primary)",
               color: "#08070d",
@@ -279,7 +285,7 @@ export function DeployForm({
           href={stage.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-md px-3 py-2 text-xs font-medium tracking-wide"
+          className="inline-flex cursor-pointer items-center justify-center rounded-md px-3 py-2 text-xs font-medium tracking-wide transition hover:scale-[1.01]"
           style={{
             background: "var(--secondary)",
             color: "#08070d",
@@ -320,7 +326,7 @@ export function DeployForm({
         <BuildLog lines={stage.log} compact />
         <button
           onClick={() => onResolved({ deployed: true, url: stage.url, slug: stage.slug, hint })}
-          className="rounded-md border px-3 py-2 text-xs transition"
+          className="cursor-pointer rounded-md border px-3 py-2 text-xs transition hover:scale-[1.01]"
           style={{ borderColor: "var(--border-strong)", color: "var(--fg-muted)" }}
         >
           Acknowledge
@@ -342,7 +348,7 @@ export function DeployForm({
       <div className="flex justify-end gap-2">
         <button
           onClick={() => onResolved({ deployed: false })}
-          className="rounded-md px-3 py-2 text-xs"
+          className="cursor-pointer rounded-md px-3 py-2 text-xs"
           style={{ color: "var(--fg-muted)" }}
         >
           Dismiss
