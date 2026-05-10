@@ -162,11 +162,19 @@ export function RepoCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="truncate font-mono text-[10px] transition hover:underline"
-          style={{ color: "var(--fg-dim)", maxWidth: "60%" }}
-          title={repo.fullName}
+          className="truncate font-mono text-[11px] underline underline-offset-2 transition"
+          style={{ color: "var(--secondary)", maxWidth: "60%", textDecorationColor: "var(--secondary)" }}
+          title={`Open ${repo.fullName} on GitHub in a new tab ↗`}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
+            (e.currentTarget as HTMLAnchorElement).style.textDecorationColor = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
+            (e.currentTarget as HTMLAnchorElement).style.textDecorationColor = "var(--secondary)";
+          }}
         >
-          {repo.fullName}
+          ↗ {repo.fullName}
           {repo.language ? ` · ${repo.language}` : ""}
         </a>
         <button
