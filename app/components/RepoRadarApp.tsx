@@ -574,7 +574,7 @@ export function RepoRadarApp() {
           >
             <div className="flex items-center justify-between">
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-                Tune your radar
+                Slide to tune
               </h2>
               <button
                 onClick={() => setWeights(DEFAULT_WEIGHTS)}
