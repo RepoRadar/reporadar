@@ -251,7 +251,7 @@ export function DeployForm({
     return (
       <div
         className="flex flex-col gap-3 rounded-xl border p-4"
-        style={{ borderColor: "var(--secondary)", background: "rgba(34,211,238,0.06)" }}
+        style={{ borderColor: "var(--secondary)", background: "rgba(59,130,246,0.06)" }}
       >
         <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: "var(--secondary)" }}>
           ✓ Deployed

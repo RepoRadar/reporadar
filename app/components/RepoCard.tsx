@@ -29,7 +29,7 @@ export function RepoCard({
         className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100"
         style={{
           background:
-            "radial-gradient(600px 200px at top right, rgba(244,63,138,0.08), transparent 60%)",
+            "radial-gradient(600px 200px at top right, rgba(34,197,94,0.08), transparent 60%)",
         }}
       />
 
@@ -133,15 +133,15 @@ export function RepoCard({
         className="mt-auto inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-medium tracking-wide transition disabled:opacity-50"
         style={{
           borderColor: "var(--primary)",
-          background: "rgba(244,63,138,0.08)",
+          background: "rgba(34,197,94,0.08)",
           color: "var(--primary)",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "rgba(244,63,138,0.18)";
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.20)";
           (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px var(--primary-glow)";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "rgba(244,63,138,0.08)";
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.08)";
           (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
         }}
       >

@@ -119,8 +119,8 @@ export function InteractiveRadar({
           {/* Filled polygon for current weights */}
           <polygon
             points={poly}
-            fill="rgba(244, 63, 138, 0.30)"
-            stroke="rgba(244, 63, 138, 0.85)"
+            fill="rgba(34, 197, 94, 0.30)"
+            stroke="rgba(34, 197, 94, 0.85)"
             strokeWidth={1.6}
             strokeLinejoin="round"
             style={{ transition: draggingDim ? "none" : "all 0.25s ease" }}
@@ -136,14 +136,14 @@ export function InteractiveRadar({
                   cx={v.x}
                   cy={v.y}
                   r={active ? HANDLE_RADIUS + 3 : HANDLE_RADIUS}
-                  fill={active ? "#f43f8a" : "rgba(244,63,138,0.85)"}
+                  fill={active ? "#22c55e" : "rgba(34,197,94,0.85)"}
                   stroke="#08070d"
                   strokeWidth={1.5}
                   style={{
                     cursor: "grab",
                     filter: active
-                      ? "drop-shadow(0 0 12px rgba(244,63,138,0.9))"
-                      : "drop-shadow(0 0 4px rgba(244,63,138,0.45))",
+                      ? "drop-shadow(0 0 12px rgba(34,197,94,0.9))"
+                      : "drop-shadow(0 0 4px rgba(34,197,94,0.45))",
                     transition: active ? "none" : "all 0.2s ease",
                   }}
                   onPointerDown={(e) => {

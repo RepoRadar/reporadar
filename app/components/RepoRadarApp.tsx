@@ -183,7 +183,7 @@ export function RepoRadarApp() {
         return (
           <div
             className="rounded-md border px-3 py-2 text-xs font-mono"
-            style={{ borderColor: "var(--secondary)", background: "rgba(34,211,238,0.1)", color: "var(--secondary)" }}
+            style={{ borderColor: "var(--secondary)", background: "rgba(59,130,246,0.1)", color: "var(--secondary)" }}
           >
             ✓ surfaced {r.count} repos on the radar
           </div>
@@ -281,7 +281,7 @@ export function RepoRadarApp() {
                 className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
                 style={{
                   borderColor: active ? "var(--primary)" : "var(--border)",
-                  background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
+                  background: active ? "rgba(34,197,94,0.10)" : "var(--surface-2)",
                   color: active ? "var(--primary)" : "var(--fg-muted)",
                   boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
                 }}

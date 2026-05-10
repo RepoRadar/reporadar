@@ -1,23 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #08070d;
-  --surface: #14121e;
-  --surface-2: #1c1a28;
-  --surface-3: #25223a;
+  --bg: #06080d;
+  --surface: #10141b;
+  --surface-2: #181d28;
+  --surface-3: #242a38;
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
   --fg: #fafafa;
-  --fg-muted: #b3b1c0;
-  --fg-dim: #6b6878;
-  --primary: #f43f8a;       /* hot pink */
-  --primary-glow: rgba(244, 63, 138, 0.45);
-  --secondary: #22d3ee;     /* cyan */
-  --secondary-glow: rgba(34, 211, 238, 0.45);
-  --accent: #fbbf24;        /* amber */
-  --accent-glow: rgba(251, 191, 36, 0.40);
-  --danger: #f87171;
-  --success: #22d3ee;
+  --fg-muted: #b3bbc8;
+  --fg-dim: #6b7384;
+
+  /* primary 4-stop palette: green / blue / yellow / red */
+  --primary: #22c55e;            /* signal green */
+  --primary-glow: rgba(34, 197, 94, 0.45);
+  --secondary: #3b82f6;           /* electric blue */
+  --secondary-glow: rgba(59, 130, 246, 0.45);
+  --accent: #eab308;              /* school-bus yellow */
+  --accent-glow: rgba(234, 179, 8, 0.40);
+  --danger: #ef4444;              /* alert red */
+  --danger-glow: rgba(239, 68, 68, 0.40);
+  --success: #22c55e;
 }
 
 @theme inline {
@@ -44,8 +47,9 @@
   body {
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     background-image:
-      radial-gradient(ellipse 800px 600px at 0% 0%, rgba(244, 63, 138, 0.08), transparent 60%),
-      radial-gradient(ellipse 800px 600px at 100% 100%, rgba(34, 211, 238, 0.06), transparent 60%);
+      radial-gradient(ellipse 900px 600px at 0% 0%, rgba(34, 197, 94, 0.08), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 100% 0%, rgba(59, 130, 246, 0.07), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(234, 179, 8, 0.05), transparent 60%);
     background-attachment: fixed;
   }
   ::selection { background: var(--primary-glow); color: var(--fg); }
@@ -63,10 +67,6 @@
 @keyframes rr-pulse-glow {
   0%, 100% { box-shadow: 0 0 0 0 var(--primary-glow); }
   50% { box-shadow: 0 0 20px 4px var(--primary-glow); }
-}
-@keyframes rr-radar-sweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 @keyframes rr-blink {
   0%, 50% { opacity: 1; }
@@ -91,8 +91,9 @@
   .rr-card:nth-child(11) { animation-delay: 0.42s; }
   .rr-card:nth-child(12) { animation-delay: 0.46s; }
 
+  /* Four-stop gradient using the new palette: green → blue → yellow → red */
   .rr-grad-text {
-    background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+    background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 35%, var(--accent) 70%, var(--danger) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -105,7 +106,7 @@
     position: absolute; inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, var(--primary), transparent 40%, var(--secondary));
+    background: linear-gradient(135deg, var(--primary), var(--secondary) 50%, var(--accent));
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -144,11 +145,11 @@ cpk-web-inspector,
   display: none !important;
 }
 
-/* Style CopilotKit chat to match the synthwave palette. */
+/* Style CopilotKit chat to match the new palette. */
 .copilotKitChat,
 .copilotKitWindow {
   --copilot-kit-primary-color: var(--primary);
-  --copilot-kit-contrast-color: #08070d;
+  --copilot-kit-contrast-color: #06080d;
   --copilot-kit-background-color: var(--surface);
   --copilot-kit-secondary-color: var(--surface-2);
   --copilot-kit-secondary-contrast-color: var(--fg);

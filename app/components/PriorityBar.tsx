@@ -32,7 +32,7 @@ export function PriorityBar({
       className="flex items-center gap-3 border-b px-6 py-3"
       style={{
         borderColor: "var(--border)",
-        background: "linear-gradient(180deg, rgba(244,63,138,0.05) 0%, transparent 100%)",
+        background: "linear-gradient(180deg, rgba(34,197,94,0.05) 0%, transparent 100%)",
       }}
     >
       <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export function PriorityBar({
               className="group flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-mono transition"
               style={{
                 borderColor: active ? "var(--primary)" : "var(--border)",
-                background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
+                background: active ? "rgba(34,197,94,0.10)" : "var(--surface-2)",
                 color: active ? "var(--primary)" : "var(--fg-muted)",
                 boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
               }}
