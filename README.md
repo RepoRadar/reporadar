@@ -1,4 +1,10 @@
-# RepoRadar (R²)
+<p align="center">
+  <img src="public/reporadar-mark.svg" alt="RepoRadar radar icon" width="104" height="104" />
+</p>
+
+<h1 align="center">
+  <span>Repo</span><span>Radar</span>
+</h1>
 
 > **Tune a Street-Fighter-style radar of trending GitHub repos by hex, slider, or text — then click Deploy and an agent emits a bespoke interactive micro-app for that repo at its own URL, backed by a per-deploy D1 database.**
 
