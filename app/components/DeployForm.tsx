@@ -9,11 +9,11 @@ type DeployStage =
   | { kind: "error"; message: string; log: string[] };
 
 const MILESTONES = [
-  "Reading repo",
-  "Asking Gemini for the right form factor",
-  "Emitting A2UI components",
-  "Persisting to R2 + D1",
-  "Going live at .reporadar.io",
+  "Fetching repo metadata from GitHub (description, topics, README)",
+  "Asking Gemini 2.5 Flash to pick a form factor + emit A2UI surface JSON",
+  "Validating components + writing surface to Cloudflare R2",
+  "Recording the deploy in Cloudflare D1 (slug → repo mapping)",
+  "Going live at <slug>.reporadar.io via the serve worker",
 ] as const;
 
 export function DeployForm({
