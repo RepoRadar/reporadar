@@ -37,15 +37,26 @@ export function PriorityBar({
     >
       <div className="flex items-center gap-2">
         <span
-          className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] cursor-help whitespace-nowrap"
           style={{ color: "var(--fg-dim)" }}
+          title="Click up to 3 of these dimensions in priority order. First click = primary sort, second click breaks ties, third refines further. Hover any chip to read what that dimension means."
         >
           Sort by
+          <span
+            className="inline-flex h-3 w-3 items-center justify-center rounded-full border text-[7px]"
+            style={{
+              borderColor: "var(--border-strong)",
+              color: "var(--fg-dim)",
+            }}
+            aria-hidden
+          >
+            ?
+          </span>
         </span>
         <span
           className="text-[10px] font-mono"
           style={{ color: "var(--fg-dim)" }}
-          title="Click up to 3 dimensions in priority order. The first you click is the primary sort, second breaks ties, third refines further."
+          title="How many sort dimensions you've picked, out of the 3 max."
         >
           ({priorities.length}/{MAX_PRIORITIES})
         </span>

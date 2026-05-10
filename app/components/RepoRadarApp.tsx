@@ -25,6 +25,14 @@ const QUICK_SCANS = [
   { topic: "security", label: "Security", glyph: "✦" },
 ];
 
+const TAG_HELP: Record<string, string> = {
+  agent: "AI agents — autonomous tools that plan, call APIs, and act. Multi-step reasoning, tool use, agentic workflows.",
+  rag: "Retrieval-Augmented Generation — LLMs grounded on knowledge bases, vector stores, or document corpora.",
+  llm: "LLM applications — chatbots, copilots, summarizers, code assistants built on Claude / GPT / Gemini.",
+  rust: "Rust ecosystem — systems-grade performance, memory safety, cargo crates. Strong overlap with infra + CLI tools.",
+  security: "Security tools — scanners, vulnerability research, secrets management, defensive + offensive tooling.",
+};
+
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
 const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
 
@@ -245,11 +253,21 @@ export function RepoRadarApp() {
         style={{ borderColor: "var(--border)" }}
       >
         <span
-          className="text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap"
+          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap cursor-help"
           style={{ color: "var(--fg-dim)" }}
-          title="Pick a tag or type your own topic. The agent finds matching trending repos."
+          title="Pick one of these popular GitHub topic tags or type your own in the white box. Hover any chip to see what that topic is about."
         >
           Tags
+          <span
+            className="inline-flex h-3 w-3 items-center justify-center rounded-full border text-[7px]"
+            style={{
+              borderColor: "var(--border-strong)",
+              color: "var(--fg-dim)",
+            }}
+            aria-hidden
+          >
+            ?
+          </span>
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {QUICK_SCANS.map((q) => {
@@ -259,7 +277,7 @@ export function RepoRadarApp() {
                 key={q.topic}
                 disabled={bootstrapping}
                 onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
-                title={`Search GitHub topic: ${q.topic}`}
+                title={TAG_HELP[q.topic] ?? `Search GitHub topic: ${q.topic}`}
                 className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
                 style={{
                   borderColor: active ? "var(--primary)" : "var(--border)",
