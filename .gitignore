@@ -44,6 +44,7 @@ next-env.d.ts
 # playwright/dev artifacts
 /.playwright-mcp/
 /reporadar-*.png
+/surface-*.png
 
 # OpenNext
 .open-next
