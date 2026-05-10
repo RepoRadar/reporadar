@@ -27,28 +27,39 @@ const SINCE_ISO = (() => {
 export async function fetchTrending({
   topic,
   query,
+  since,        // ISO date string e.g. "2026-04-10". Defaults to last 30d.
+  page = 1,     // GitHub search pagination — caps at 1000 total results
   perPage = 30,
 }: {
   topic?: string;
   query?: string;
+  since?: string;
+  page?: number;
   perPage?: number;
 } = {}): Promise<Repo[]> {
   const tiers: string[][] = [];
   const t = (topic || "").trim().toLowerCase();
   const q = (query || "").trim();
+  const sinceIso = (since || SINCE_ISO).slice(0, 10);
 
-  // Tier 1: recency-windowed topic filter (the "trending" sweet spot).
-  if (t) tiers.push([`created:>${SINCE_ISO}`, "is:public", "stars:>50", `topic:${t}`]);
-
-  // Tier 2: recency-windowed freeform keyword (covers things that aren't a topic slug).
+  // Tier 1: keyword in:name,description — surfaces repos NAMED that thing
+  // first (Christo's "I expect Peter Steinberg's OpenClaw to be #1" rule).
   const keyword = q || t;
-  if (keyword) tiers.push([keyword, `pushed:>${SINCE_ISO}`, "is:public", "stars:>50"]);
+  if (keyword) {
+    tiers.push([keyword, "in:name,description", `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+  }
 
-  // Tier 3: all-time keyword + topic — last resort so we always show *something*.
+  // Tier 2: topic-tag match within the time window.
+  if (t) tiers.push([`topic:${t}`, `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+
+  // Tier 3: broader keyword search (anywhere in repo content).
+  if (keyword) tiers.push([keyword, `pushed:>${sinceIso}`, "is:public", "stars:>50"]);
+
+  // Tier 4: all-time keyword fallback so we always show *something*.
   if (keyword) tiers.push([keyword, "is:public", "stars:>200"]);
 
-  // Tier 4: pure recency (no topic) — final fallback for empty input.
-  if (tiers.length === 0) tiers.push([`created:>${SINCE_ISO}`, "is:public", "stars:>50"]);
+  // Tier 5: pure recency (no topic) — final fallback for empty input.
+  if (tiers.length === 0) tiers.push([`pushed:>${sinceIso}`, "is:public", "stars:>50"]);
 
   for (const tier of tiers) {
     try {
@@ -57,10 +68,10 @@ export async function fetchTrending({
         sort: "stars",
         order: "desc",
         per_page: perPage,
+        page,
       });
       if (data.items.length > 0) return data.items.map(toRepo);
     } catch (err) {
-      // Skip tier on error (likely rate limit) and try the next.
       console.warn("[fetchTrending] tier failed:", err instanceof Error ? err.message : err);
     }
   }

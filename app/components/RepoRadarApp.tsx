@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { DEFAULT_WEIGHTS, rankRepos } from "@/app/lib/scoring";
@@ -46,6 +46,22 @@ const TAG_HELP: Record<string, string> = {
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
 const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
 
+// Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
+type TimeWindow = "30" | "90" | "365" | "all";
+const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
+  { key: "30", label: "1mo", help: "Pushed in the last 30 days — freshest, smallest pool." },
+  { key: "90", label: "3mo", help: "Pushed in the last 90 days." },
+  { key: "365", label: "1y", help: "Pushed in the last year. Default — broad enough for most queries." },
+  { key: "all", label: "All", help: "No time filter — surfaces classic + long-tail repos too." },
+];
+function sinceIsoFor(w: TimeWindow): string | undefined {
+  if (w === "all") return undefined;
+  const days = parseInt(w, 10);
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function RepoRadarApp() {
   const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
   // Default sort priority is "Most Stars" — toggleable. Christo's spec.
@@ -58,6 +74,13 @@ export function RepoRadarApp() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Stash the last successful query so infinite-scroll knows what to fetch next.
+  const queryRef = useRef<{ topic?: string; query?: string }>({ topic: "hermes", query: "hermes" });
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Click a card → snap weights to that repo's dimensional profile so the
   // hex polygon morphs and every slider animates to match. Side effect:
@@ -83,19 +106,37 @@ export function RepoRadarApp() {
     return rankRepos(repos as Repo[], weights, priorities);
   }, [repos, weights, priorities]);
 
+  // Build params for /api/repos including current time window + page.
+  const buildParams = (
+    overrides: { topic?: string; query?: string; page?: number; limit?: number } = {},
+  ) => {
+    const p = new URLSearchParams();
+    const topic = overrides.topic ?? queryRef.current.topic;
+    const query = overrides.query ?? queryRef.current.query;
+    if (topic) p.set("topic", topic);
+    if (query) p.set("q", query);
+    const since = sinceIsoFor(timeWindow);
+    if (since) p.set("since", since);
+    p.set("page", String(overrides.page ?? 1));
+    p.set("limit", String(overrides.limit ?? 12));
+    return p;
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // Bootstrap with the first hackathon tag. /api/repos has a multi-tier
-        // fallback (topic → keyword → all-time) so even thin tags still surface
-        // something instead of an empty radar.
-        const res = await fetch(`/api/repos?topic=hermes&q=hermes&limit=10`);
+        const res = await fetch(`/api/repos?${buildParams({ page: 1, limit: 12 })}`);
         if (!res.ok) return;
         const data = (await res.json()) as Repo[];
-        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        if (cancelled || !Array.isArray(data) || data.length === 0) {
+          setHasMore(false);
+          return;
+        }
         setRepos(rankRepos(data, weights, priorities));
-        setLastQuery("trending: agents");
+        setLastQuery("trending: hermes");
+        setPage(1);
+        setHasMore(data.length >= 12);
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
@@ -108,23 +149,79 @@ export function RepoRadarApp() {
 
   const runQuery = async ({ topic, query, label }: { topic?: string; query?: string; label: string }) => {
     setBootstrapping(true);
+    setSelectedRepo(null);
     if (topic) setActiveCategory(topic);
     else setActiveCategory("");
+    queryRef.current = { topic, query };
     try {
-      const params = new URLSearchParams();
-      if (topic) params.set("topic", topic);
-      if (query) params.set("q", query);
-      params.set("limit", "10");
-      const res = await fetch(`/api/repos?${params}`);
+      const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 12 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         setRepos(rankRepos(data, weights, priorities));
         setLastQuery(label);
+        setPage(1);
+        setHasMore(data.length >= 12);
       }
     } finally {
       setBootstrapping(false);
     }
   };
+
+  // Infinite-scroll: fetch the next page and append. De-dupes by fullName so
+  // overlap between pages doesn't cause repeats.
+  const loadMore = async () => {
+    if (loadingMore || !hasMore || bootstrapping) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 12 })}`);
+      if (res.ok) {
+        const data = (await res.json()) as Repo[];
+        if (data.length === 0) {
+          setHasMore(false);
+        } else {
+          setRepos((prev) => {
+            const seen = new Set(prev.map((r) => r.fullName));
+            const additions = data.filter((r) => !seen.has(r.fullName));
+            return rankRepos([...prev, ...additions], weights, priorities);
+          });
+          setPage(nextPage);
+          setHasMore(data.length >= 12);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Re-run on time-window change (after initial mount).
+  const isFirstWindow = useRef(true);
+  useEffect(() => {
+    if (isFirstWindow.current) {
+      isFirstWindow.current = false;
+      return;
+    }
+    const { topic, query } = queryRef.current;
+    runQuery({ topic, query, label: lastQuery || "trending" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeWindow]);
+
+  // IntersectionObserver — when the sentinel scrolls into view, load more.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "300px" },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, hasMore, loadingMore, bootstrapping, timeWindow]);
 
   useCopilotReadable({
     description:
@@ -326,6 +423,27 @@ export function RepoRadarApp() {
             );
           })}
         </div>
+        <div className="flex items-center gap-1" title="Time window for the GitHub search. Tighter = fresher repos but smaller pool.">
+          {TIME_WINDOWS.map((w) => {
+            const active = timeWindow === w.key;
+            return (
+              <button
+                key={w.key}
+                onClick={() => setTimeWindow(w.key)}
+                title={w.help}
+                className="rounded-md border px-2 py-1 text-[10px] font-mono transition"
+                style={{
+                  borderColor: active ? "var(--secondary)" : "var(--border)",
+                  background: active ? "rgba(59,130,246,0.10)" : "var(--surface-2)",
+                  color: active ? "var(--secondary)" : "var(--fg-muted)",
+                  boxShadow: active ? "0 0 8px var(--secondary-glow)" : "none",
+                }}
+              >
+                {w.label}
+              </button>
+            );
+          })}
+        </div>
         <form onSubmit={submitSearch} className="relative flex-1 min-w-[280px]">
           <input
             type="text"
@@ -488,7 +606,7 @@ export function RepoRadarApp() {
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {ranked.map((r, i) => (
-                  <div key={r.fullName} className="rr-card" style={{ animationDelay: `${i * 0.04}s` }}>
+                  <div key={r.fullName} className="rr-card" style={{ animationDelay: `${Math.min(i, 11) * 0.04}s` }}>
                     <RepoCard
                       repo={r}
                       onDeploy={(repo) => setActiveDeploy({ repo })}
@@ -499,6 +617,19 @@ export function RepoRadarApp() {
                     />
                   </div>
                 ))}
+              </div>
+              <div
+                ref={sentinelRef}
+                className="flex items-center justify-center py-6 text-xs font-mono"
+                style={{ color: "var(--fg-dim)" }}
+              >
+                {loadingMore ? (
+                  <span className="rr-blink">loading more…</span>
+                ) : hasMore ? (
+                  <span>scroll for more</span>
+                ) : (
+                  <span>· end of results ·</span>
+                )}
               </div>
             </div>
           )}
