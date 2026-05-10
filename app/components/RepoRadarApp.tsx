@@ -21,18 +21,8 @@ const QUICK_SCANS = [
   { topic: "agent", label: "Agents", glyph: "◈" },
   { topic: "rag", label: "RAG", glyph: "◇" },
   { topic: "llm", label: "LLM Apps", glyph: "◆" },
-  { topic: "machine-learning", label: "ML", glyph: "✸" },
   { topic: "rust", label: "Rust", glyph: "▲" },
-  { topic: "typescript", label: "TypeScript", glyph: "⌘" },
-  { topic: "python", label: "Python", glyph: "▽" },
-  { topic: "frontend", label: "Frontend", glyph: "◐" },
-  { topic: "devtools", label: "Devtools", glyph: "▣" },
-  { topic: "cli", label: "CLI", glyph: "▤" },
-  { topic: "api", label: "API", glyph: "▥" },
-  { topic: "iot", label: "IoT", glyph: "◬" },
   { topic: "security", label: "Security", glyph: "✦" },
-  { topic: "web3", label: "Web3", glyph: "✺" },
-  { topic: "gamedev", label: "Gaming", glyph: "◉" },
 ];
 
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
@@ -249,24 +239,19 @@ export function RepoRadarApp() {
         </div>
       </header>
 
-      {/* Row 1 — TAGS (popular GitHub topics, click one to search) */}
+      {/* Row 1 — TAGS + inline search input */}
       <div
-        className="flex flex-wrap items-center gap-3 border-b px-6 py-3"
+        className="flex items-center gap-3 border-b px-6 py-3 flex-wrap"
         style={{ borderColor: "var(--border)" }}
       >
-        <div className="flex items-baseline gap-2">
-          <span
-            className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: "var(--fg-dim)" }}
-            title="Click a tag to surface trending repos with that GitHub topic. Pick one tag at a time."
-          >
-            Tags
-          </span>
-          <span className="text-[10px]" style={{ color: "var(--fg-dim)" }}>
-            click a tag to load trending repos
-          </span>
-        </div>
-        <div className="flex flex-1 flex-wrap items-center gap-1.5">
+        <span
+          className="text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap"
+          style={{ color: "var(--fg-dim)" }}
+          title="Pick a tag or type your own topic. The agent finds matching trending repos."
+        >
+          Tags
+        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
           {QUICK_SCANS.map((q) => {
             const active = activeCategory === q.topic;
             return (
@@ -275,7 +260,7 @@ export function RepoRadarApp() {
                 disabled={bootstrapping}
                 onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
                 title={`Search GitHub topic: ${q.topic}`}
-                className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-mono transition disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
                 style={{
                   borderColor: active ? "var(--primary)" : "var(--border)",
                   background: active ? "rgba(244,63,138,0.10)" : "var(--surface-2)",
@@ -289,31 +274,14 @@ export function RepoRadarApp() {
             );
           })}
         </div>
-      </div>
-
-      {/* Row 2 — FILTERS / SORT BY (10 dimensions, click order = priority) */}
-      <PriorityBar priorities={priorities} onChange={setPriorities} />
-
-      {/* Row 3 — bigger free-text search bar */}
-      <div
-        className="flex items-center gap-3 border-b px-6 py-3"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap"
-          style={{ color: "var(--fg-dim)" }}
-          title="Type any phrase — a topic, a project description, even a vibe. The agent runs a multi-tier search across GitHub topics + keywords."
-        >
-          Or describe it
-        </span>
-        <form onSubmit={submitSearch} className="relative flex-1">
+        <form onSubmit={submitSearch} className="relative flex-1 min-w-[280px]">
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="✦ try: 'a podcast platform', 'rust cli that's fun this weekend', 'an iot temperature dashboard'…"
+            placeholder="✦ or type your own topic — 'a podcast platform', 'rust cli for the weekend'…"
             disabled={bootstrapping}
-            className="w-full rounded-md border px-4 py-2.5 pr-12 text-sm outline-none transition"
+            className="w-full rounded-md border px-3.5 py-2 pr-14 text-sm outline-none transition"
             style={{
               background: "#fafafa",
               color: "#0a0a0a",
@@ -332,13 +300,16 @@ export function RepoRadarApp() {
             type="submit"
             disabled={bootstrapping || !searchInput.trim()}
             aria-label="Search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-mono disabled:opacity-40"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-mono disabled:opacity-40"
             style={{ color: "var(--primary)" }}
           >
             ↵ Enter
           </button>
         </form>
       </div>
+
+      {/* Row 2 — FILTERS / SORT BY (10 dimensions, click order = priority) */}
+      <PriorityBar priorities={priorities} onChange={setPriorities} />
 
       <main className="grid flex-1 grid-cols-12 gap-5 p-5">
         <aside
