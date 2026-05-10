@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
@@ -49,6 +49,9 @@ const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
 
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
 type TimeWindow = "30" | "90" | "365" | "all";
+type DeployMode = "modal" | "panel";
+type DeployStatus = "form" | "running" | "done" | "error";
+
 const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
   { key: "30", label: "1mo", help: "Pushed in the last 30 days — freshest, smallest pool." },
   { key: "90", label: "3mo", help: "Pushed in the last 90 days." },
@@ -126,6 +129,8 @@ export function RepoRadarApp() {
   const [activeCategory, setActiveCategory] = useState<string>("hermes");
   const [lastQuery, setLastQuery] = useState<string>("");
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
+  const [deployMode, setDeployMode] = useState<DeployMode>("modal");
+  const [deployStatus, setDeployStatus] = useState<DeployStatus>("form");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -139,6 +144,7 @@ export function RepoRadarApp() {
   // Stash the last successful query so infinite-scroll knows what to fetch next.
   const queryRef = useRef<{ topic?: string; query?: string }>({ topic: "hermes", query: "hermes" });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const deployPanelRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef(1);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(true);
@@ -156,6 +162,23 @@ export function RepoRadarApp() {
   useEffect(() => {
     bootstrappingRef.current = bootstrapping;
   }, [bootstrapping]);
+
+  const minimizeDeploy = () => {
+    setDeployMode("panel");
+    window.setTimeout(() => {
+      deployPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
+  };
+
+  const openDeploy = (repo: ScoredRepo) => {
+    if (activeDeploy && deployStatus === "running") {
+      minimizeDeploy();
+      return;
+    }
+    setActiveDeploy({ repo });
+    setDeployMode("modal");
+    setDeployStatus("form");
+  };
 
   // Click a card → snap weights to that repo's dimensional profile so the
   // hex polygon morphs and every slider animates to match. Side effect:
@@ -701,6 +724,20 @@ export function RepoRadarApp() {
             )}
           </div>
 
+          {activeDeploy && (
+            <DeployDock
+              refEl={deployPanelRef}
+              mode={deployMode}
+              repo={activeDeploy.repo.fullName}
+              description={activeDeploy.repo.description}
+              status={deployStatus}
+              onStatusChange={setDeployStatus}
+              onMinimize={minimizeDeploy}
+              onExpand={() => setDeployMode("modal")}
+              onClose={() => setActiveDeploy(null)}
+            />
+          )}
+
         </aside>
 
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
@@ -768,7 +805,7 @@ export function RepoRadarApp() {
                   <div key={r.fullName} className="rr-card" style={{ animationDelay: `${Math.min(i, 11) * 0.04}s` }}>
                     <RepoCard
                       repo={r}
-                      onDeploy={(repo) => setActiveDeploy({ repo })}
+                      onDeploy={openDeploy}
                       onSelect={selectRepoProfile}
                       onTagClick={(topic) => runQuery({ topic, label: `tag: ${topic}` })}
                       selected={selectedRepo === r.fullName}
@@ -842,14 +879,6 @@ export function RepoRadarApp() {
         </section>
       </main>
 
-      {activeDeploy && (
-        <DeployModal
-          repo={activeDeploy.repo.fullName}
-          description={activeDeploy.repo.description}
-          onClose={() => setActiveDeploy(null)}
-        />
-      )}
-
       <CopilotPopup
         instructions={
           "You are RepoRadar, an agent that surfaces trending GitHub repos as interactive UI cards and deploys bespoke generative-UI variants of them on demand. When the user asks about repos, projects, or examples, ALWAYS call rankRepos with a query (and a topic slug if one fits). When the user asks to deploy, run, build, or explore a repo, call deployRepo with that repo's fullName. After tool calls, give a short conversational summary in 1-2 sentences."
@@ -903,29 +932,93 @@ function DimSlider({
   );
 }
 
-function DeployModal({
+function DeployDock({
+  refEl,
+  mode,
   repo,
   description,
+  status,
+  onStatusChange,
+  onMinimize,
+  onExpand,
   onClose,
 }: {
+  refEl: RefObject<HTMLDivElement | null>;
+  mode: DeployMode;
   repo: string;
   description?: string | null;
+  status: DeployStatus;
+  onStatusChange: (status: DeployStatus) => void;
+  onMinimize: () => void;
+  onExpand: () => void;
   onClose: () => void;
 }) {
+  const modal = mode === "modal";
+  const closeOrMinimize = () => {
+    if (status === "running") {
+      onMinimize();
+      return;
+    }
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md"
-      style={{ background: "rgba(8,7,13,0.75)" }}
+    <div
+      ref={refEl}
+      data-testid="deploy-dock"
+      className={
+        modal
+          ? "fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md"
+          : "rr-deploy-dock-panel rr-fade-up"
+      }
+      style={modal ? { background: "rgba(8,7,13,0.75)" } : undefined}
     >
-      <div className="relative w-full max-w-md rr-fade-up">
-        <button
-          onClick={onClose}
-          className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-sm transition hover:scale-110"
-          style={{ borderColor: "var(--border-strong)", background: "var(--surface-2)", color: "var(--fg)" }}
-          aria-label="Close"
-        >
-          ×
-        </button>
+      <div className={modal ? "relative w-full max-w-md rr-fade-up" : "relative"}>
+        <div className="absolute -top-3 -right-3 z-10 flex items-center gap-1">
+          {modal && status === "running" && (
+            <button
+              onClick={onMinimize}
+              className="flex h-8 cursor-pointer items-center justify-center rounded-full border px-3 text-[10px] font-mono transition hover:scale-105"
+              style={{ borderColor: "var(--primary)", background: "var(--surface-2)", color: "var(--primary)" }}
+              aria-label="Minimize deployment"
+              data-testid="minimize-deploy"
+            >
+              minimize
+            </button>
+          )}
+          {!modal && (
+            <button
+              onClick={onExpand}
+              className="flex h-8 cursor-pointer items-center justify-center rounded-full border px-3 text-[10px] font-mono transition hover:scale-105"
+              style={{ borderColor: "var(--border-strong)", background: "var(--surface-2)", color: "var(--fg-muted)" }}
+              aria-label="Expand deployment"
+            >
+              expand
+            </button>
+          )}
+          <button
+            onClick={closeOrMinimize}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border text-sm transition hover:scale-110"
+            style={{ borderColor: "var(--border-strong)", background: "var(--surface-2)", color: "var(--fg)" }}
+            aria-label={status === "running" ? "Minimize deployment" : "Close"}
+          >
+            ×
+          </button>
+        </div>
+        {!modal && status === "running" && (
+          <div
+            className="mb-2 rounded-md border px-3 py-2 text-[10px] font-mono uppercase tracking-[0.16em]"
+            style={{
+              borderColor: "var(--primary)",
+              background: "rgba(34,197,94,0.08)",
+              color: "var(--primary)",
+            }}
+          >
+            Deploying in background
+          </div>
+        )}
         <DeployForm
+          key={repo}
           repo={repo}
           description={description}
           onResolved={(result) => {
@@ -935,6 +1028,7 @@ function DeployModal({
             onClose();
           }}
           onCancel={onClose}
+          onStatusChange={onStatusChange}
         />
       </div>
     </div>
