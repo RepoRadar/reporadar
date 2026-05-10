@@ -17,6 +17,8 @@ import { RepoCard } from "@/app/components/RepoCard";
 import { InteractiveRadar } from "@/app/components/InteractiveRadar";
 import { PriorityBar, type SortKey } from "@/app/components/PriorityBar";
 import { DeployForm } from "@/app/components/DeployForm";
+import { NotificationSignup } from "@/app/components/NotificationSignup";
+import type { NotificationDigestItem } from "@/app/lib/notifications";
 
 const QUICK_SCANS = [
   { topic: "hermes", label: "Hermes" },
@@ -203,6 +205,17 @@ export function RepoRadarApp() {
     if (repos.length === 0) return [] as ScoredRepo[];
     return rankRepos(repos as Repo[], weights, priorities);
   }, [repos, weights, priorities]);
+
+  const notificationDigest = useMemo<NotificationDigestItem[]>(
+    () =>
+      ranked.slice(0, 3).map((repo) => ({
+        title: repo.fullName,
+        subtitle: `${formatCompact(repo.stars)} stars${repo.language ? ` · ${repo.language}` : ""}`,
+        score: Math.round(repo.scores.overall * 100),
+        source: "RepoRadar",
+      })),
+    [ranked],
+  );
 
   // Build params for /api/repos including current time window + page.
   const buildParams = (
@@ -476,7 +489,7 @@ export function RepoRadarApp() {
   return (
     <div className="flex flex-1 flex-col">
       <header
-        className="flex items-center justify-between px-6 py-4 border-b"
+        className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b"
         style={{ borderColor: "var(--border)" }}
       >
         <div className="flex items-center gap-3">
@@ -500,7 +513,7 @@ export function RepoRadarApp() {
           </span>
         </div>
         <div
-          className="flex items-center gap-3 text-[11px] font-mono whitespace-nowrap"
+          className="flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-[11px] font-mono"
           style={{ color: "var(--fg-dim)" }}
         >
           <span style={{ color: "var(--accent)" }}>{process.env.NEXT_PUBLIC_APP_VERSION || "v0.4"}</span>
@@ -738,6 +751,8 @@ export function RepoRadarApp() {
             />
           )}
 
+          <NotificationSignup digest={notificationDigest} />
+
         </aside>
 
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
@@ -893,6 +908,12 @@ export function RepoRadarApp() {
       />
     </div>
   );
+}
+
+function formatCompact(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}k`;
+  return String(value);
 }
 
 function DimSlider({
