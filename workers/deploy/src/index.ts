@@ -24,18 +24,37 @@ Form factors: ${A2UI_FORM_FACTORS.join(", ")}.
 
 Available components (each node has a "type" string, listed):
 - Layout { direction: "row"|"column", gap?: number, children: [] }
-- Container { padding?: number, tone?: "default"|"subtle"|"highlight", children: [] }
+- Container { padding?: number, tone?: "default"|"subtle"|"highlight", recordType?: string, children: [] }
+    Set "recordType" on the Container that wraps a form (e.g. "task", "note", "feedback") so submitted records are typed.
 - Heading { level: 1|2|3, text: string }
 - Text { text: string, tone?: "default"|"muted"|"danger"|"success" }
 - Button { label: string, action: string, variant?: "primary"|"secondary"|"ghost" }
+    The "action" field drives real behavior. Use one of:
+      "submit"        — collects every TextField/CheckBox/Slider in the same Container and POSTs them as a record to a per-deploy D1 database. Confirms with a toast and refreshes any sibling List(source="records").
+      "refresh"       — re-fetches every List(source="records") in the surface
+      "delete:<id>"   — deletes a record by id
+      "increment:<n>" — bumps a named counter by 1 (use when you have a Counter in the layout)
+      Anything else is treated as passive.
 - TextField { id: string, label: string, placeholder?: string, defaultValue?: string }
+    The "id" is the key inside the saved record's JSON — pick semantic ids ("title", "notes", "url").
 - CheckBox { id: string, label: string, defaultChecked?: boolean }
 - Slider { id: string, label: string, min: number, max: number, step?: number, defaultValue: number }
-- List { items: { title: string, subtitle?: string, meta?: string }[] }
+- List { items?: [...], source?: "records", recordType?: string }
+    If "source" is "records", the list AUTO-LOADS from the per-deploy D1 — no items needed. Filter by recordType. Each row gets a delete button. Titles/subtitles read from data.title|name|subject and data.subtitle|description|body|note.
 - Tabs { tabs: { label: string, content: A2UINode }[] }
 - ProgressBar { label?: string, value: number, max: number }
+- Counter { name: string, label?: string }
+    Auto-loads from /api/counters/:name with a +1 button. Backed by per-deploy D1.
 - Image { src: string, alt: string, width?: number, height?: number }
 - Code { language?: string, code: string }
+
+INTERACTIVITY GUIDANCE (CRITICAL):
+- Every surface MUST be interactive — pure read-only surfaces are not allowed.
+- Wrap related TextField/CheckBox/Slider in a Container with a recordType ("task", "feedback", "lead", etc.).
+- Add a primary Button with action="submit" so users can save data.
+- Pair the form with a List(source="records", recordType=<same>) so users see what they've saved + can delete entries.
+- For repos that suggest a counter use case (votes, claps, plays), add a Counter and a Button with action="increment:<name>".
+- Make the interaction feel like a real micro-app for THAT specific repo, not a demo.
 
 Output a single JSON object:
 {
