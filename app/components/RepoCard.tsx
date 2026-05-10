@@ -3,6 +3,8 @@
 import type { ScoredRepo } from "@/app/lib/types";
 
 const TAGS_SHOWN = 5;
+const RADAR_GRADIENT =
+  "linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--danger))";
 
 export function RepoCard({
   repo,
@@ -24,6 +26,7 @@ export function RepoCard({
   const { overall } = repo.scores;
   const overallPct = Math.round(overall * 100);
   const tags = (repo.topics ?? []).slice(0, TAGS_SHOWN);
+  const repoName = repo.fullName.split("/")[1] ?? repo.fullName;
 
   return (
     <div
@@ -36,8 +39,8 @@ export function RepoCard({
           onSelect(repo);
         }
       }}
-      title={onSelect ? "Click to load this repo's profile into the radar + sliders" : undefined}
-      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl border p-4 transition cursor-pointer outline-none focus-visible:ring-2"
+      aria-label={onSelect ? `Load ${repo.fullName} into the radar and sliders` : undefined}
+      className="group relative flex h-full flex-col gap-3 overflow-visible rounded-xl border p-4 transition cursor-pointer outline-none focus-visible:ring-2"
       style={{
         borderColor: selected ? "var(--primary)" : "var(--border)",
         background:
@@ -61,20 +64,39 @@ export function RepoCard({
         }}
       />
 
-      {/* HERO ROW — medal/rank on the left, BIG star count on the right.
-          Christo's rule: stars are the reward, make them huge. */}
-      <div className="relative flex items-start justify-between gap-3">
-        <RankMedal rank={rank} />
-        <div className="flex flex-col items-end gap-0.5">
+      {/* HERO — rank, repo name, and stars stay in one guarded row. */}
+      <div className="relative flex flex-col gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <RankMedal rank={rank} />
+          <span
+            className="min-w-0 flex-1 truncate text-xl font-bold leading-tight tracking-normal transition"
+            style={{ color: "var(--fg)" }}
+          >
+            {repoName}
+          </span>
           <StarBadge stars={repo.stars} rank={rank} />
-          <RepoTimeline createdAt={repo.createdAt} pushedAt={repo.pushedAt} />
+        </div>
+        <div className="grid min-w-0 gap-0.5 pl-11 text-[11px] font-mono">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 truncate" style={{ color: "var(--fg-muted)" }}>
+              {repo.fullName}
+            </span>
+            {repo.language && (
+              <>
+                <span className="shrink-0" style={{ color: "var(--fg-dim)" }}>·</span>
+                <span className="shrink-0" style={{ color: "var(--secondary)" }}>{repo.language}</span>
+              </>
+            )}
+          </div>
+          <div>
+            <RepoTimeline createdAt={repo.createdAt} pushedAt={repo.pushedAt} />
+          </div>
         </div>
       </div>
 
       {/* TAGS ROW — top 5 GitHub topics. Click any one to repopulate the
-          whole page by that tag. Primary scan affordance per Christo's
-          rule: tags first, names last. */}
-      <div className="relative flex flex-wrap items-center gap-1.5">
+          whole page by that tag. */}
+      <div className="relative flex min-h-[4.25rem] content-start items-start gap-1.5 flex-wrap">
         {tags.length > 0 ? (
           tags.map((t) => (
             <button
@@ -113,7 +135,7 @@ export function RepoCard({
 
       {/* DESCRIPTION — what does this repo actually do */}
       {(repo.descriptionEn || repo.description) && (
-        <div className="flex flex-col gap-1.5">
+        <div className="group/desc relative flex min-h-[5rem] flex-col gap-1.5">
           {repo.descriptionEn && repo.descriptionLang && (
             <span
               className="inline-flex w-fit items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-mono"
@@ -127,14 +149,30 @@ export function RepoCard({
               [Translated from {repo.descriptionLang} to English]
             </span>
           )}
-          <p
-            className="line-clamp-3 text-sm leading-relaxed"
-            style={{ color: "var(--fg)" }}
-          >
-            {repo.descriptionEn || repo.description}
-          </p>
+          <div className="relative">
+            <p
+              className="line-clamp-3 text-sm leading-relaxed"
+              style={{ color: "var(--fg)" }}
+            >
+              {repo.descriptionEn || repo.description}
+            </p>
+            {(repo.descriptionEn || repo.description || "").length > 120 && (
+              <div
+                className="pointer-events-none absolute -left-3 -right-3 top-0 z-30 max-h-64 overflow-auto rounded-md border p-3 text-sm leading-relaxed opacity-0 shadow-2xl transition delay-700 duration-150 group-hover/desc:pointer-events-auto group-hover/desc:opacity-100"
+                style={{
+                  borderColor: "var(--border-strong)",
+                  background: "var(--surface)",
+                  color: "var(--fg)",
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.42)",
+                }}
+              >
+                {repo.descriptionEn || repo.description}
+              </div>
+            )}
+          </div>
         </div>
       )}
+      {!(repo.descriptionEn || repo.description) && <div className="min-h-[5rem]" />}
 
       {repo.agentSummary && (
         <p className="text-xs leading-5" style={{ color: "var(--fg-muted)" }}>
@@ -162,35 +200,39 @@ export function RepoCard({
             className="h-full"
             style={{
               width: `${overallPct}%`,
-              background:
-                "linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--danger))",
+              background: RADAR_GRADIENT,
               boxShadow: "0 0 8px var(--primary-glow)",
             }}
           />
         </div>
       </div>
 
-      {/* FOOTER — small repo identity + Deploy button */}
+      {/* FOOTER — action row */}
       <div className="mt-auto flex items-end justify-between gap-3 pt-1">
         <a
           href={repo.htmlUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="truncate font-mono text-[11px] underline underline-offset-2 transition"
-          style={{ color: "var(--secondary)", maxWidth: "60%", textDecorationColor: "var(--secondary)" }}
-          title={`Open ${repo.fullName} on GitHub in a new tab ↗`}
+          aria-label={`Open ${repo.fullName} on GitHub`}
+          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition"
+          style={{
+            borderColor: "var(--border)",
+            background: "var(--surface-3)",
+            color: "var(--secondary)",
+          }}
+          title={`Open ${repo.fullName} on GitHub in a new tab`}
           onMouseEnter={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--secondary)";
             (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
-            (e.currentTarget as HTMLAnchorElement).style.textDecorationColor = "var(--accent)";
           }}
           onMouseLeave={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
             (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
-            (e.currentTarget as HTMLAnchorElement).style.textDecorationColor = "var(--secondary)";
           }}
         >
-          ↗ {repo.fullName}
-          {repo.language ? ` · ${repo.language}` : ""}
+          <GitHubMark size={13} />
+          GitHub repo
         </a>
         <button
           onClick={(e) => {
@@ -217,6 +259,21 @@ export function RepoCard({
         </button>
       </div>
     </div>
+  );
+}
+
+function GitHubMark({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      width={size}
+      height={size}
+      fill="currentColor"
+      className="shrink-0"
+    >
+      <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.77.4.08.55-.18.55-.4l-.01-1.4c-2.23.5-2.7-1.1-2.7-1.1-.36-.95-.89-1.2-.89-1.2-.73-.51.06-.5.06-.5.8.06 1.23.85 1.23.85.72 1.26 1.88.9 2.34.68.07-.53.28-.9.51-1.1-1.78-.2-3.64-.91-3.64-4.05 0-.9.31-1.63.82-2.2-.08-.21-.36-1.04.08-2.17 0 0 .67-.22 2.2.84A7.45 7.45 0 0 1 8 3.95c.68 0 1.36.09 2 .27 1.52-1.06 2.19-.84 2.19-.84.44 1.13.16 1.96.08 2.17.51.57.82 1.3.82 2.2 0 3.15-1.87 3.84-3.65 4.05.29.26.54.76.54 1.53l-.01 2.24c0 .22.15.48.55.4A8.13 8.13 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z" />
+    </svg>
   );
 }
 
@@ -281,30 +338,29 @@ const MEDALS: Record<number, { label: string; bg: string; fg: string; border: st
 };
 
 function StarBadge({ stars, rank }: { stars: number; rank?: number }) {
-  // Top 3 get the huge font + medal-tinted glow; everyone else still gets a
-  // big number, just slightly smaller.
+  // Keep stars prominent, but compact enough to share the title row.
   const isPodium = rank != null && rank <= 3;
   const pretty = formatStars(stars);
   return (
     <div
-      className="flex items-baseline gap-1.5"
+      className="flex shrink-0 items-baseline gap-1"
       title={`${stars.toLocaleString()} stars on GitHub`}
     >
       <span
-        className="text-3xl font-bold tracking-tight tabular-nums leading-none"
-        style={{
-          color: isPodium ? "var(--accent)" : "var(--fg)",
-          textShadow: isPodium ? "0 0 20px rgba(234, 179, 8, 0.45)" : "none",
-        }}
-      >
-        {pretty}
-      </span>
-      <span
-        className="text-base"
+        className="text-2xl font-bold leading-none"
         style={{ color: "var(--accent)" }}
         aria-hidden
       >
         ★
+      </span>
+      <span
+        className="text-2xl font-bold tracking-tight tabular-nums leading-none"
+        style={{
+          color: isPodium ? "var(--accent)" : "var(--fg)",
+          textShadow: isPodium ? "0 0 14px rgba(234, 179, 8, 0.38)" : "none",
+        }}
+      >
+        {pretty}
       </span>
     </div>
   );

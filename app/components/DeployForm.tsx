@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 type DeployStage =
   | { kind: "form" }
-  | { kind: "running"; log: string[]; progress: number; milestoneIdx: number }
+  | { kind: "running"; log: string[]; progress: number; milestoneIdx: number; seconds: number }
   | { kind: "done"; url: string; slug: string; formFactor: string; log: string[]; notified?: "sent" | "queued" }
   | { kind: "error"; message: string; log: string[] };
 
@@ -13,7 +13,7 @@ const MILESTONES = [
   "Asking Gemini 2.5 Flash to pick a form factor + emit A2UI surface JSON",
   "Validating components + writing surface to Cloudflare R2",
   "Recording the deploy in Cloudflare D1 (slug → repo mapping)",
-  "Going live at <slug>.reporadar.io via the serve worker",
+  "Going live at your reporadar.io subdomain via the serve worker",
 ] as const;
 
 export function DeployForm({
@@ -21,11 +21,13 @@ export function DeployForm({
   description,
   onResolved,
   onCancel,
+  onStatusChange,
 }: {
   repo: string;
   description?: string | null;
   onResolved: (result: { deployed: boolean; url?: string; slug?: string; hint?: string }) => void;
   onCancel: () => void;
+  onStatusChange?: (status: DeployStage["kind"]) => void;
 }) {
   const [hint, setHint] = useState("");
   const [contact, setContact] = useState("");
@@ -39,18 +41,23 @@ export function DeployForm({
     };
   }, []);
 
+  useEffect(() => {
+    onStatusChange?.(stage.kind);
+  }, [onStatusChange, stage.kind]);
+
   const submit = async () => {
     const log: string[] = [`launching deploy for ${repo}`];
     tickStartedAt.current = Date.now();
-    setStage({ kind: "running", log, progress: 4, milestoneIdx: 0 });
+    setStage({ kind: "running", log, progress: 4, milestoneIdx: 0, seconds: 0 });
 
     // Animate progress + milestones based on elapsed time. Caps at 92% until
     // the real fetch resolves, then jumps to 100% in the done state.
     progressTimer.current = setInterval(() => {
       const elapsed = (Date.now() - (tickStartedAt.current ?? Date.now())) / 1000;
+      const seconds = Math.floor(elapsed);
       const fakePct = Math.min(92, 4 + Math.round((1 - Math.exp(-elapsed / 6)) * 92));
       const idx = Math.min(MILESTONES.length - 1, Math.floor(elapsed / 2.4));
-      setStage((s) => (s.kind === "running" ? { ...s, progress: fakePct, milestoneIdx: idx } : s));
+      setStage((s) => (s.kind === "running" ? { ...s, progress: fakePct, milestoneIdx: idx, seconds } : s));
     }, 250);
 
     try {
@@ -162,14 +169,14 @@ export function DeployForm({
               onCancel();
               onResolved({ deployed: false });
             }}
-            className="rounded-md px-3 py-2 text-xs transition"
+            className="cursor-pointer rounded-md px-3 py-2 text-xs transition"
             style={{ color: "var(--fg-muted)" }}
           >
             Cancel
           </button>
           <button
             onClick={submit}
-            className="rounded-md px-3 py-2 text-xs font-medium transition"
+            className="cursor-pointer rounded-md px-3 py-2 text-xs font-medium transition"
             style={{
               background: "var(--primary)",
               color: "#08070d",
@@ -184,7 +191,6 @@ export function DeployForm({
   }
 
   if (stage.kind === "running") {
-    const seconds = tickStartedAt.current ? Math.floor((Date.now() - tickStartedAt.current) / 1000) : 0;
     return (
       <div
         className="flex flex-col gap-3 rounded-xl border p-4"
@@ -194,7 +200,7 @@ export function DeployForm({
           <div className="text-[10px] uppercase tracking-[0.18em] rr-blink" style={{ color: "var(--primary)" }}>
             ● Building…
           </div>
-          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{seconds}s · {stage.progress}%</div>
+          <div className="font-mono text-xs" style={{ color: "var(--fg-muted)" }}>{stage.seconds}s · {stage.progress}%</div>
         </div>
 
         <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
@@ -279,7 +285,7 @@ export function DeployForm({
           href={stage.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center rounded-md px-3 py-2 text-xs font-medium tracking-wide"
+          className="inline-flex cursor-pointer items-center justify-center rounded-md px-3 py-2 text-xs font-medium tracking-wide transition hover:scale-[1.01]"
           style={{
             background: "var(--secondary)",
             color: "#08070d",
@@ -320,7 +326,7 @@ export function DeployForm({
         <BuildLog lines={stage.log} compact />
         <button
           onClick={() => onResolved({ deployed: true, url: stage.url, slug: stage.slug, hint })}
-          className="rounded-md border px-3 py-2 text-xs transition"
+          className="cursor-pointer rounded-md border px-3 py-2 text-xs transition hover:scale-[1.01]"
           style={{ borderColor: "var(--border-strong)", color: "var(--fg-muted)" }}
         >
           Acknowledge
@@ -342,7 +348,7 @@ export function DeployForm({
       <div className="flex justify-end gap-2">
         <button
           onClick={() => onResolved({ deployed: false })}
-          className="rounded-md px-3 py-2 text-xs"
+          className="cursor-pointer rounded-md px-3 py-2 text-xs"
           style={{ color: "var(--fg-muted)" }}
         >
           Dismiss

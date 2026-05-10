@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">RepoRadar</title>
+  <desc id="desc">A clean green radar icon with a sweep beam, circular scope, nodes, and repository hex.</desc>
+  <defs>
+    <linearGradient id="beam" x1="58" y1="68" x2="104" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#5dffa8" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#5dffa8" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="1.6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="64" cy="64" r="50" stroke="#33c77b" stroke-width="7" filter="url(#glow)"/>
+    <circle cx="64" cy="64" r="33" stroke="#33c77b" stroke-opacity="0.58" stroke-width="3"/>
+    <circle cx="64" cy="64" r="17" stroke="#33c77b" stroke-opacity="0.38" stroke-width="2.5"/>
+    <path d="M64 7v16M64 105v16M7 64h16M105 64h16" stroke="#33c77b" stroke-width="6"/>
+    <path d="M42 94a42 42 0 0 1 56-50" stroke="#33c77b" stroke-opacity="0.62" stroke-width="3"/>
+    <path d="M91 40l8 5-7 7" stroke="#33c77b" stroke-opacity="0.75" stroke-width="3"/>
+    <path d="M64 64 100 28" stroke="url(#beam)" stroke-width="20" filter="url(#glow)"/>
+    <path d="M64 64 100 28" stroke="#35df83" stroke-width="6"/>
+  </g>
+
+  <circle cx="64" cy="64" r="9" fill="#2fd475" stroke="#072017" stroke-width="2.5" filter="url(#glow)"/>
+  <g fill="#f8fafc" stroke="#09251b" stroke-width="1.8">
+    <circle cx="40" cy="35" r="7"/>
+    <circle cx="86" cy="54" r="7"/>
+    <circle cx="76" cy="94" r="7"/>
+  </g>
+  <circle cx="39" cy="68" r="6.5" fill="#2fa86e" stroke="#09251b" stroke-width="1.8"/>
+  <path d="M31 86 43 79l12 7v13l-12 7-12-7Z" fill="#30bd76" stroke="#09251b" stroke-width="2"/>
+</svg>
