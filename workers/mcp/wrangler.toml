@@ -1,0 +1,14 @@
+name = "reporadar-mcp"
+main = "src/worker.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+# Public endpoints the MCP tools forward to. Both are already deployed in the hackathon account.
+REPORADAR_API_BASE = "https://reporadar.io"
+DEPLOY_WORKER_URL = "https://reporadar-deploy.let-s-go-christo.workers.dev"
+# mcp-use's dev mode tries to fs.mkdir a widgets/resources directory at startup,
+# which Workers can't do. Forcing production skips that watcher — we don't ship
+# widgets here, only tools.
+NODE_ENV = "production"

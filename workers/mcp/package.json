@@ -1,0 +1,24 @@
+{
+  "name": "reporadar-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RepoRadar exposed as an MCP server (mcp-use). Two tools: rank_repos + deploy_variant. Runs on Cloudflare Workers (HTTP/SSE) or locally over stdio for Claude Desktop.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "stdio": "tsx src/stdio.ts",
+    "inspect": "npx @modelcontextprotocol/inspector tsx src/stdio.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "mcp-use": "^1.27.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260509.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5",
+    "wrangler": "^4.90.0"
+  }
+}

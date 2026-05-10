@@ -18,19 +18,19 @@ import { PriorityBar } from "@/app/components/PriorityBar";
 import { DeployForm } from "@/app/components/DeployForm";
 
 const QUICK_SCANS = [
-  { topic: "agent", label: "Agents", glyph: "◈" },
-  { topic: "rag", label: "RAG", glyph: "◇" },
-  { topic: "llm", label: "LLM Apps", glyph: "◆" },
-  { topic: "rust", label: "Rust", glyph: "▲" },
-  { topic: "security", label: "Security", glyph: "✦" },
+  { topic: "hermes", label: "Hermes", glyph: "◈" },
+  { topic: "openclaw", label: "OpenClaw", glyph: "◇" },
+  { topic: "ag-ui", label: "AG-UI", glyph: "◆" },
+  { topic: "a2ui", label: "A2UI", glyph: "✸" },
+  { topic: "claude-code", label: "Claude Code", glyph: "✦" },
 ];
 
 const TAG_HELP: Record<string, string> = {
-  agent: "AI agents — autonomous tools that plan, call APIs, and act. Multi-step reasoning, tool use, agentic workflows.",
-  rag: "Retrieval-Augmented Generation — LLMs grounded on knowledge bases, vector stores, or document corpora.",
-  llm: "LLM applications — chatbots, copilots, summarizers, code assistants built on Claude / GPT / Gemini.",
-  rust: "Rust ecosystem — systems-grade performance, memory safety, cargo crates. Strong overlap with infra + CLI tools.",
-  security: "Security tools — scanners, vulnerability research, secrets management, defensive + offensive tooling.",
+  hermes: "Hermes — open-weights instruction-tuned models from Nous Research. Tool-use, function-calling, and JSON-mode out of the box.",
+  openclaw: "OpenClaw — open-source agentic tooling from this hackathon's stack. Click to surface anything tagged or mentioning it.",
+  "ag-ui": "AG-UI — CopilotKit's open transport protocol for fullstack agentic UI in React. Bidirectional state sync between agent + frontend.",
+  a2ui: "A2UI — Google DeepMind's open protocol for agents to send fully interactive UI components instead of plain text. Apache 2.0.",
+  "claude-code": "Claude Code — Anthropic's CLI agent for engineering workflows. Click to surface skills, plugins, and projects building on it.",
 };
 
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
@@ -40,7 +40,7 @@ export function RepoRadarApp() {
   const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
   const [priorities, setPriorities] = useState<Dimension[]>([]);
   const [repos, setRepos] = useState<ScoredRepo[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("agent");
+  const [activeCategory, setActiveCategory] = useState<string>("hermes");
   const [lastQuery, setLastQuery] = useState<string>("");
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
@@ -76,7 +76,10 @@ export function RepoRadarApp() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/repos?topic=agent&limit=10`);
+        // Bootstrap with the first hackathon tag. /api/repos has a multi-tier
+        // fallback (topic → keyword → all-time) so even thin tags still surface
+        // something instead of an empty radar.
+        const res = await fetch(`/api/repos?topic=hermes&q=hermes&limit=10`);
         if (!res.ok) return;
         const data = (await res.json()) as Repo[];
         if (cancelled || !Array.isArray(data) || data.length === 0) return;
@@ -477,6 +480,7 @@ export function RepoRadarApp() {
                       repo={r}
                       onDeploy={(repo) => setActiveDeploy({ repo })}
                       onSelect={selectRepoProfile}
+                      onTagClick={(topic) => runQuery({ topic, label: `tag: ${topic}` })}
                       selected={selectedRepo === r.fullName}
                       rank={i + 1}
                     />

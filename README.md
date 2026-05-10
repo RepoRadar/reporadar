@@ -47,7 +47,7 @@ A chatbot can describe a repo. RepoRadar lets you *use* it.
 | **A2UI** (Google DeepMind) | The output schema for every deployed surface. Gemini emits A2UI JSON; our vanilla-JS renderer maps the subset (Layout, Container, Heading, Text, Button, TextField, CheckBox, Slider, List, Tabs, ProgressBar, Counter, Image, Code) to live DOM. We extended the schema with **interactive primitives** — `action="submit"` collects siblings + POSTs to `/api/records`; `source="records"` auto-loads a List from D1; `Counter` is a new node-type backed by `/api/counters/:name`. |
 | **AG-UI** (CopilotKit) | Transport layer. Every `useCopilotAction("rankRepos")` and `useCopilotAction("deployRepo")` invocation, plus the `renderAndWaitForResponse` deploy form, flows through AG-UI events between the Next.js client and our CopilotRuntime. |
 | **CopilotKit** | Top-level React framework. `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, the `GoogleGenerativeAIAdapter` driving the agentic loop. |
-| **MCP Apps** (mcp-use) | Stretch — pending. Plan: expose `rank_repos` and `deploy_variant` so the same flow runs inside Claude Desktop / ChatGPT. |
+| **MCP Apps** (mcp-use) | ✅ Shipped — `workers/mcp/` exposes `rank_repos` and `deploy_variant` as a Model Context Protocol server built on [mcp-use](https://github.com/mcp-use/mcp-use). Live remote at `https://reporadar-mcp.let-s-go-christo.workers.dev/mcp` (Streamable HTTP / SSE), plus a local stdio entry (`workers/mcp/src/stdio.ts`) for Claude Desktop. The same flow now runs inside Claude Desktop / ChatGPT MCP. See `workers/mcp/README.md`. |
 
 ---
 
@@ -257,6 +257,10 @@ workers/
     migrations/0002_records.sql
   serve/
     src/index.ts            # *.reporadar.io router + renderer + REST backend
+  mcp/
+    src/worker.ts           # Cloudflare Worker entry — mcp-use HTTP/SSE MCP server
+    src/stdio.ts            # local stdio entry for Claude Desktop (official MCP SDK)
+    src/tools.ts            # rank_repos + deploy_variant impls (shared by both transports)
 wrangler.jsonc              # apex Next.js worker config
 open-next.config.ts         # OpenNext for Cloudflare adapter config
 ```
@@ -267,7 +271,7 @@ open-next.config.ts         # OpenNext for Cloudflare adapter config
 
 - Repo: this one
 - Demo video: see top of repo (Loom)
-- Protocols: **A2UI** · **AG-UI** · **CopilotKit**
+- Protocols: **A2UI** · **AG-UI** · **CopilotKit** · **MCP Apps**
 - Tracks: Kill the Dashboard · No Designer No Problem (moonshot)
 - Team: **Christo Roberts** · **Craig** · **Priyanshu** (AI Tinkerers SF)
 
