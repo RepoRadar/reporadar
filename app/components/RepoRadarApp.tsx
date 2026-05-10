@@ -561,6 +561,13 @@ export function RepoRadarApp() {
           className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
+          <div className="flex flex-col gap-2">
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
+              Drag to tune
+            </h2>
+            <InteractiveRadar weights={weights} onChange={setWeights} />
+          </div>
+
           <div
             className="flex flex-col gap-3 rounded-xl border p-4"
             style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
@@ -615,13 +622,6 @@ export function RepoRadarApp() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-              Drag to tune
-            </h2>
-            <InteractiveRadar weights={weights} onChange={setWeights} />
           </div>
 
           <div
