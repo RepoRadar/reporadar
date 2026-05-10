@@ -522,7 +522,7 @@ export function RepoRadarApp() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="✦ or type your own topic — 'a podcast platform', 'rust cli for the weekend'…"
+            placeholder="Search for something else"
             disabled={bootstrapping}
             className="w-full rounded-md border px-3.5 py-2 pr-14 text-sm outline-none transition"
             style={{
