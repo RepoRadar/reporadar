@@ -48,9 +48,14 @@ export function computeDimensions(repo: Repo): Dimensions {
   const momentum = Math.round(0.65 * stars + 0.35 * ageNormalized * 100);
 
   const commitVelocity = logNormalize(repo.recentCommits, 200) * 100;
+  // pushedRecently is 0..100 based on days since the last push. When we have
+  // no commit-count enrichment (the home page hits /api/repos without
+  // ?enrich=1 to stay under the GitHub anon rate limit), this serves as the
+  // primary velocity signal — and a continuous fn of pushedAt actually
+  // varies across repos, so dragging the velocity vertex reorders the list.
   const pushedRecently = clamp01(1 - sincePush / 14) * 100;
   const velocity = Math.round(
-    repo.recentCommits > 0 ? commitVelocity : 0.6 * pushedRecently,
+    repo.recentCommits > 0 ? commitVelocity : pushedRecently,
   );
 
   const stableBonus = repo.topics.some((t) =>
@@ -106,9 +111,16 @@ export function computeDimensions(repo: Repo): Dimensions {
     clamp01((40 + trustBonus + lowIssuePressure + recentBonus) / 100) * 100,
   );
 
+  // Without README enrichment, fall back to description length as a free
+  // per-repo signal. Description lengths in GitHub trending vary 0..300+
+  // chars, so this gives the docs dimension real spread across repos — and
+  // dragging the docs hex vertex actually reorders the list. Caps below
+  // typical README-derived scores so enriched repos still rank a hair
+  // higher on docs when both are present.
+  const descLen = (repo.description ?? "").length;
   const docs = repo.readmeLength > 0
     ? logNormalize(repo.readmeLength, 30000) * 100
-    : 50;
+    : Math.min(85, 20 + descLen * 0.3);
   const documentation = Math.round(docs);
 
   const ecosystemPull = Math.round(stars);
