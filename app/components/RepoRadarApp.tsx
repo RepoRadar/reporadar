@@ -182,12 +182,22 @@ export function RepoRadarApp() {
     setDeployStatus("form");
   };
 
+  // Wrapper for every "user tuned the radar" code path (hex drag, slider
+  // drag, card-snap). Updates weights AND demotes the lone default "stars"
+  // sort priority — otherwise priority-sort wins over the weighted overall
+  // score and the list never visibly reorders when the user drags. If the
+  // user has explicitly picked other priorities we leave them alone.
+  const tuneWeights = (next: DimensionWeights) => {
+    setWeights(next);
+    setPriorities((p) => (p.length === 1 && p[0] === "stars" ? [] : p));
+  };
+
   // Click a card → snap weights to that repo's dimensional profile so the
   // hex polygon morphs and every slider animates to match. Side effect:
   // the ranking re-orders to put similar repos near the top.
   const selectRepoProfile = (r: ScoredRepo) => {
     setSelectedRepo(r.fullName);
-    setWeights({
+    tuneWeights({
       momentum: r.dimensions.momentum / 100,
       velocity: r.dimensions.velocity / 100,
       maturity: r.dimensions.maturity / 100,
@@ -678,7 +688,7 @@ export function RepoRadarApp() {
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
               Drag to tune
             </h2>
-            <InteractiveRadar weights={weights} onChange={setWeights} />
+            <InteractiveRadar weights={weights} onChange={tuneWeights} />
           </div>
 
           <div
@@ -704,7 +714,7 @@ export function RepoRadarApp() {
                 key={dim}
                 dim={dim}
                 value={weights[dim]}
-                onChange={(v) => setWeights({ ...weights, [dim]: v })}
+                onChange={(v) => tuneWeights({ ...weights, [dim]: v })}
               />
             ))}
 
@@ -730,7 +740,7 @@ export function RepoRadarApp() {
                     key={dim}
                     dim={dim}
                     value={weights[dim]}
-                    onChange={(v) => setWeights({ ...weights, [dim]: v })}
+                    onChange={(v) => tuneWeights({ ...weights, [dim]: v })}
                   />
                 ))}
               </div>
