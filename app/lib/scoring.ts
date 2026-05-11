@@ -184,14 +184,20 @@ export function rankRepos(
   priorities: SortKey[] = [],
 ): ScoredRepo[] {
   const scored = repos.map((r) => scoreRepo(r, weights));
-  // Un-normalized weighted sum Σ(w × dim). Used as the no-explicit-priority
-  // sort metric so cranking a single weight up always pushes repos high on
-  // that axis to the top. The normalized `scores.overall` is too dilute —
-  // after a card-click snap the weights are non-uniform mid-range values
-  // and a single-axis change barely budges the ratio.
+  // Squared-weight emphasis: Σ(w³ × dim). Cubing the weight makes the
+  // highest-weighted dim dominate the sort, so dragging a single vertex
+  // toward 1.0 actually pulls repos high on that axis to the top — even
+  // when 9 other dims sit in the 0.3-0.6 range (the typical post-snap
+  // profile). Linear weighting is too gentle: dragging docs to 1.0 only
+  // gives docs a 2.5× advantage over a 0.6 dim and that ties with the
+  // 9-vs-1 axis count. Cubed weighting gives docs ~5× advantage and the
+  // axis it represents actually wins the sort.
   const weightedSum = (r: ScoredRepo) => {
     let s = 0;
-    for (const k of DIMENSION_ORDER) s += weights[k] * r.dimensions[k];
+    for (const k of DIMENSION_ORDER) {
+      const w = weights[k];
+      s += w * w * w * r.dimensions[k];
+    }
     return s;
   };
   return scored.sort((a, b) => {
