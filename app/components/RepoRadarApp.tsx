@@ -228,8 +228,14 @@ export function RepoRadarApp() {
   );
 
   // Build params for /api/repos including current time window + page.
+  // `enrich=1` pulls real readmeLength + recentCommits per repo — without
+  // this, every card lands with readmeLength=0 (docs dim defaults to 50 for
+  // everyone) and recentCommits=0 (velocity=0 for everyone), so dragging
+  // the docs or velocity hex vertex has nothing to differentiate by. We
+  // pay 2 extra GitHub calls per repo for this, mitigated by the 5-min
+  // in-memory cache in /api/repos.
   const buildParams = (
-    overrides: { topic?: string; query?: string; page?: number; limit?: number } = {},
+    overrides: { topic?: string; query?: string; page?: number; limit?: number; enrich?: boolean } = {},
   ) => {
     const p = new URLSearchParams();
     const topic = overrides.topic ?? queryRef.current.topic;
@@ -240,6 +246,7 @@ export function RepoRadarApp() {
     if (since) p.set("since", since);
     p.set("page", String(overrides.page ?? 1));
     p.set("limit", String(overrides.limit ?? 12));
+    if (overrides.enrich ?? true) p.set("enrich", "1");
     return p;
   };
 
@@ -302,7 +309,10 @@ export function RepoRadarApp() {
     setLoadMoreError(null);
     try {
       const nextPage = pageRef.current + 1;
-      const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 12 })}`);
+      // Skip enrich on infinite-scroll pages to spare the GitHub anon rate
+      // limit. Tail repos with default docs/velocity values are fine — the
+      // user is unlikely to be tuning dimensions while bulk-scrolling.
+      const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 12, enrich: false })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         if (data.length === 0) {
