@@ -184,6 +184,16 @@ export function rankRepos(
   priorities: SortKey[] = [],
 ): ScoredRepo[] {
   const scored = repos.map((r) => scoreRepo(r, weights));
+  // Un-normalized weighted sum Σ(w × dim). Used as the no-explicit-priority
+  // sort metric so cranking a single weight up always pushes repos high on
+  // that axis to the top. The normalized `scores.overall` is too dilute —
+  // after a card-click snap the weights are non-uniform mid-range values
+  // and a single-axis change barely budges the ratio.
+  const weightedSum = (r: ScoredRepo) => {
+    let s = 0;
+    for (const k of DIMENSION_ORDER) s += weights[k] * r.dimensions[k];
+    return s;
+  };
   return scored.sort((a, b) => {
     for (const key of priorities) {
       const diff =
@@ -192,6 +202,8 @@ export function rankRepos(
           : b.dimensions[key] - a.dimensions[key];
       if (diff !== 0) return diff;
     }
+    const ws = weightedSum(b) - weightedSum(a);
+    if (ws !== 0) return ws;
     return b.scores.overall - a.scores.overall;
   });
 }
