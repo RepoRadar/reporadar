@@ -17,7 +17,26 @@
 
 🔁 **Repo**: [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar)
 
-Built for the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026** (presented by AI Tinkerers · Google DeepMind · CopilotKit).
+Built for the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026** (presented by AI Tinkerers, Google DeepMind, CopilotKit, Manufact, and LangChain).
+
+---
+
+## R² in one minute
+
+RepoRadar started as **R²**: repo radar plus recursive UI. First the system ranks repos, then the interface reshapes around that ranking, then a deploy agent generates a live app for the selected repo.
+
+The problem is simple. Developers discover tools across GitHub Trending, Hacker News, launch posts, X/Twitter, and README skimming. Even after finding a promising repo, they still lose time on setup before they know whether it is useful. RepoRadar compresses that loop into: tune taste, compare repos, deploy a working surface.
+
+The thesis is intentionally small: software discovery should get you to something usable, not just something readable.
+
+Judge path:
+
+1. Open [reporadar.io](https://reporadar.io).
+2. Search for a category like `agents`, `a2ui`, `mcp`, `rag`, or `developer tools`.
+3. Drag the radar or sliders and watch the repo ranking change.
+4. Ask the CopilotKit agent to re-rank or deploy a repo.
+5. Click **Deploy** on a repo card.
+6. Open the generated `<slug>.reporadar.io` app and use its Save, List, or Counter controls. Those interactions persist through D1, so the deploy is a real app, not a static mock.
 
 ---
 
@@ -50,10 +69,12 @@ A chatbot can describe a repo. RepoRadar lets you *use* it.
 
 | Protocol | Role in RepoRadar |
 |---|---|
-| **A2UI** (Google DeepMind) | The output schema for every deployed surface. Gemini emits A2UI JSON; our vanilla-JS renderer maps the subset (Layout, Container, Heading, Text, Button, TextField, CheckBox, Slider, List, Tabs, ProgressBar, Counter, Image, Code) to live DOM. We extended the schema with **interactive primitives** — `action="submit"` collects siblings + POSTs to `/api/records`; `source="records"` auto-loads a List from D1; `Counter` is a new node-type backed by `/api/counters/:name`. |
-| **AG-UI** (CopilotKit) | Transport layer. Every `useCopilotAction("rankRepos")` and `useCopilotAction("deployRepo")` invocation, plus the `renderAndWaitForResponse` deploy form, flows through AG-UI events between the Next.js client and our CopilotRuntime. |
-| **CopilotKit** | Top-level React framework. `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, the `GoogleGenerativeAIAdapter` driving the agentic loop. |
-| **MCP Apps** (mcp-use) | ✅ Shipped — `workers/mcp/` exposes `rank_repos` and `deploy_variant` as a Model Context Protocol server built on [mcp-use](https://github.com/mcp-use/mcp-use). Live remote at `https://reporadar-mcp.let-s-go-christo.workers.dev/mcp` (Streamable HTTP / SSE), plus a local stdio entry (`workers/mcp/src/stdio.ts`) for Claude Desktop. The same flow now runs inside Claude Desktop / ChatGPT MCP. See `workers/mcp/README.md`. |
+| **A2UI** (Google DeepMind) | The output schema for every deployed surface. Gemini emits A2UI JSON; our vanilla-JS renderer maps the subset (Layout, Container, Heading, Text, Button, TextField, CheckBox, Slider, List, Tabs, ProgressBar, Counter, Image, Code) to live DOM. We extended the schema with **interactive primitives**: `action="submit"` collects sibling fields and POSTs to `/api/records`; `source="records"` auto-loads a List from D1; `Counter` is backed by `/api/counters/:name`. |
+| **AG-UI** (CopilotKit) | The agent and UI share the same surface. `useCopilotAction("rankRepos")`, `useCopilotAction("deployRepo")`, and the `renderAndWaitForResponse` deploy form flow through AG-UI events between the Next.js client and CopilotRuntime. |
+| **CopilotKit** | Top-level React framework for the agentic frontend: `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, and the `GoogleGenerativeAIAdapter` driving the loop. |
+| **MCP Apps** (Manufact / mcp-use) | Shipped in `workers/mcp/`. RepoRadar exposes `rank_repos` and `deploy_variant` as MCP tools built on [mcp-use](https://github.com/mcp-use/mcp-use), with a hosted Streamable HTTP / SSE endpoint and a local stdio entry for Claude Desktop. The same rank-and-deploy flow can run from MCP clients instead of only the website. See `workers/mcp/README.md`. |
+
+LangChain and Daytona are not in the shipped hackathon path. They fit the next step: deeper multi-source research flows with memory, and fast sandboxed repo trials so users can test a project without fighting local setup.
 
 ---
 
@@ -138,6 +159,19 @@ See `app/lib/types.ts` for `DIMENSION_META` (label + short label + tooltip help)
 5. New tab opens at `<slug>.reporadar.io`. The serve worker streams the A2UI JSON and the renderer mounts it.
 6. **The user can use the deployed app.** Form fields persist on Submit. Lists update. Counters increment. Records can be deleted. Per-slug isolation in D1.
 7. (Optional) Resend fires an email when configured: subject "`<repo> → <formFactor> live at <url>`".
+
+---
+
+## What we would build next
+
+RepoRadar should become a faster way to decide whether software is worth trying.
+
+- **One-click trials**: deploy or run generated repo-specific apps quickly so users can test a project without losing time to setup, dependency issues, or long install docs.
+- **User reviews**: add ratings, notes, saved comparisons, and follow-up reviews from people who actually tried the repo.
+- **Broader discovery signals**: combine GitHub with Product Hunt, Hacker News, Twitter/X, app directories, changelogs, launch posts, and trend reports.
+- **Generated repo reports**: explain what the repo does, who it is for, setup difficulty, maturity, risks, alternatives, and whether it is worth testing.
+- **More generated surfaces**: add guided setup flows, API explorers, benchmark runners, onboarding wizards, and repo-specific test harnesses.
+- **Sandboxed execution**: connect generated interfaces to safe ephemeral environments so users can run examples and inspect outputs before touching their own machine.
 
 ---
 
