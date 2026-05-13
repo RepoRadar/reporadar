@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="356" height="92" viewBox="0 0 356 92" role="img" aria-labelledby="title desc">
+  <title id="title">RepoRadar</title>
+  <desc id="desc">RepoRadar wordmark with Repo in white and Radar in signal green on a dark background.</desc>
+  <rect width="356" height="92" rx="12" fill="#06120d"/>
+  <text
+    x="178"
+    y="58"
+    text-anchor="middle"
+    font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="42"
+    font-weight="800"
+    letter-spacing="0"
+  ><tspan fill="#f8fafc">Repo</tspan><tspan fill="#22c55e">Radar</tspan></text>
+</svg>
