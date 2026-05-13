@@ -21,7 +21,7 @@ Built for the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026*
 
 ---
 
-## R² in one minute
+## RepoRadar (R²) in one minute
 
 RepoRadar started as **R²**: repo radar plus recursive UI. First the system ranks repos, then the interface reshapes around that ranking, then a deploy agent generates a live app for the selected repo.
 
