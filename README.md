@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="public/reporadar-mark.svg" alt="RepoRadar radar icon" width="104" height="104" />
-</p>
-
-<p align="center">
   <img src="public/reporadar-wordmark.svg" alt="RepoRadar" width="252" />
 </p>
 
