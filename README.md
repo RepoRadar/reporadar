@@ -13,7 +13,7 @@
 
 🔁 **Repo**: [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar)
 
-Built for the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026** (presented by AI Tinkerers, Google DeepMind, CopilotKit, Manufact, and LangChain).
+Built in four hours at the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026**, presented by **[AI Tinkerers](https://aitinkerers.org)**, **[Google DeepMind](https://deepmind.google)**, **[CopilotKit](https://copilotkit.ai)**, **[Manufact](https://manufact.ai)**, and **[LangChain](https://langchain.com)**.
 
 ---
 
@@ -61,16 +61,17 @@ A chatbot can describe a repo. RepoRadar lets you *use* it.
 
 ---
 
-## How we used each protocol
+## How we honored each sponsor
 
-| Protocol | Role in RepoRadar |
-|---|---|
-| **A2UI** (Google DeepMind) | The output schema for every deployed surface. Gemini emits A2UI JSON; our vanilla-JS renderer maps the subset (Layout, Container, Heading, Text, Button, TextField, CheckBox, Slider, List, Tabs, ProgressBar, Counter, Image, Code) to live DOM. We extended the schema with **interactive primitives**: `action="submit"` collects sibling fields and POSTs to `/api/records`; `source="records"` auto-loads a List from D1; `Counter` is backed by `/api/counters/:name`. |
-| **AG-UI** (CopilotKit) | The agent and UI share the same surface. `useCopilotAction("rankRepos")`, `useCopilotAction("deployRepo")`, and the `renderAndWaitForResponse` deploy form flow through AG-UI events between the Next.js client and CopilotRuntime. |
-| **CopilotKit** | Top-level React framework for the agentic frontend: `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, and the `GoogleGenerativeAIAdapter` driving the loop. |
-| **MCP Apps** (Manufact / mcp-use) | Shipped in `workers/mcp/`. RepoRadar exposes `rank_repos` and `deploy_variant` as MCP tools built on [mcp-use](https://github.com/mcp-use/mcp-use), with a hosted Streamable HTTP / SSE endpoint and a local stdio entry for Claude Desktop. The same rank-and-deploy flow can run from MCP clients instead of only the website. See `workers/mcp/README.md`. |
+The hackathon shipped four protocols, each with a sponsor behind it. We used all four and credit each here.
 
-LangChain and Daytona are not in the shipped hackathon path. They fit the next step: deeper multi-source research flows with memory, and fast sandboxed repo trials so users can test a project without fighting local setup.
+| Sponsor | Protocol / Product | Role in RepoRadar |
+|---|---|---|
+| **[Google DeepMind](https://deepmind.google)** | **A2UI** | The output schema for every deployed surface. Gemini 2.5 Flash emits A2UI JSON; our vanilla-JS renderer maps the subset (Layout, Container, Heading, Text, Button, TextField, CheckBox, Slider, List, Tabs, ProgressBar, Counter, Image, Code) to live DOM. We extended the schema with **interactive primitives** — `action="submit"` collects sibling fields and POSTs to `/api/records`; `source="records"` auto-loads a List from D1; `Counter` is a new node type backed by `/api/counters/:name`. Gemini also powers the in-app **non-English description translation** so foreign-language READMEs surface in English on the cards. |
+| **[CopilotKit](https://copilotkit.ai)** | **AG-UI + CopilotKit** | Both protocols ship together here. Top-level React framework: `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, and the `GoogleGenerativeAIAdapter` driving the agentic loop. Every `useCopilotAction("rankRepos")` and `useCopilotAction("deployRepo")` call — plus the `renderAndWaitForResponse` deploy form — flows through AG-UI events between the Next.js client and our CopilotRuntime. |
+| **[Manufact](https://manufact.ai)** | **MCP Apps** (via [mcp-use](https://github.com/mcp-use/mcp-use)) | `workers/mcp/` exposes `rank_repos` and `deploy_variant` as a Model Context Protocol server built on mcp-use. Live remote at `https://reporadar-mcp.let-s-go-christo.workers.dev/mcp` (Streamable HTTP / SSE), plus a local stdio entry (`workers/mcp/src/stdio.ts`) for Claude Desktop. The same rank-and-deploy flow runs inside Claude Desktop / ChatGPT MCP / any MCP client. See `workers/mcp/README.md`. |
+| **[LangChain](https://langchain.com)** | **LangChain** | Roadmap item. The next milestone uses LangChain for deeper multi-source repo research (Hacker News + Product Hunt + launch-post signals fused with GitHub) and long-term taste memory across sessions. Not in the four-hour build; planned for v0.x→1.0. |
+| **[AI Tinkerers](https://aitinkerers.org)** | Organizer | Hosted the Generative UI Global Hackathon in SF on May 9, 2026. The whole project exists because of the room they put us in. |
 
 ---
 
@@ -82,13 +83,15 @@ LangChain and Daytona are not in the shipped hackathon path. They fit the next s
 │  Deployed via @opennextjs/cloudflare → Cloudflare Worker                 │
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │ <CopilotKit> Provider                                            │  │
-│  │   ├── Header + LIVE indicator                                    │  │
+│  │   ├── Header + LIVE indicator + version + last-updated + refresh │  │
 │  │   ├── Tags row (5 chips + inline white search bar)               │  │
 │  │   ├── PriorityBar (10 dim chips, click-order = sort priority)    │  │
+│  │   ├── Time-window selector (30d / 90d / 1y / all)                │  │
 │  │   ├── Sidebar:                                                   │  │
-│  │   │     • 3 + 7 sliders (with caret expand)                      │  │
 │  │   │     • InteractiveRadar  (custom-SVG decagon, drag handles)   │  │
-│  │   ├── Card grid (rank pills, score progress bars, Deploy CTA)    │  │
+│  │   │     • 3 + 7 sliders (with caret expand)                      │  │
+│  │   ├── Card grid (rank pills, score gradient, Deploy CTA,         │  │
+│  │   │              infinite scroll, click-to-snap weights)         │  │
 │  │   ├── <CopilotPopup>  (default-collapsed chat dock)              │  │
 │  │   ├── useCopilotAction("rankRepos")  → handler → /api/repos      │  │
 │  │   └── useCopilotAction("deployRepo") → renderAndWaitForResponse  │  │
@@ -123,24 +126,31 @@ LangChain and Daytona are not in the shipped hackathon path. They fit the next s
 │    DELETE /api/records/:id → slug-scoped delete                          │
 │    GET/POST /api/counters/:name → per-slug counter upsert                │
 └──────────────────────────────────────────────────────────────────────────┘
+                                                    │
+                                                    ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  reporadar-mcp  (Cloudflare Worker, MCP server)                          │
+│    /mcp  (Streamable HTTP / SSE) → rank_repos, deploy_variant            │
+│    workers/mcp/src/stdio.ts      → local stdio entry for Claude Desktop  │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## The 10 PRD dimensions
+## The 10 dimensions
 
-Every repo is scored 0–100 on each axis (heuristic, derived from GitHub data). Higher = better on every axis. The radar/sliders/sort bar all share the same 10:
+Every repo is scored 0–100 on each axis (heuristic, derived from GitHub data). Higher = better on every axis. The radar, sliders, sort bar, and chat all share the same 10:
 
-1. **Momentum** — stars × younger-age (rate-of-attention proxy)
-2. **Velocity** — recent commits, falls back to "pushed this week"
-3. **Maturity** — forks + age + stable-topic bonus
-4. **Community** — stars + forks + issue cadence
-5. **Recency** — days since last push (capped at 30d)
-6. **Heat** — fork rate + recency
-7. **Production Readiness** — testing/CI topic flags + maturity
-8. **License Safety** — permissive default, docked for GPL/copyleft
-9. **Documentation** — README length log-normalized
-10. **Ecosystem Pull** — stars proxy (real impl would use npm/pypi)
+1. **Trending Momentum** — stars × younger-age (rate-of-attention proxy)
+2. **Shipping Velocity** — recent commits, falls back to "pushed this week"
+3. **Project Maturity** — forks + age + stable-topic bonus
+4. **Community Engagement** — stars + forks + issue cadence
+5. **Activity Recency** — days since last push (capped at 30d)
+6. **Ease of Prototyping** — starter / boilerplate / example / template signals + recent activity + clear quickstart
+7. **Production Readiness** — tests, CI, docs, security policy present
+8. **Security & Trust** — explicit security tooling + active maintenance + low open-vuln pressure
+9. **Documentation Quality** — README length log-normalized + examples + docs site
+10. **Ecosystem Pull** — downstream pull / adoption / dependents (stars proxy today; real impl would use npm/pypi)
 
 See `app/lib/types.ts` for `DIMENSION_META` (label + short label + tooltip help) and `app/lib/scoring.ts:computeDimensions` for the math.
 
@@ -155,6 +165,22 @@ See `app/lib/types.ts` for `DIMENSION_META` (label + short label + tooltip help)
 5. New tab opens at `<slug>.reporadar.io`. The serve worker streams the A2UI JSON and the renderer mounts it.
 6. **The user can use the deployed app.** Form fields persist on Submit. Lists update. Counters increment. Records can be deleted. Per-slug isolation in D1.
 7. (Optional) Resend fires an email when configured: subject "`<repo> → <formFactor> live at <url>`".
+
+---
+
+## What's new since the hackathon ship
+
+Shipped after the four-hour build, all live on `reporadar.io`:
+
+- **Infinite scroll** with visible loading state + retry affordance
+- **Time-window selector** — 30d / 90d / 1y / all — re-fetches against GitHub with the chosen `since:` cutoff
+- **Card-click → weight snap** — clicking a repo card snaps sliders + hex to that repo's 10-dim fingerprint; subsequent drags still re-rank in real time
+- **Real-time re-rank on drag** — sliders, hex vertices, and chat-driven weight changes reorder cards live (not on submit)
+- **Non-English description translation** — Gemini translates foreign READMEs so the cards stay scannable
+- **Deploy completion email signup** — optional email/phone field in the deploy modal; Resend fires on completion
+- **Background deploys** — the deploy runs in the background so you can keep exploring while a slug builds
+- **"How to test" panel** — the deploy success state explains what each generated surface actually does
+- **Hackathon tag chips** + hero star badge + production smoke test suite
 
 ---
 
@@ -179,11 +205,12 @@ RepoRadar should become a faster way to decide whether software is worth trying.
 - **Octokit** for GitHub
 - **Recharts** sub-charts (PolarGrid for spokes); the main hex is a custom SVG with pointer-event drag handles
 - **Cloudflare**:
-  - **Workers** — `reporadar` (Next.js apex via `@opennextjs/cloudflare`), `reporadar-deploy`, `reporadar-serve`
+  - **Workers** — `reporadar` (Next.js apex via `@opennextjs/cloudflare`), `reporadar-deploy`, `reporadar-serve`, `reporadar-mcp`
   - **D1** — `deploys` registry, per-slug `records`, per-slug `counters`, OpenNext incremental cache
   - **R2** — `reporadar-surfaces` (A2UI JSON per deploy)
   - **Custom Domain** — `reporadar.io` apex + `*.reporadar.io` wildcard, Universal SSL, **Always-Use-HTTPS**, **HSTS** (1y, includeSubDomains), TLS 1.2 minimum
 - **Resend** — email-on-deploy-complete (configured per worker via `wrangler secret put RESEND_API_KEY`)
+- **mcp-use** — MCP server framework powering the remote + stdio MCP transports
 
 ---
 
@@ -250,6 +277,9 @@ wrangler deploy --config workers/deploy/wrangler.toml
 
 # Serve worker (*.reporadar.io interactive renderer + API)
 wrangler deploy --config workers/serve/wrangler.toml
+
+# MCP worker (rank_repos + deploy_variant over Streamable HTTP / SSE)
+wrangler deploy --config workers/mcp/wrangler.toml
 ```
 
 ### DNS / TLS hardening (already applied via API)
@@ -271,10 +301,10 @@ app/
   api/
     copilotkit/route.ts     # CopilotRuntime + GoogleGenerativeAIAdapter
     deploy/route.ts         # Gemini → A2UI surface, forward to worker, Resend notify
-    repos/route.ts          # Octokit fetch with multi-tier topic+keyword fallback
+    repos/route.ts          # Octokit fetch with multi-tier topic+keyword fallback + translate
   components/
     Providers.tsx           # <CopilotKit> wrapper
-    RepoRadarApp.tsx        # the home surface — tags row, sort bar, sliders, hex, cards
+    RepoRadarApp.tsx        # the home surface — tags row, sort bar, time-window, sliders, hex, cards
     PriorityBar.tsx         # 10-chip sort priority bar
     InteractiveRadar.tsx    # custom-SVG decagon with draggable vertices
     RepoCard.tsx            # rank pill + score gradient + Deploy CTA
@@ -284,6 +314,7 @@ app/
     types.ts                # Repo, ScoredRepo, Dimension, DIMENSION_META, etc.
     scoring.ts              # rankRepos + computeDimensions (10 PRD axes)
     github.ts               # Octokit fetch with multi-tier fallback
+    translate.ts            # Gemini-driven non-English description translation
     a2ui-types.ts           # A2UI subset typings
   d/[slug]/page.tsx         # local /d/<slug> route mirror of the live serve worker
 workers/
@@ -305,11 +336,14 @@ open-next.config.ts         # OpenNext for Cloudflare adapter config
 
 ## Submission
 
-- Repo: this one
-- Demo video: see top of repo (Loom)
-- Protocols: **A2UI** · **AG-UI** · **CopilotKit** · **MCP Apps**
-- Tracks: Kill the Dashboard · No Designer No Problem (moonshot)
-- Team: **Christo Roberts** · **Craig** · **Priyanshu** (AI Tinkerers SF)
+- **Repo**: this one
+- **Live**: [reporadar.io](https://reporadar.io)
+- **Demo video**: see top of repo (Loom)
+- **Protocols used**: **A2UI** (Google DeepMind) · **AG-UI** + **CopilotKit** (CopilotKit) · **MCP Apps** (Manufact / mcp-use)
+- **Sponsors honored**: AI Tinkerers · Google DeepMind · CopilotKit · Manufact · LangChain
+- **Tracks**: Kill the Dashboard · No Designer No Problem (moonshot)
+- **Team**: **Christo Roberts** · **Craig** · **Priyanshu** (AI Tinkerers SF)
+- **Hackathon**: Generative UI Global Hackathon · AI Tinkerers SF · May 9, 2026
 
 ## License
 
