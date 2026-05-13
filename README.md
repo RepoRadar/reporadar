@@ -2,21 +2,6 @@
   <img src="public/reporadar-wordmark.svg" alt="RepoRadar" width="252" />
 </p>
 
-> **Tune a Street-Fighter-style radar of trending GitHub repos by hex, slider, or text — then click Deploy and an agent emits a bespoke interactive micro-app for that repo at its own URL, backed by a per-deploy D1 database.**
-
-🌐 **Live demo**: [reporadar.io](https://reporadar.io)
-📡 **Sample deploys** (each with its own D1-backed records table — try the Save buttons):
-- [anthropics-claude-cookbooks-href.reporadar.io](https://anthropics-claude-cookbooks-href.reporadar.io) — *interactive Prompt Recipe Playground*
-- [vercel-ai-ei0s.reporadar.io](https://vercel-ai-ei0s.reporadar.io) — *Vercel AI SDK Streaming Agent Playground*
-- [souzatharsis-podcastfy-c7d8.reporadar.io](https://souzatharsis-podcastfy-c7d8.reporadar.io)
-- [bytedance-deer-flow-zez4.reporadar.io](https://bytedance-deer-flow-zez4.reporadar.io)
-
-🔁 **Repo**: [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar)
-
-Built in four hours at the **Generative UI Global Hackathon — AI Tinkerers SF, May 9, 2026**, presented by **[AI Tinkerers](https://aitinkerers.org)**, **[Google DeepMind](https://deepmind.google)**, **[CopilotKit](https://copilotkit.ai)**, **[Manufact](https://manufact.ai)**, and **[LangChain](https://langchain.com)**.
-
----
-
 ## RepoRadar (R²) in one minute
 
 RepoRadar started as **R²**: repo radar plus recursive UI. First the system ranks repos, then the interface reshapes around that ranking, then a deploy agent generates a live app for the selected repo.
@@ -61,7 +46,7 @@ A chatbot can describe a repo. RepoRadar lets you *use* it.
 
 ---
 
-## How we honored each sponsor
+## How we used each sponsor's tech
 
 The hackathon shipped four protocols, each with a sponsor behind it. We used all four and credit each here.
 
@@ -71,7 +56,6 @@ The hackathon shipped four protocols, each with a sponsor behind it. We used all
 | **[CopilotKit](https://copilotkit.ai)** | **AG-UI + CopilotKit** | Both protocols ship together here. Top-level React framework: `<CopilotKit>` provider, `<CopilotPopup>` chat dock, `useCopilotAction`, `useCopilotReadable`, and the `GoogleGenerativeAIAdapter` driving the agentic loop. Every `useCopilotAction("rankRepos")` and `useCopilotAction("deployRepo")` call — plus the `renderAndWaitForResponse` deploy form — flows through AG-UI events between the Next.js client and our CopilotRuntime. |
 | **[Manufact](https://manufact.ai)** | **MCP Apps** (via [mcp-use](https://github.com/mcp-use/mcp-use)) | `workers/mcp/` exposes `rank_repos` and `deploy_variant` as a Model Context Protocol server built on mcp-use. Live remote at `https://reporadar-mcp.let-s-go-christo.workers.dev/mcp` (Streamable HTTP / SSE), plus a local stdio entry (`workers/mcp/src/stdio.ts`) for Claude Desktop. The same rank-and-deploy flow runs inside Claude Desktop / ChatGPT MCP / any MCP client. See `workers/mcp/README.md`. |
 | **[LangChain](https://langchain.com)** | **LangChain** | Roadmap item. The next milestone uses LangChain for deeper multi-source repo research (Hacker News + Product Hunt + launch-post signals fused with GitHub) and long-term taste memory across sessions. Not in the four-hour build; planned for v0.x→1.0. |
-| **[AI Tinkerers](https://aitinkerers.org)** | Organizer | Hosted the Generative UI Global Hackathon in SF on May 9, 2026. The whole project exists because of the room they put us in. |
 
 ---
 
