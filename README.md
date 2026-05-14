@@ -2,22 +2,36 @@
   <img src="public/reporadar-wordmark.svg" alt="RepoRadar" width="252" />
 </p>
 
-## RepoRadar (R²) in one minute
+## RepoRadar in one minute
 
-RepoRadar started as **R²**: repo radar plus recursive UI. First the system ranks repos, then the interface reshapes around that ranking, then a deploy agent generates a live app for the selected repo.
+**RepoRadar helps you do the most meaningful, most impactful research on GitHub — fast.**
 
-The problem is simple. Developers discover tools across GitHub Trending, Hacker News, launch posts, X/Twitter, and README skimming. Even after finding a promising repo, they still lose time on setup before they know whether it is useful. RepoRadar compresses that loop into: tune taste, compare repos, deploy a working surface.
+### The problem
 
-The thesis is intentionally small: software discovery should get you to something usable, not just something readable.
+Developers find new repos across GitHub Trending, Hacker News, launch posts, X/Twitter, and README skimming. Even after spotting a promising one, the next hour evaporates into cloning, installing, and reading examples just to find out whether the repo actually does what you need. Discovery and evaluation are two slow steps stacked on top of each other, and neither lets you express *what you actually want* — what trade-off between maturity and momentum, how much you weight production-readiness versus shipping velocity, whether you'd rather adopt a battle-tested library or bet on a rising star.
 
-Judge path:
+### What RepoRadar does
+
+It collapses both halves of that workflow into one surface:
+
+1. **Land on a default ranking** of trending repos.
+2. **Drill into a topic** — click a tag chip (`Agents` · `RAG` · `LLM Apps` · `Rust` · `Security`) or type your own. The ranking re-runs against that topic with a multi-tier `topic → keyword → all-time` fallback, so weird queries like *"a podcast platform"* still surface something.
+3. **Set up to three priorities** in the SORT BY bar — e.g. *Trending Momentum → Production Readiness → Documentation Quality*. The top-right card is now exactly the repo you should look at first.
+4. **Refine with the widgets on the left** — drag a slider, pull a vertex on the decagon hex, or ask the CopilotKit chat agent to nudge things for you. Every input binds to the same internal taste vector, and the card grid on the right re-ranks and re-renders **live**. That live reshape is the generative-UI bit: nothing is pre-baked.
+5. **Click Deploy on any repo.** RepoRadar spins up a working micro-app for that specific repo on Cloudflare Workers, at its own `<slug>.reporadar.io` URL — backed by a per-deploy D1 database so Save buttons, Lists, and Counters work for real. You don't just *read about* the repo; you kick the tires.
+
+### A concrete example: building a Hermes-style agent
+
+Say you want to build a Hermes-style agent. You'd start by adopting Hermes itself through its highest-starred repo — the canonical implementation everyone else is building on. Then you want to layer in skills, tools, memory, evals. Drill into the `agents` topic, set your priorities (Production Readiness → Documentation Quality → Ease of Prototyping), and the next-most-popular repos line up in the order that matches *your* taste. Tap Deploy on two or three of them and you have working interactive demos to compare side by side. Days of evaluation collapse into minutes.
+
+### Judge path
 
 1. Open [reporadar.io](https://reporadar.io).
-2. Search for a category like `agents`, `a2ui`, `mcp`, `rag`, or `developer tools`.
-3. Drag the radar or sliders and watch the repo ranking change.
-4. Ask the CopilotKit agent to re-rank or deploy a repo.
+2. Click a tag like `Agents` or type a topic into the search box.
+3. Click 1–3 chips on the SORT BY bar to set priority order.
+4. Drag a slider, pull a hex vertex, or ask the CopilotKit chat to re-rank — watch the cards re-order live.
 5. Click **Deploy** on a repo card.
-6. Open the generated `<slug>.reporadar.io` app and use its Save, List, or Counter controls. Those interactions persist through D1, so the deploy is a real app, not a static mock.
+6. Open the generated `<slug>.reporadar.io` app and use its Save, List, or Counter controls. Those persist through D1, so the deploy is a real app, not a static mock.
 
 ---
 
@@ -25,15 +39,9 @@ Judge path:
 
 The hackathon's bar: *would this have been impossible with a chat interface?* For RepoRadar, yes — twice over.
 
-1. **The home surface** is a multi-modal taste editor that re-ranks GitHub at 60fps. **Five inputs** all bind to the same internal weights vector:
-   - **5 popular topic tags** (Agents · RAG · LLM Apps · Rust · Security) for one-click trending pulls
-   - **A free-text search box** that runs a multi-tier topic→keyword→all-time fallback so weird queries like *"a podcast platform"* still surface something
-   - **A SORT BY priority bar** — click up to 3 of the 10 PRD dimensions in click-order to set sort priorities 1/2/3
-   - **10 weight sliders** in the sidebar — top 3 visible (Momentum/Velocity/Maturity), caret expands to all 10
-   - **A draggable decagon hex** ("Street Fighter character stats") where dragging a vertex outward weights that axis. Sliders ↔ hex ↔ chat are bidirectionally bound
-   - Plus a **CopilotKit chat agent** (Gemini) that can call `rankRepos` with any combination of the above and re-render cards inline
+1. **The home surface is a multi-modal taste editor**, not a conversation. Five inputs — tag chips, search, the SORT BY priority bar, ten sliders, and a draggable decagon hex — all bind to the same taste vector and reshape the card grid at 60fps. A chat dock is there too, and CopilotKit's `useCopilotAction` flows through the same vector, but the chat is one input among five, not the entire interface. You can drag the hex with one hand and watch the ranking change without typing a word.
 
-2. **The deploy artifact is itself a working app, generated by an agent, with its own database.** When you click Deploy, Gemini decides what kind of interactive surface best demonstrates that specific repo — `playground` / `dashboard` / `control-panel` / `wizard` / `widget-grid` / `reader` — and emits an **[A2UI](https://a2ui.org) JSON document** describing it. Our renderer mounts it at `<slug>.reporadar.io` from R2. **Per-slug D1 tables (records + counters)** make Submit buttons, Lists, and Counters real — not props. Type into a field, hit Save, the data persists, the list refreshes. Different repos get different working micro-apps. Each with its own private database.
+2. **The deploy artifact is a working app with its own database**, not a description of one. Click Deploy and Gemini emits an [A2UI](https://a2ui.org) JSON document describing a `playground` / `dashboard` / `control-panel` / `wizard` / `widget-grid` / `reader`. Our renderer mounts it at `<slug>.reporadar.io` from R2. Per-slug D1 tables (records + counters) make Submit buttons, Lists, and Counters real — not props. Type into a field, hit Save, the data persists.
 
 A chatbot can describe a repo. RepoRadar lets you *use* it.
 
