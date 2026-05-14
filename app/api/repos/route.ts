@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   const query = params.get("q") ?? "";
   const since = params.get("since") ?? ""; // YYYY-MM-DD; empty = default 30d
   const page = Math.max(1, parseInt(params.get("page") ?? "1", 10) || 1);
-  // Infinite scroll wants up to 30 per page; bumped from 12.
-  const limit = Math.min(30, Math.max(1, parseInt(params.get("limit") ?? "10", 10) || 10));
+  // Big-page mode: up to 100 per request (GitHub Search API's per_page cap).
+  const limit = Math.min(100, Math.max(1, parseInt(params.get("limit") ?? "10", 10) || 10));
   const enrich = params.get("enrich") === "1";
 
   const cacheKey = `t:${topic}|q:${query}|s:${since}|p:${page}|n:${limit}|e:${enrich ? 1 : 0}`;

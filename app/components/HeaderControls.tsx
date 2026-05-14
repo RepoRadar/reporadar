@@ -19,7 +19,7 @@ const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
 type ActivePanel = "tags" | "talk" | "type" | "filter" | null;
 
 export function HeaderControls({
-  activeTopic,
+  activeTopics,
   priorities,
   timeWindow,
   bootstrapping,
@@ -28,7 +28,7 @@ export function HeaderControls({
   onSetPriorities,
   onSetTimeWindow,
 }: {
-  activeTopic: string | null;
+  activeTopics: string[];
   priorities: SortKey[];
   timeWindow: TimeWindow;
   bootstrapping: boolean;
@@ -57,7 +57,17 @@ export function HeaderControls({
     sub?: string;
     title: string;
   }[] = [
-    { key: "tags", label: "TAGS", sub: activeTopic ?? undefined, title: "Pick a popular GitHub topic." },
+    {
+      key: "tags",
+      label: "TAGS",
+      sub:
+        activeTopics.length === 0
+          ? undefined
+          : activeTopics.length === 1
+            ? activeTopics[0]
+            : `${activeTopics.length} tags`,
+      title: "Pick one or more popular GitHub topics — click chips to combine them.",
+    },
     { key: "talk", label: "TALK", title: "Talk to RepoRadar with your voice." },
     { key: "type", label: "TYPE", title: "Type what you're looking for in natural language." },
     { key: "filter", label: "FILTER", sub: priorityCount > 0 ? `${priorityCount}/3` : undefined, title: "Pick up to 3 sort priorities." },
@@ -138,10 +148,12 @@ export function HeaderControls({
 
       {active === "tags" && (
         <TagsPanel
-          activeTopic={activeTopic}
-          onPick={(topic, label) => {
-            onRunQuery({ topic, label });
-            setActive(null);
+          activeTopics={activeTopics}
+          onPick={(topics, label) => {
+            // Multi-tag: keep the panel open so the user can keep
+            // adding/removing chips. Each toggle fires this with the
+            // new combination as a comma-joined topic string.
+            onRunQuery({ topic: topics.join(",") || undefined, label });
           }}
           onClose={() => setActive(null)}
         />

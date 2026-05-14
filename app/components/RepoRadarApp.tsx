@@ -21,9 +21,6 @@ import { DeployForm } from "@/app/components/DeployForm";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
 
-const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
-const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
-
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
 // Header chip rendering moved to <HeaderControls>; this type is still used
 // by sinceIsoFor() and the activeCategory state machine.
@@ -105,7 +102,6 @@ export function RepoRadarApp() {
   const [deployStatus, setDeployStatus] = useState<DeployStatus>("form");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
-  const [expanded, setExpanded] = useState(false);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
   const [lastRefresh, setLastRefresh] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -212,7 +208,7 @@ export function RepoRadarApp() {
     const since = sinceIsoFor(timeWindow);
     if (since) p.set("since", since);
     p.set("page", String(overrides.page ?? 1));
-    p.set("limit", String(overrides.limit ?? 12));
+    p.set("limit", String(overrides.limit ?? 100));
     return p;
   };
 
@@ -220,7 +216,7 @@ export function RepoRadarApp() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/repos?${buildParams({ page: 1, limit: 12 })}`);
+        const res = await fetch(`/api/repos?${buildParams({ page: 1, limit: 100 })}`);
         if (!res.ok) return;
         const data = (await res.json()) as Repo[];
         if (cancelled || !Array.isArray(data) || data.length === 0) {
@@ -232,7 +228,7 @@ export function RepoRadarApp() {
         setLastQuery("trending: hermes");
         setPage(1);
         pageRef.current = 1;
-        setHasMore(data.length >= 12);
+        setHasMore(data.length >= 100);
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
@@ -258,14 +254,21 @@ export function RepoRadarApp() {
     setLastQuery(label);
     queryRef.current = { topic, query };
     try {
-      const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 12 })}`);
+      const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 100 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
-        setRepos(rankRepos(data, weights, priorities));
+        const fresh = rankRepos(data, weights, priorities);
+        setRepos(fresh);
         setLastRefresh(Date.now());
         setPage(1);
         pageRef.current = 1;
-        setHasMore(data.length >= 12);
+        setHasMore(data.length >= 100);
+        // Auto-snap to the top repo so the user sees the radar/sliders
+        // populate with its profile and the #1 card highlight in green.
+        // From there they can click any other card to compare profiles.
+        if (fresh.length > 0) {
+          selectRepoProfile(fresh[0]);
+        }
       }
     } finally {
       setBootstrapping(false);
@@ -281,7 +284,7 @@ export function RepoRadarApp() {
     setLoadMoreError(null);
     try {
       const nextPage = pageRef.current + 1;
-      const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 12 })}`);
+      const res = await fetch(`/api/repos?${buildParams({ page: nextPage, limit: 100 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         if (data.length === 0) {
@@ -297,9 +300,9 @@ export function RepoRadarApp() {
           });
           setPage(nextPage);
           pageRef.current = nextPage;
-          setHasMore(data.length >= 12);
-          hasMoreRef.current = data.length >= 12;
-          if (addedCount === 0 && data.length < 12) {
+          setHasMore(data.length >= 100);
+          hasMoreRef.current = data.length >= 100;
+          if (addedCount === 0 && data.length < 100) {
             setHasMore(false);
             hasMoreRef.current = false;
           }
@@ -474,7 +477,19 @@ export function RepoRadarApp() {
         className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b"
         style={{ borderColor: "var(--border)" }}
       >
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            // Logo click = "take me home". Reset to default trending pull
+            // (Hermes, Most Stars) so the user always has a clean starting
+            // point during the demo without a full page reload.
+            setPriorities(["stars"]);
+            runQuery({ topic: "hermes", label: "trending: hermes" });
+          }}
+          className="flex items-center gap-3 rounded-md transition hover:opacity-80"
+          title="Reset to the default Hermes trending view"
+          aria-label="RepoRadar home"
+        >
           <Image
             src="/reporadar-mark.svg"
             alt=""
@@ -493,7 +508,7 @@ export function RepoRadarApp() {
           >
             Find the most meaningful repo to build upon as efficiently as possible.
           </span>
-        </div>
+        </button>
         <div
           className="flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-[11px] font-mono"
           style={{ color: "var(--fg-dim)" }}
@@ -551,7 +566,7 @@ export function RepoRadarApp() {
 
       {/* Streamlined header — TAGS / TALK / TYPE / FILTER buttons + time-window pills. */}
       <HeaderControls
-        activeTopic={activeCategory || null}
+        activeTopics={activeCategory ? activeCategory.split(",").map((s) => s.trim()).filter(Boolean) : []}
         priorities={priorities}
         timeWindow={timeWindow as HeaderTimeWindow}
         bootstrapping={bootstrapping}
@@ -591,7 +606,7 @@ export function RepoRadarApp() {
               </button>
             </div>
 
-            {TOP3.map((dim) => (
+            {DIMENSION_ORDER.map((dim) => (
               <DimSlider
                 key={dim}
                 dim={dim}
@@ -599,34 +614,6 @@ export function RepoRadarApp() {
                 onChange={(v) => tuneWeights({ ...weights, [dim]: v })}
               />
             ))}
-
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="flex items-center justify-center gap-1 rounded-md border py-1 text-[10px] font-mono transition"
-              style={{
-                borderColor: "var(--border)",
-                background: "transparent",
-                color: "var(--fg-muted)",
-              }}
-            >
-              <span>{expanded ? "fewer dimensions" : `+${REST.length} more dimensions`}</span>
-              <span style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
-                ▼
-              </span>
-            </button>
-
-            {expanded && (
-              <div className="flex flex-col gap-3 pt-1 rr-fade-up">
-                {REST.map((dim) => (
-                  <DimSlider
-                    key={dim}
-                    dim={dim}
-                    value={weights[dim]}
-                    onChange={(v) => tuneWeights({ ...weights, [dim]: v })}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {activeDeploy && (

@@ -42,21 +42,38 @@ export async function fetchTrending({
   const q = (query || "").trim();
   const sinceIso = (since || SINCE_ISO).slice(0, 10);
 
+  // Multi-tag support: topic can be a comma-joined list ("hermes,cloudflare")
+  // meaning "repos tagged BOTH". Single-tag behavior is preserved when there's
+  // only one entry.
+  const topics = t ? t.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  const topicFilters = topics.map((top) => `topic:${top}`);
+  // Keyword tiers only make sense when there's a single topic (or no topic
+  // and an explicit q). A comma-string like "hermes,cloudflare" passed as a
+  // raw keyword would return nothing useful.
+  const keyword = q || (topics.length === 1 ? topics[0] : "");
+
   // Tier 1: keyword in:name,description — surfaces repos NAMED that thing
   // first (Christo's "I expect Peter Steinberg's OpenClaw to be #1" rule).
-  const keyword = q || t;
   if (keyword) {
     tiers.push([keyword, "in:name,description", `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
   }
 
-  // Tier 2: topic-tag match within the time window.
-  if (t) tiers.push([`topic:${t}`, `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+  // Tier 2: topic-tag match within the time window. Multiple topics ANDed.
+  if (topics.length > 0) {
+    tiers.push([...topicFilters, `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+  }
 
   // Tier 3: broader keyword search (anywhere in repo content).
   if (keyword) tiers.push([keyword, `pushed:>${sinceIso}`, "is:public", "stars:>50"]);
 
   // Tier 4: all-time keyword fallback so we always show *something*.
   if (keyword) tiers.push([keyword, "is:public", "stars:>200"]);
+
+  // Tier 4b: multi-tag all-time fallback so combinations like "hermes +
+  // cloudflare" never silently fall through into the generic-trending tier.
+  if (topics.length > 1) {
+    tiers.push([...topicFilters, "is:public", "stars:>10"]);
+  }
 
   // Tier 5: pure recency (no topic) — final fallback for empty input.
   if (tiers.length === 0) tiers.push([`pushed:>${sinceIso}`, "is:public", "stars:>50"]);

@@ -25,7 +25,7 @@ export function TalkPanel({
   const [state, setState] = useState<TalkState>("idle");
   const [transcript, setTranscript] = useState("");
   const [agentSay, setAgentSay] = useState<string>(
-    "Hey — what are you looking for? How can I help?",
+    "Hey - what are you looking for? How can I help?",
   );
   const [error, setError] = useState<string | null>(null);
   const recogRef = useRef<unknown>(null);
@@ -68,7 +68,7 @@ export function TalkPanel({
   // granted it stays granted for the session.
   useEffect(() => {
     setState("greeting");
-    speak("Hey — what are you looking for? How can I help?", () => {
+    speak("Hey - what are you looking for? How can I help?", () => {
       startListening();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

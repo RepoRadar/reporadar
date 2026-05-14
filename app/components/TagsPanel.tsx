@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 const TRENDING_TAGS: { topic: string; label: string; help: string }[] = [
   { topic: "hermes", label: "Hermes", help: "Open-weights instruction-tuned models from Nous Research." },
   { topic: "claude-code", label: "Claude Code", help: "Anthropic's CLI agent for engineering workflows." },
@@ -20,14 +22,52 @@ const TRENDING_TAGS: { topic: string; label: string; help: string }[] = [
 ];
 
 export function TagsPanel({
-  activeTopic,
+  activeTopics,
   onPick,
   onClose,
 }: {
-  activeTopic: string | null;
-  onPick: (topic: string, label: string) => void;
+  activeTopics: string[];
+  onPick: (topics: string[], label: string) => void;
   onClose: () => void;
 }) {
+  // Local working set seeded from whatever's currently active. Each chip
+  // click toggles in/out of the set and fires onPick immediately so the
+  // card grid re-queries with the new combination. Panel stays open so
+  // the user can keep adding/removing tags.
+  const [selected, setSelected] = useState<string[]>(activeTopics);
+
+  useEffect(() => {
+    setSelected(activeTopics);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTopics.join(",")]);
+
+  const fire = (next: string[]) => {
+    if (next.length === 0) {
+      // Empty selection → fall back to default trending (Hermes).
+      onPick([], "trending");
+      return;
+    }
+    const labels = next.map(
+      (s) => TRENDING_TAGS.find((x) => x.topic === s)?.label.toLowerCase() ?? s,
+    );
+    const label =
+      labels.length === 1
+        ? `trending: ${labels[0]}`
+        : `trending: ${labels.join(" + ")}`;
+    onPick(next, label);
+  };
+
+  const toggle = (t: string) => {
+    const next = selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t];
+    setSelected(next);
+    fire(next);
+  };
+
+  const clear = () => {
+    setSelected([]);
+    fire([]);
+  };
+
   return (
     <div
       id="panel-tags"
@@ -39,28 +79,46 @@ export function TagsPanel({
         background: "linear-gradient(180deg, rgba(34,197,94,0.04) 0%, transparent 100%)",
       }}
     >
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-          Trending tags — pick one to drill in
+          Pick one or more — click any chip to toggle
+          {selected.length > 0 && (
+            <span style={{ color: "var(--primary)" }}> ({selected.length} selected)</span>
+          )}
         </p>
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          className="text-[11px] font-mono transition hover:underline"
-          style={{ color: "var(--fg-dim)" }}
-        >
-          close ✕
-        </button>
+        <div className="flex items-center gap-3">
+          {selected.length > 0 && (
+            <button
+              onClick={clear}
+              className="text-[11px] underline-offset-2 transition hover:underline"
+              style={{ color: "var(--fg-dim)" }}
+            >
+              clear
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md border px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] transition"
+            style={{
+              borderColor: "var(--primary)",
+              background: "var(--primary)",
+              color: "#08070d",
+            }}
+          >
+            Done ✓
+          </button>
+        </div>
       </div>
       <div className="flex flex-wrap gap-2">
         {TRENDING_TAGS.map((t) => {
-          const isActive = activeTopic === t.topic;
+          const isActive = selected.includes(t.topic);
           return (
             <button
               key={t.topic}
-              onClick={() => onPick(t.topic, `trending: ${t.label.toLowerCase()}`)}
+              onClick={() => toggle(t.topic)}
               title={t.help}
-              className="rounded-md border px-3 py-2 text-[12px] font-mono transition"
+              className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-[12px] font-mono transition"
               style={{
                 borderColor: isActive ? "var(--primary)" : "var(--border)",
                 background: isActive ? "rgba(34,197,94,0.10)" : "var(--surface-2)",
@@ -68,6 +126,7 @@ export function TagsPanel({
                 boxShadow: isActive ? "0 0 12px var(--primary-glow)" : "none",
               }}
             >
+              {isActive && <span aria-hidden>✓</span>}
               {t.label}
             </button>
           );
