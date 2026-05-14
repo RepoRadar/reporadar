@@ -15,51 +15,21 @@ import {
 } from "@/app/lib/types";
 import { RepoCard } from "@/app/components/RepoCard";
 import { InteractiveRadar } from "@/app/components/InteractiveRadar";
-import { PriorityBar, type SortKey } from "@/app/components/PriorityBar";
+import { type SortKey } from "@/app/components/PriorityBar";
+import { HeaderControls, type TimeWindow as HeaderTimeWindow } from "@/app/components/HeaderControls";
 import { DeployForm } from "@/app/components/DeployForm";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
-
-const QUICK_SCANS = [
-  { topic: "hermes", label: "Hermes" },
-  { topic: "openclaw", label: "OpenClaw" },
-  { topic: "ag-ui", label: "AG-UI" },
-  { topic: "a2ui", label: "A2UI" },
-  { topic: "claude-code", label: "Claude Code" },
-  { topic: "cloudflare", label: "Cloudflare" },
-  { topic: "generative-ui", label: "Generative UI" },
-  { topic: "mcp", label: "MCP" },
-  { topic: "langchain", label: "LangChain" },
-  { topic: "gemini", label: "Gemini" },
-];
-
-const TAG_HELP: Record<string, string> = {
-  hermes: "Hermes — open-weights instruction-tuned models from Nous Research. Tool-use, function-calling, and JSON-mode out of the box.",
-  openclaw: "OpenClaw — open-source agentic tooling from this hackathon's stack. Click to surface anything tagged or mentioning it.",
-  "ag-ui": "AG-UI — CopilotKit's open transport protocol for fullstack agentic UI in React. Bidirectional state sync between agent + frontend.",
-  a2ui: "A2UI — Google DeepMind's open protocol for agents to send fully interactive UI components instead of plain text. Apache 2.0.",
-  "claude-code": "Claude Code — Anthropic's CLI agent for engineering workflows. Click to surface skills, plugins, and projects building on it.",
-  cloudflare: "Cloudflare — Workers, D1, R2, KV, Durable Objects, AI Gateway. Edge-deployed everything; the entire RepoRadar stack runs on it.",
-  "generative-ui": "Generative UI — agents that emit interactive UI at runtime instead of plain text. The whole point of this hackathon.",
-  mcp: "Model Context Protocol — the open standard for connecting AI assistants to tools, data, and live UI widgets. Manufact / mcp-use territory.",
-  langchain: "LangChain — the most-used framework for building production-grade LLM applications. Chains, agents, RAG, tool-use, memory.",
-  gemini: "Gemini — Google's multimodal model family. Powers RepoRadar's Gemini 2.5 Flash for both the chat agent and the A2UI deploy generator.",
-};
 
 const TOP3: Dimension[] = ["momentum", "velocity", "maturity"];
 const REST: Dimension[] = DIMENSION_ORDER.filter((d) => !TOP3.includes(d));
 
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
+// Header chip rendering moved to <HeaderControls>; this type is still used
+// by sinceIsoFor() and the activeCategory state machine.
 type TimeWindow = "30" | "90" | "365" | "all";
 type DeployMode = "modal" | "panel";
 type DeployStatus = "form" | "running" | "done" | "error";
-
-const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
-  { key: "30", label: "1mo", help: "Pushed in the last 30 days — freshest, smallest pool." },
-  { key: "90", label: "3mo", help: "Pushed in the last 90 days." },
-  { key: "365", label: "1y", help: "Pushed in the last year. Default — broad enough for most queries." },
-  { key: "all", label: "All", help: "No time filter — surfaces classic + long-tail repos too." },
-];
 
 const ABSOLUTE_TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
@@ -136,7 +106,6 @@ export function RepoRadarApp() {
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
   const [lastRefresh, setLastRefresh] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -490,13 +459,6 @@ export function RepoRadarApp() {
     },
   });
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchInput.trim();
-    if (!q) return;
-    runQuery({ query: q, label: `search: ${q}` });
-  };
-
   const buildTimeIso = process.env.NEXT_PUBLIC_BUILD_TIME;
   const lastRefreshIso = lastRefresh == null ? undefined : new Date(lastRefresh).toISOString();
 
@@ -581,107 +543,17 @@ export function RepoRadarApp() {
         </div>
       </header>
 
-      {/* Row 1 — TAGS + inline search input */}
-      <div
-        className="flex items-center gap-3 border-b px-6 py-3 flex-wrap"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <span
-          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] whitespace-nowrap cursor-help"
-          style={{ color: "var(--fg-dim)" }}
-          title="Pick one of these popular GitHub topic tags or type your own in the white box. Hover any chip to see what that topic is about."
-        >
-          Tags
-          <span
-            className="inline-flex h-3 w-3 items-center justify-center rounded-full border text-[7px]"
-            style={{
-              borderColor: "var(--border-strong)",
-              color: "var(--fg-dim)",
-            }}
-            aria-hidden
-          >
-            ?
-          </span>
-        </span>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {QUICK_SCANS.map((q) => {
-            const active = activeCategory === q.topic;
-            return (
-              <button
-                key={q.topic}
-                disabled={bootstrapping}
-                onClick={() => runQuery({ topic: q.topic, label: `trending: ${q.label.toLowerCase()}` })}
-                title={TAG_HELP[q.topic] ?? `Search GitHub topic: ${q.topic}`}
-                className="flex items-center rounded-md border px-2.5 py-1.5 text-[11px] font-mono transition disabled:opacity-50"
-                style={{
-                  borderColor: active ? "var(--primary)" : "var(--border)",
-                  background: active ? "rgba(34,197,94,0.10)" : "var(--surface-2)",
-                  color: active ? "var(--primary)" : "var(--fg-muted)",
-                  boxShadow: active ? "0 0 12px var(--primary-glow)" : "none",
-                }}
-              >
-                {q.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-1" title="Time window for the GitHub search. Tighter = fresher repos but smaller pool.">
-          {TIME_WINDOWS.map((w) => {
-            const active = timeWindow === w.key;
-            return (
-              <button
-                key={w.key}
-                onClick={() => setTimeWindow(w.key)}
-                title={w.help}
-                className="rounded-md border px-2 py-1 text-[10px] font-mono transition"
-                style={{
-                  borderColor: active ? "var(--secondary)" : "var(--border)",
-                  background: active ? "rgba(59,130,246,0.10)" : "var(--surface-2)",
-                  color: active ? "var(--secondary)" : "var(--fg-muted)",
-                  boxShadow: active ? "0 0 8px var(--secondary-glow)" : "none",
-                }}
-              >
-                {w.label}
-              </button>
-            );
-          })}
-        </div>
-        <form onSubmit={submitSearch} className="relative flex-1 min-w-[280px]">
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search for something else"
-            disabled={bootstrapping}
-            className="w-full rounded-md border px-3.5 py-2 pr-14 text-sm outline-none transition"
-            style={{
-              background: "#fafafa",
-              color: "#0a0a0a",
-              borderColor: "var(--border-strong)",
-            }}
-            onFocus={(e) => {
-              (e.currentTarget as HTMLInputElement).style.boxShadow = "0 0 0 3px var(--primary-glow)";
-              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--primary)";
-            }}
-            onBlur={(e) => {
-              (e.currentTarget as HTMLInputElement).style.boxShadow = "none";
-              (e.currentTarget as HTMLInputElement).style.borderColor = "var(--border-strong)";
-            }}
-          />
-          <button
-            type="submit"
-            disabled={bootstrapping || !searchInput.trim()}
-            aria-label="Search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-mono disabled:opacity-40"
-            style={{ color: "var(--primary)" }}
-          >
-            ↵ Enter
-          </button>
-        </form>
-      </div>
-
-      {/* Row 2 — FILTERS / SORT BY (10 dimensions, click order = priority) */}
-      <PriorityBar priorities={priorities} onChange={setPriorities} />
+      {/* Streamlined header — TAGS / TALK / TYPE / FILTER buttons + time-window pills. */}
+      <HeaderControls
+        activeTopic={activeCategory || null}
+        priorities={priorities}
+        timeWindow={timeWindow as HeaderTimeWindow}
+        bootstrapping={bootstrapping}
+        priorityCount={priorities.length}
+        onRunQuery={runQuery}
+        onSetPriorities={setPriorities}
+        onSetTimeWindow={(w) => setTimeWindow(w as TimeWindow)}
+      />
 
       <main className="grid flex-1 grid-cols-12 gap-5 p-5">
         <aside
