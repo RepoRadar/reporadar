@@ -249,6 +249,13 @@ export function RepoRadarApp() {
     setSelectedRepo(null);
     if (topic) setActiveCategory(topic);
     else setActiveCategory("");
+    // Optimistic pill update — the status chip + tag-button sub-label should
+    // reflect the user's *intent* immediately, not 1-3s later when the GitHub
+    // fetch resolves. Without this the user clicks "Claude Code" and sees the
+    // chip still say "trending: hermes" while old hermes cards linger, and it
+    // looks broken. The grid still shows previous cards during the fetch, but
+    // they're dimmed via the bootstrapping flag (see card-grid wrapper below).
+    setLastQuery(label);
     queryRef.current = { topic, query };
     try {
       const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 12 })}`);
@@ -256,7 +263,6 @@ export function RepoRadarApp() {
         const data = (await res.json()) as Repo[];
         setRepos(rankRepos(data, weights, priorities));
         setLastRefresh(Date.now());
-        setLastQuery(label);
         setPage(1);
         pageRef.current = 1;
         setHasMore(data.length >= 12);

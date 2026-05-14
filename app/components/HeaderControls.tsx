@@ -148,8 +148,8 @@ export function HeaderControls({
       )}
       {active === "talk" && (
         <TalkPanel
-          onSubmit={(query) => {
-            onRunQuery({ query, label: `voice: ${query}` });
+          onSubmit={(intent) => {
+            onRunQuery(intent);
             setActive(null);
           }}
           onClose={() => setActive(null)}

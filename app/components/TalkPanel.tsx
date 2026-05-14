@@ -1,23 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { parseVoiceIntent } from "@/app/lib/parseVoiceIntent";
 
 type TalkState = "idle" | "greeting" | "listening" | "thinking" | "speaking" | "error";
 
-// Minimal in-browser voice loop:
-//   1. mount → /api/talk/greet returns a one-liner greeting → play via TTS
+// In-browser voice loop:
+//   1. mount → 11Labs TTS greets via /api/talk/tts (Archer voice)
 //   2. user clicks mic → Web Speech API captures → final transcript
-//   3. POST /api/talk/reply with transcript → returns { spoken, query } → TTS the
-//      `spoken` acknowledgment, then onSubmit(query) to re-rank the card grid
+//   3. transcript → parseVoiceIntent → {topic, query}
+//   4. agent acks (TTS) what it understood, then onSubmit fires runQuery
+//      with the parsed intent so the card grid re-ranks
 //
-// The /api endpoints will be added in a follow-up. Until they exist this panel
-// degrades gracefully: greeting is text-only, mic falls back to a typed prompt
-// the user can submit, and the query is sent as-is.
+// Without ELEVENLABS_API_KEY the panel still works: greeting + ack go silent,
+// mic still captures + transcribes + submits. Without SpeechRecognition the
+// user sees a clear "voice not supported" message.
 export function TalkPanel({
   onSubmit,
   onClose,
 }: {
-  onSubmit: (query: string) => void;
+  onSubmit: (intent: { topic?: string; query?: string; label: string }) => void;
   onClose: () => void;
 }) {
   const [state, setState] = useState<TalkState>("idle");
@@ -125,10 +127,21 @@ export function TalkPanel({
 
   const handleQuery = async (q: string) => {
     setState("thinking");
-    const ack = "Yeah, let me look those up for you.";
+    const intent = parseVoiceIntent(q);
+    // Confirm what was understood so the user knows we heard them right.
+    // If the topic matched, name it; otherwise fall back to the generic ack.
+    const ack = intent.topic
+      ? `Looking up ${intent.topic.replace(/-/g, " ")} repos for you.`
+      : intent.query
+        ? `Searching for ${intent.query}.`
+        : "Yeah, let me look those up for you.";
     setAgentSay(ack);
     speak(ack);
-    onSubmit(q);
+    const labelBits: string[] = [];
+    if (intent.topic) labelBits.push(intent.topic);
+    if (intent.query) labelBits.push(`"${intent.query}"`);
+    const label = labelBits.length ? `voice: ${labelBits.join(" + ")}` : `voice: ${q}`;
+    onSubmit({ topic: intent.topic, query: intent.query, label });
   };
 
   return (
