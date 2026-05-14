@@ -1,6 +1,5 @@
 import { RepoRadarApp } from "@/app/components/RepoRadarApp";
 import { fetchTrending } from "@/app/lib/github";
-import { translateRepoDescriptions } from "@/app/lib/translate";
 import type { Repo } from "@/app/lib/types";
 
 // No caching at the page level. We're iterating on this every few minutes —
@@ -20,17 +19,20 @@ export const revalidate = 0;
 // time, we degrade gracefully: pass an empty initialRepos array and the
 // client-side bootstrap fires the old way.
 export default async function Home() {
+  // Skip translateRepoDescriptions in the SSR path — that's a Gemini round
+  // trip per cold isolate (~5-10s) and the cards have a graceful fallback
+  // (RepoCard renders descriptionEn || description). The client will pick
+  // up translations on any later /api/repos fetch (infinite scroll, search,
+  // tag click) which keeps the module-level translation cache populated.
   let initialRepos: Repo[] = [];
   try {
     const since = new Date(Date.now() - 365 * 86400 * 1000).toISOString().slice(0, 10);
-    const data = await fetchTrending({
+    initialRepos = await fetchTrending({
       topic: "hermes",
       since,
       page: 1,
       perPage: 100,
     });
-    await translateRepoDescriptions(data);
-    initialRepos = data;
   } catch (e) {
     console.error("[home] hermes SSR prefetch failed:", e);
   }
