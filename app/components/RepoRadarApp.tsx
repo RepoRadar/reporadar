@@ -660,29 +660,42 @@ export function RepoRadarApp() {
           ) : (
             <div className="flex flex-col gap-3">
               <div className="text-xs font-mono flex items-center gap-2 flex-wrap" style={{ color: "var(--fg-dim)" }}>
-                {lastQuery && (
-                  <>
-                    <span style={{ color: "var(--primary)" }}>›</span>
-                    {(() => {
-                      // Format "tag: claude-code-memory" with the value in
-                      // accent yellow so the user always knows what's
-                      // currently filtering the radar.
-                      const m = lastQuery.match(/^([^:]+:)\s*(.+)$/);
-                      if (m) {
-                        return (
-                          <>
-                            <span style={{ color: "var(--fg-dim)" }}>{m[1]}</span>{" "}
-                            <span style={{ color: "var(--accent)", fontWeight: 600 }}>
-                              {m[2]}
-                            </span>
-                          </>
-                        );
-                      }
-                      return <span style={{ color: "var(--accent)", fontWeight: 600 }}>{lastQuery}</span>;
-                    })()}
-                    <span style={{ color: "var(--fg-dim)" }}>·</span>
-                  </>
-                )}
+                {lastQuery && (() => {
+                  // Pill chip showing the active filter, with a ✕ to clear
+                  // back to the default trending pull.
+                  const m = lastQuery.match(/^([^:]+:)\s*(.+)$/);
+                  const prefix = m ? m[1] : "";
+                  const value = m ? m[2] : lastQuery;
+                  return (
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
+                      style={{
+                        borderColor: "var(--primary)",
+                        background: "rgba(34,197,94,0.10)",
+                        boxShadow: "0 0 12px var(--primary-glow)",
+                      }}
+                      title={`Active filter: ${lastQuery}. Click ✕ to clear and return to the default trending list.`}
+                    >
+                      {prefix && (
+                        <span className="text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--fg-dim)" }}>
+                          {prefix.replace(":", "")}
+                        </span>
+                      )}
+                      <span style={{ color: "var(--primary)", fontWeight: 600 }}>{value}</span>
+                      <button
+                        onClick={() => runQuery({ topic: "hermes", label: "trending: hermes" })}
+                        aria-label="Clear active filter"
+                        className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none transition"
+                        style={{
+                          background: "rgba(34,197,94,0.20)",
+                          color: "var(--primary)",
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  );
+                })()}
                 <span>{ranked.length} repos</span>
                 {priorities.length > 0 && (
                   <>
