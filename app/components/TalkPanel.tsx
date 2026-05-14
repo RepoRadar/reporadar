@@ -31,8 +31,11 @@ export function TalkPanel({
   const recogRef = useRef<unknown>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const speak = async (text: string) => {
-    if (!text) return;
+  const speak = async (text: string, onComplete?: () => void) => {
+    if (!text) {
+      onComplete?.();
+      return;
+    }
     try {
       setState("speaking");
       const res = await fetch("/api/talk/tts", {
@@ -50,17 +53,24 @@ export function TalkPanel({
       audio.onended = () => {
         URL.revokeObjectURL(url);
         setState("idle");
+        onComplete?.();
       };
     } catch {
       // Voice is best-effort — if TTS fails we still show the text and continue.
       setState("idle");
+      onComplete?.();
     }
   };
 
-  // Speak the greeting once when the panel mounts.
+  // Speak the greeting once when the panel mounts, then auto-start the mic
+  // so the user can just talk without having to tap a second button. The
+  // browser will surface the mic-permission prompt the first time; once
+  // granted it stays granted for the session.
   useEffect(() => {
     setState("greeting");
-    speak("Hey — what are you looking for? How can I help?");
+    speak("Hey — what are you looking for? How can I help?", () => {
+      startListening();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

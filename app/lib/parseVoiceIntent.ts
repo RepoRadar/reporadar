@@ -49,6 +49,7 @@ const FILLER_PATTERNS: RegExp[] = [
   /\b(do|does|did)\s+you\s+(?:know|have)\b/g,
   /\b(are|is|was|were|be|been|being|am)\b/g,
   /\b(about|with|for|of|that|this|those|these|than|then)\b/g,
+  /\b(on|in|at|to|from|into|onto|off|out|up|down|over|under|via|against)\b/g,
   /\b(by|using|like|similar\s+to|written\s+in|written|writing)\b/g,
   /\b(repo|repos|repository|repositories|project|projects)\b/g,
   /\b(some|the|a|an|any|all|every|each|many|much|few|several)\b/g,
