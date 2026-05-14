@@ -223,12 +223,19 @@ export function RepoRadarApp() {
           setHasMore(false);
           return;
         }
-        setRepos(rankRepos(data, weights, priorities));
+        const fresh = rankRepos(data, weights, priorities);
+        setRepos(fresh);
         setLastRefresh(Date.now());
         setLastQuery("trending: hermes");
         setPage(1);
         pageRef.current = 1;
         setHasMore(data.length >= 100);
+        // Auto-snap to the top repo on initial page load too (not just on
+        // tag clicks via runQuery) — radar/sliders populate and the #1
+        // card highlights green, matching the post-query behavior.
+        if (fresh.length > 0) {
+          selectRepoProfile(fresh[0]);
+        }
       } finally {
         if (!cancelled) setBootstrapping(false);
       }
