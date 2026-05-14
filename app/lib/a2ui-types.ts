@@ -19,7 +19,7 @@ export type A2UINode =
 
 export type A2UISurface = {
   title: string;
-  formFactor: "dashboard" | "playground" | "control-panel" | "wizard" | "widget-grid" | "reader";
+  formFactor: "dashboard" | "playground" | "control-panel" | "wizard" | "widget-grid" | "reader" | "needs-runtime";
   root: A2UINode;
   meta?: { repo?: string; hint?: string; generatedAt?: string };
 };
@@ -31,4 +31,5 @@ export const A2UI_FORM_FACTORS: A2UISurface["formFactor"][] = [
   "wizard",
   "widget-grid",
   "reader",
+  "needs-runtime",
 ];
