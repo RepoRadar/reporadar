@@ -125,18 +125,27 @@ function sinceIsoFor(w: TimeWindow): string | undefined {
   return d.toISOString().slice(0, 10);
 }
 
-export function RepoRadarApp() {
+export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = {}) {
   const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
   // Default sort priority is "Most Stars" — toggleable. Christo's spec.
   const [priorities, setPriorities] = useState<SortKey[]>(["stars"]);
-  const [repos, setRepos] = useState<ScoredRepo[]>([]);
+  // Server-prefetched Hermes data hydrates the initial card grid so the
+  // first paint includes cards instead of a loading dot animation. If the
+  // SSR fetch failed we fall back to the client-side bootstrap.
+  const [repos, setRepos] = useState<ScoredRepo[]>(() =>
+    initialRepos.length > 0
+      ? rankRepos(initialRepos, DEFAULT_WEIGHTS, ["stars"])
+      : [],
+  );
   const [activeCategory, setActiveCategory] = useState<string>("hermes");
-  const [lastQuery, setLastQuery] = useState<string>("");
+  const [lastQuery, setLastQuery] = useState<string>(
+    initialRepos.length > 0 ? "trending: hermes" : "",
+  );
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
   const [deployMode, setDeployMode] = useState<DeployMode>("modal");
   const [deployStatus, setDeployStatus] = useState<DeployStatus>("form");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
-  const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootstrapping, setBootstrapping] = useState(initialRepos.length === 0);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
   // Random example prompt for the empty/loading state. Picked once per
   // mount so the page feels different every visit. Picked in an effect
@@ -261,6 +270,23 @@ export function RepoRadarApp() {
   };
 
   useEffect(() => {
+    // Fast path: SSR already pre-fetched Hermes and hydrated `repos`.
+    // Skip the client-side fetch entirely; just auto-snap to the top
+    // repo so the radar populates + the #1 card highlights green.
+    if (initialRepos.length > 0) {
+      const fresh = rankRepos(initialRepos, DEFAULT_WEIGHTS, ["stars"]);
+      if (fresh.length > 0) {
+        selectRepoProfile(fresh[0]);
+      }
+      setLastRefresh(Date.now());
+      setPage(1);
+      pageRef.current = 1;
+      setHasMore(initialRepos.length >= 100);
+      return;
+    }
+
+    // Slow path: SSR failed (e.g. GitHub rate-limited) — fall back to a
+    // client-side bootstrap so the page still works.
     let cancelled = false;
     (async () => {
       try {
