@@ -25,6 +25,41 @@ import type { NotificationDigestItem } from "@/app/lib/notifications";
 // Header chip rendering moved to <HeaderControls>; this type is still used
 // by sinceIsoFor() and the activeCategory state machine.
 type TimeWindow = "30" | "90" | "365" | "all";
+
+// Rotating example prompts shown in the empty/loading state. One picked at
+// random on each page load so the dashboard doesn't feel canned.
+const EXAMPLE_PROMPTS: string[] = [
+  "Give me some OpenClaw skills for design",
+  "Hermes skill packs for finance",
+  "agent orchestrators",
+  "paperclip-style agents",
+  "Cloudflare Workers repos",
+  "MCP servers for Claude Desktop",
+  "production-grade RAG in TypeScript",
+  "voice agents with 11Labs",
+  "open-source code review tools",
+  "Next.js starters with auth",
+  "vector databases for embeddings",
+  "AI evals frameworks",
+  "self-hosted LLM gateways",
+  "agentic browser automation",
+  "Python data engineering pipelines",
+  "Rust CLI tools that shipped this month",
+  "Stable Diffusion fine-tuning kits",
+  "Cloudflare D1 examples",
+  "WebRTC voice apps",
+  "real-time collab editors",
+  "TypeScript AI SDKs",
+  "podcast generation tools",
+  "embedding visualization libraries",
+  "GitHub Actions for AI",
+  "WebSocket-based agent infra",
+  "no-code AI workflow builders",
+  "trading bots with backtesting",
+  "developer copilots for Vim",
+  "MCP clients I can self-host",
+  "agent memory backends",
+];
 type DeployMode = "modal" | "panel";
 type DeployStatus = "form" | "running" | "done" | "error";
 
@@ -103,6 +138,14 @@ export function RepoRadarApp() {
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
+  // Random example prompt for the empty/loading state. Picked once per
+  // mount so the page feels different every visit. Picked in an effect
+  // (not in useState init) so the server-rendered HTML matches the first
+  // client paint — otherwise React throws a hydration mismatch.
+  const [examplePrompt, setExamplePrompt] = useState<string>(EXAMPLE_PROMPTS[0]);
+  useEffect(() => {
+    setExamplePrompt(EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)]);
+  }, []);
   const [lastRefresh, setLastRefresh] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -157,12 +200,17 @@ export function RepoRadarApp() {
     setPriorities((p) => (p.length === 1 && p[0] === "stars" ? [] : p));
   };
 
-  // Click a card → snap weights to that repo's dimensional profile so the
-  // hex polygon morphs and every slider animates to match. Side effect:
-  // the ranking re-orders to put similar repos near the top.
+  // Click a card → snap the radar/sliders to that repo's dimensional profile
+  // so the user can SEE what kind of repo it is. We deliberately call
+  // setWeights directly here (not tuneWeights) so we don't clear the
+  // "Most Stars" priority — that priority-clearing side effect would let
+  // weighted-sum take over the rank, which bubbles the clicked card to
+  // position #1 every time and the list re-shuffles under the user's
+  // cursor. Clicking is now purely visual: highlight + radar update, no
+  // reorder.
   const selectRepoProfile = (r: ScoredRepo) => {
     setSelectedRepo(r.fullName);
-    tuneWeights({
+    setWeights({
       momentum: r.dimensions.momentum / 100,
       velocity: r.dimensions.velocity / 100,
       maturity: r.dimensions.maturity / 100,
@@ -644,17 +692,35 @@ export function RepoRadarApp() {
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
           {ranked.length === 0 ? (
             <div
-              className="flex min-h-[28rem] flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center rr-fade-up"
+              className="flex min-h-[28rem] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-6 text-center rr-fade-up"
               style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
             >
+              {bootstrapping && (
+                <div className="flex items-center gap-2" aria-label="Loading">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full animate-bounce"
+                    style={{ background: "var(--primary)", animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="inline-block h-2 w-2 rounded-full animate-bounce"
+                    style={{ background: "var(--primary)", animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="inline-block h-2 w-2 rounded-full animate-bounce"
+                    style={{ background: "var(--primary)", animationDelay: "300ms" }}
+                  />
+                </div>
+              )}
               <span className="text-sm" style={{ color: "var(--fg)" }}>
-                Ask the agent or use the search box:{" "}
+                Try:{" "}
                 <span className="font-mono" style={{ color: "var(--primary)" }}>
-                  &quot;something for podcasts&quot;
+                  &quot;{examplePrompt}&quot;
                 </span>
               </span>
-              <span className="mt-2 text-xs" style={{ color: "var(--fg-dim)" }}>
-                Repo cards will materialize here, agent-summarized and ranked by your sliders + sort priorities.
+              <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
+                {bootstrapping
+                  ? "Pulling the latest from GitHub…"
+                  : "Repo cards will materialize here, agent-summarized and ranked by your sliders + sort priorities."}
               </span>
             </div>
           ) : (

@@ -38,6 +38,9 @@ export function HeaderControls({
   onSetTimeWindow: (next: TimeWindow) => void;
 }) {
   const [active, setActive] = useState<ActivePanel>(null);
+  // Number of times the user has submitted a voice query in this session,
+  // so TalkPanel can rotate first-turn vs follow-up greetings.
+  const [talkTurns, setTalkTurns] = useState(0);
 
   useEffect(() => {
     if (!active) return;
@@ -160,8 +163,10 @@ export function HeaderControls({
       )}
       {active === "talk" && (
         <TalkPanel
+          turnIndex={talkTurns}
           onSubmit={(intent) => {
             onRunQuery(intent);
+            setTalkTurns((n) => n + 1);
             setActive(null);
           }}
           onClose={() => setActive(null)}

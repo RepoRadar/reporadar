@@ -17,11 +17,21 @@ type Intent = { topic?: string; query?: string };
 
 // Order matters: longer / more specific patterns first, so "claude code"
 // wins before "claude" (currently not in our topic set, but defensive).
+// Patterns include the obvious spellings PLUS the common voice-transcription
+// variants. Web Speech API often returns things like "n eight n" for "n8n",
+// "a two u i" for "a2ui", and "cloud code" (homophone) for "claude code".
+// More specific patterns come first so partial matches don't win.
 const TOPIC_PATTERNS: Array<[RegExp, string]> = [
-  [/\bclaude[\s-]?code\b/, "claude-code"],
+  // claude-code + "cloud code" homophone the Web Speech API loves to produce.
+  [/\b(?:claude|cloud)[\s-]?code\b/, "claude-code"],
+  // ag-ui — "ag ui", "a g u i", "agee yoo eye"
+  [/\b(?:a[\s-]?g|agee|ag)[\s-]?(?:u[\s-]?i|you[\s-]?eye|yoo[\s-]?eye)\b/, "ag-ui"],
   [/\bag[\s-]?ui\b/, "ag-ui"],
+  // a2ui — "a 2 u i", "a two ui", "a two you eye"
+  [/\ba\s*(?:2|two)\s*(?:u[\s-]?i|you[\s-]?eye|ui)\b/, "a2ui"],
   [/\ba2[\s-]?ui\b/, "a2ui"],
   [/\bgenerative[\s-]?ui\b/, "generative-ui"],
+  [/\bgenerative\s+you[\s-]?eye\b/, "generative-ui"],
   [/\bmodel\s+context\s+protocol\b/, "mcp"],
   [/\bvoice[\s-]?ai\b/, "voice-ai"],
   [/\bopen[\s-]?claw\b/, "openclaw"],
@@ -31,9 +41,12 @@ const TOPIC_PATTERNS: Array<[RegExp, string]> = [
   [/\bgemini\b/, "gemini"],
   [/\banthropic\b/, "anthropic"],
   [/\bopen[\s-]?ai\b/, "openai"],
+  // n8n — the trickiest. STT renders it as "n8n", "n 8 n", "n eight n",
+  // "n-8-n", or even "and 8 and"/"and eight and".
+  [/\b(?:n|and)\s*(?:8|eight)\s*(?:n|and)\b/, "n8n"],
   [/\bn8n\b/, "n8n"],
   [/\bmcp\b/, "mcp"],
-  [/\bagent(s)?\b/, "agents"],
+  [/\bagent(?:s)?\b/, "agents"],
   [/\brag\b/, "rag"],
 ];
 

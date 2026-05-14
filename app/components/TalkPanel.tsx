@@ -5,6 +5,34 @@ import { parseVoiceIntent } from "@/app/lib/parseVoiceIntent";
 
 type TalkState = "idle" | "greeting" | "listening" | "thinking" | "speaking" | "error";
 
+// Conversational greeting variety. First-turn greetings open the conversation;
+// follow-up greetings ride on top of an existing search so the user feels
+// like they're refining, not starting over.
+const FIRST_TURN_GREETINGS: string[] = [
+  "Hey - what are you looking for?",
+  "How can I help?",
+  "What's on your mind?",
+  "What are you looking to achieve?",
+  "Hey - what kind of repo do you need?",
+  "Hi - what would you like to find?",
+  "What can I dig up for you?",
+];
+
+const FOLLOWUP_GREETINGS: string[] = [
+  "What else can I help with?",
+  "How would you like to refine this?",
+  "Want to look for something different?",
+  "Want to narrow that down?",
+  "Anything else you'd like to find?",
+  "What direction next?",
+  "Want me to filter this further?",
+];
+
+function pickGreeting(turnIndex: number): string {
+  const pool = turnIndex === 0 ? FIRST_TURN_GREETINGS : FOLLOWUP_GREETINGS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // In-browser voice loop:
 //   1. mount → 11Labs TTS greets via /api/talk/tts (Archer voice)
 //   2. user clicks mic → Web Speech API captures → final transcript
@@ -16,16 +44,20 @@ type TalkState = "idle" | "greeting" | "listening" | "thinking" | "speaking" | "
 // mic still captures + transcribes + submits. Without SpeechRecognition the
 // user sees a clear "voice not supported" message.
 export function TalkPanel({
+  turnIndex,
   onSubmit,
   onClose,
 }: {
+  turnIndex: number;
   onSubmit: (intent: { topic?: string; query?: string; label: string }) => void;
   onClose: () => void;
 }) {
   const [state, setState] = useState<TalkState>("idle");
   const [transcript, setTranscript] = useState("");
+  // Initialize to a stable placeholder so SSR + first client paint match;
+  // the real (randomized) greeting is set in the mount effect below.
   const [agentSay, setAgentSay] = useState<string>(
-    "Hey - what are you looking for? How can I help?",
+    turnIndex === 0 ? FIRST_TURN_GREETINGS[0] : FOLLOWUP_GREETINGS[0],
   );
   const [error, setError] = useState<string | null>(null);
   const recogRef = useRef<unknown>(null);
@@ -67,8 +99,10 @@ export function TalkPanel({
   // browser will surface the mic-permission prompt the first time; once
   // granted it stays granted for the session.
   useEffect(() => {
+    const greeting = pickGreeting(turnIndex);
+    setAgentSay(greeting);
     setState("greeting");
-    speak("Hey - what are you looking for? How can I help?", () => {
+    speak(greeting, () => {
       startListening();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -132,6 +132,22 @@ export function TagsPanel({
           );
         })}
       </div>
+      {/* A second Done sits directly under the chips so the user doesn't
+          have to fly the cursor back up to the top-right after picking. */}
+      <div className="mt-3 flex items-center justify-end">
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="rounded-md border px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] transition"
+          style={{
+            borderColor: "var(--primary)",
+            background: "var(--primary)",
+            color: "#08070d",
+          }}
+        >
+          Done ✓
+        </button>
+      </div>
     </div>
   );
 }
