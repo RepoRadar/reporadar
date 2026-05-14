@@ -163,6 +163,10 @@ function shellHtml(slug: string): string {
       <a href="https://reporadar.io">↗ reporadar.io</a>
     </header>
     <div id="root"><div class="loading">loading surface…</div></div>
+    <footer style="margin-top:32px;padding:16px 12px;border-top:1px solid rgba(255,255,255,0.08);font:11px ui-monospace,monospace;color:#6b6878;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;">
+      <span>Built by <a href="https://github.com/letsgochristo" target="_blank" rel="noopener noreferrer" style="color:#22c55e;text-decoration:none;">@letsgochristo</a> + <a href="https://github.com/priyanshuharshbodhi1" target="_blank" rel="noopener noreferrer" style="color:#22c55e;text-decoration:none;">@priyanshuharshbodhi1</a> at AI Tinkerers SF</span>
+      <span><a href="https://github.com/RepoRadar/reporadar" target="_blank" rel="noopener noreferrer" style="color:#22d3ee;text-decoration:none;">github.com/RepoRadar/reporadar</a> · MIT</span>
+    </footer>
     <script type="module">
       const surface = await fetch("/surface.json").then(r => r.json()).catch(() => null);
       if (!surface) {
@@ -428,6 +432,14 @@ function render(node) {
           const name = action.slice(10);
           const next = b.parentElement && b.parentElement.querySelector("[data-rr-counter='" + name + "']");
           return incrementCounter(name, next);
+        }
+        // link:<url> — open an external URL in a new tab. Used by the
+        // needs-runtime explainer surfaces so users can ping the team
+        // on GitHub when a repo can't be statically demoed.
+        if (action.startsWith("link:")) {
+          const url = action.slice(5);
+          try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+          return;
         }
         toast("action: " + action);
       });
