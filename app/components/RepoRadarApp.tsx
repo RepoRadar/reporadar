@@ -18,6 +18,7 @@ import { InteractiveRadar } from "@/app/components/InteractiveRadar";
 import { type SortKey } from "@/app/components/PriorityBar";
 import { HeaderControls, type TimeWindow as HeaderTimeWindow } from "@/app/components/HeaderControls";
 import { DeployForm } from "@/app/components/DeployForm";
+import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
 
@@ -591,7 +592,7 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
           </span>
         </button>
         <div
-          className="flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-[11px] font-mono"
+          className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-[11px] font-mono"
           style={{ color: "var(--fg-dim)" }}
         >
           <span style={{ color: "var(--accent)" }}>{process.env.NEXT_PUBLIC_APP_VERSION || "v0.4"}</span>
@@ -642,6 +643,9 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
               ↻
             </button>
           </span>
+          <FeedbackWidget
+            context={`Active query: ${lastQuery || "none"}. Visible repos: ${ranked.length}. Priorities: ${priorities.join(",") || "weighted score"}.`}
+          />
         </div>
       </header>
 
