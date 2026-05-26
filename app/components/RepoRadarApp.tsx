@@ -17,6 +17,7 @@ import { RepoCard } from "@/app/components/RepoCard";
 import { InteractiveRadar } from "@/app/components/InteractiveRadar";
 import { type SortKey } from "@/app/components/PriorityBar";
 import { HeaderControls, type TimeWindow as HeaderTimeWindow } from "@/app/components/HeaderControls";
+import { buildShareUrl } from "@/app/lib/shareUrl";
 import { DeployForm } from "@/app/components/DeployForm";
 import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
@@ -126,28 +127,47 @@ function sinceIsoFor(w: TimeWindow): string | undefined {
   return d.toISOString().slice(0, 10);
 }
 
-export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = {}) {
+export function RepoRadarApp({
+  initialRepos = [],
+  initialQuery,
+  initialPriorities,
+  initialTimeWindow,
+}: {
+  initialRepos?: Repo[];
+  // Hydration from a shared URL (?topic / ?q / ?sort / ?window), parsed
+  // server-side in app/page.tsx. Absent → the default Hermes trending view.
+  initialQuery?: { topic?: string; query?: string; label: string };
+  initialPriorities?: SortKey[];
+  initialTimeWindow?: TimeWindow;
+} = {}) {
+  // Resolve the initial sort once so the prop-hydrated state and the initial
+  // ranking agree (a shared ?sort= link should rank + snap by that sort).
+  const startPriorities: SortKey[] = initialPriorities ?? ["stars"];
   const [weights, setWeights] = useState<DimensionWeights>(DEFAULT_WEIGHTS);
   // Default sort priority is "Most Stars" — toggleable. Christo's spec.
-  const [priorities, setPriorities] = useState<SortKey[]>(["stars"]);
-  // Server-prefetched Hermes data hydrates the initial card grid so the
-  // first paint includes cards instead of a loading dot animation. If the
-  // SSR fetch failed we fall back to the client-side bootstrap.
+  const [priorities, setPriorities] = useState<SortKey[]>(startPriorities);
+  // Server-prefetched data hydrates the initial card grid so the first paint
+  // includes cards instead of a loading dot animation. For a shared link this
+  // is the shared topic/query's repos; otherwise the default Hermes pull. If
+  // the SSR fetch failed we fall back to the client-side bootstrap.
   const [repos, setRepos] = useState<ScoredRepo[]>(() =>
     initialRepos.length > 0
-      ? rankRepos(initialRepos, DEFAULT_WEIGHTS, ["stars"])
+      ? rankRepos(initialRepos, DEFAULT_WEIGHTS, startPriorities)
       : [],
   );
-  const [activeCategory, setActiveCategory] = useState<string>("hermes");
+  // activeCategory holds comma-joined topics; "" means freeform-query mode.
+  const [activeCategory, setActiveCategory] = useState<string>(
+    initialQuery ? (initialQuery.topic ?? "") : "hermes",
+  );
   const [lastQuery, setLastQuery] = useState<string>(
-    initialRepos.length > 0 ? "trending: hermes" : "",
+    initialRepos.length > 0 ? (initialQuery?.label ?? "trending: hermes") : "",
   );
   const [activeDeploy, setActiveDeploy] = useState<{ repo: ScoredRepo } | null>(null);
   const [deployMode, setDeployMode] = useState<DeployMode>("modal");
   const [deployStatus, setDeployStatus] = useState<DeployStatus>("form");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(initialRepos.length === 0);
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("365");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>(initialTimeWindow ?? "365");
   // Random example prompt for the empty/loading state. Picked once per
   // mount so the page feels different every visit. Picked in an effect
   // (not in useState init) so the server-rendered HTML matches the first
@@ -162,7 +182,13 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   // Stash the last successful query so infinite-scroll knows what to fetch next.
-  const queryRef = useRef<{ topic?: string; query?: string }>({ topic: "hermes", query: "hermes" });
+  // Hydrated from a shared link when present so the slow-path bootstrap + load-more
+  // fetch the shared view, not the default.
+  const queryRef = useRef<{ topic?: string; query?: string }>(
+    initialQuery
+      ? { topic: initialQuery.topic, query: initialQuery.query }
+      : { topic: "hermes", query: "hermes" },
+  );
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const deployPanelRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef(1);
@@ -256,14 +282,17 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
   // The scoring heuristic (app/lib/scoring.ts) falls back to description
   // length and pushedAt freshness when readmeLength/recentCommits are 0.
   const buildParams = (
-    overrides: { topic?: string; query?: string; page?: number; limit?: number } = {},
+    overrides: { topic?: string; query?: string; window?: TimeWindow; page?: number; limit?: number } = {},
   ) => {
     const p = new URLSearchParams();
     const topic = overrides.topic ?? queryRef.current.topic;
     const query = overrides.query ?? queryRef.current.query;
     if (topic) p.set("topic", topic);
     if (query) p.set("q", query);
-    const since = sinceIsoFor(timeWindow);
+    // `window` override lets a caller fetch at a specific window in the same
+    // tick a setTimeWindow() is scheduled (state hasn't committed yet) — used
+    // by the logo "home" reset so its single fetch uses the default window.
+    const since = sinceIsoFor(overrides.window ?? timeWindow);
     if (since) p.set("since", since);
     p.set("page", String(overrides.page ?? 1));
     p.set("limit", String(overrides.limit ?? 100));
@@ -271,11 +300,12 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
   };
 
   useEffect(() => {
-    // Fast path: SSR already pre-fetched Hermes and hydrated `repos`.
-    // Skip the client-side fetch entirely; just auto-snap to the top
-    // repo so the radar populates + the #1 card highlights green.
+    // Fast path: SSR already pre-fetched the view (default Hermes, or the
+    // shared topic/query) and hydrated `repos`. Skip the client-side fetch
+    // entirely; just auto-snap to the top repo so the radar populates + the
+    // #1 card highlights green.
     if (initialRepos.length > 0) {
-      const fresh = rankRepos(initialRepos, DEFAULT_WEIGHTS, ["stars"]);
+      const fresh = rankRepos(initialRepos, DEFAULT_WEIGHTS, startPriorities);
       if (fresh.length > 0) {
         selectRepoProfile(fresh[0]);
       }
@@ -301,7 +331,7 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
         const fresh = rankRepos(data, weights, priorities);
         setRepos(fresh);
         setLastRefresh(Date.now());
-        setLastQuery("trending: hermes");
+        setLastQuery(initialQuery?.label ?? "trending: hermes");
         setPage(1);
         pageRef.current = 1;
         setHasMore(data.length >= 100);
@@ -321,7 +351,7 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runQuery = async ({ topic, query, label }: { topic?: string; query?: string; label: string }) => {
+  const runQuery = async ({ topic, query, label, window }: { topic?: string; query?: string; label: string; window?: TimeWindow }) => {
     setBootstrapping(true);
     setLoadMoreError(null);
     setSelectedRepo(null);
@@ -336,7 +366,7 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
     setLastQuery(label);
     queryRef.current = { topic, query };
     try {
-      const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 100 })}`);
+      const res = await fetch(`/api/repos?${buildParams({ topic, query, window, page: 1, limit: 100 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         const fresh = rankRepos(data, weights, priorities);
@@ -400,17 +430,73 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
     }
   };
 
+  // Mirror the current search into the address bar so the view is copy-pasteable
+  // and shareable: topics (?topic), a freeform ask (?q), the sort filters (?sort),
+  // and the time window (?window). The default Hermes view collapses to "/".
+  //
+  // Uses the native History API — Next 16 integrates pushState/replaceState with
+  // the App Router, so this updates the URL WITHOUT a navigation or server
+  // re-render. The client already holds the data (runQuery fetched it), so there's
+  // no double-fetch. replaceState (not pushState) keeps rapid tag toggling from
+  // bloating the back stack. Idempotent: on a shared-link load this reconstructs
+  // the same URL the state was hydrated from, so it never loops or clobbers.
+  //
+  // Keyed on lastQuery (not queryRef, which is a ref): runQuery sets lastQuery and
+  // queryRef together, so the effect fires and reads the fresh freeform query.
+  //
+  // First-mount guard: skip the initial hydration pass so we don't rewrite the
+  // URL the instant a shared link loads. The incoming params are already parsed
+  // + sanitized server-side (parseShareParams), so the view is correct; leaving
+  // the URL untouched on arrival preserves any #fragment and non-schema params
+  // (utm_*, ref, gclid) on a freshly opened link. We only start writing the
+  // canonical URL once the user actually changes the search.
+  const isFirstUrlSync = useRef(true);
+  useEffect(() => {
+    if (isFirstUrlSync.current) {
+      isFirstUrlSync.current = false;
+      return;
+    }
+    const freeform = !activeCategory;
+    const url = buildShareUrl({
+      topic: freeform ? undefined : activeCategory,
+      query: freeform ? queryRef.current.query : undefined,
+      priorities,
+      timeWindow,
+    });
+    window.history.replaceState(null, "", url);
+  }, [activeCategory, lastQuery, priorities, timeWindow]);
+
   // Re-run on time-window change (after initial mount).
   const isFirstWindow = useRef(true);
+  // Set when another handler (logo "home" reset) changes the window AND issues
+  // its own fetch — suppresses this effect's duplicate fetch (and the race
+  // between the two) for that one change.
+  const skipNextWindowEffect = useRef(false);
   useEffect(() => {
     if (isFirstWindow.current) {
       isFirstWindow.current = false;
+      return;
+    }
+    if (skipNextWindowEffect.current) {
+      skipNextWindowEffect.current = false;
       return;
     }
     const { topic, query } = queryRef.current;
     runQuery({ topic, query, label: lastQuery || "trending" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeWindow]);
+
+  // "Take me home" — reset EVERY dimension the URL serializes (topic → hermes,
+  // sort → Most Stars, window → default 1y) so the address bar collapses to a
+  // clean "/". Shared by the logo and the active-filter ✕. Fetches once with an
+  // explicit window override and suppresses the time-window effect's duplicate
+  // fetch (see skipNextWindowEffect) to avoid a redundant call + race.
+  const resetToHome = () => {
+    setPriorities(["stars"]);
+    if (timeWindow !== "365") skipNextWindowEffect.current = true;
+    setTimeWindow("365");
+    runQuery({ topic: "hermes", label: "trending: hermes", window: "365" });
+  };
 
   // IntersectionObserver — when the sentinel scrolls into view, load more.
   useEffect(() => {
@@ -465,6 +551,10 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
       setLastQuery(summary ?? trimmedQuery ?? normalizedTopic ?? "");
       if (normalizedTopic) setActiveCategory(normalizedTopic);
       else if (trimmedQuery) setActiveCategory("");
+      // Keep queryRef in sync (as runQuery does) so the URL-sync effect and
+      // infinite-scroll see this Copilot search, not the previous one — without
+      // this, a freeform ask via chat would serialize a stale ?q= into the URL.
+      queryRef.current = { topic: normalizedTopic || undefined, query: trimmedQuery || undefined };
 
       const params = new URLSearchParams();
       if (normalizedTopic) params.set("topic", normalizedTopic);
@@ -562,11 +652,8 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
         <button
           type="button"
           onClick={() => {
-            // Logo click = "take me home". Reset to default trending pull
-            // (Hermes, Most Stars) so the user always has a clean starting
-            // point during the demo without a full page reload.
-            setPriorities(["stars"]);
-            runQuery({ topic: "hermes", label: "trending: hermes" });
+            // Logo click = "take me home". Full default reset → clean "/".
+            resetToHome();
           }}
           className="flex items-center gap-3 rounded-md transition hover:opacity-80"
           title="Reset to the default Hermes trending view"
@@ -779,7 +866,7 @@ export function RepoRadarApp({ initialRepos = [] }: { initialRepos?: Repo[] } = 
                       )}
                       <span style={{ color: "var(--primary)", fontWeight: 600 }}>{value}</span>
                       <button
-                        onClick={() => runQuery({ topic: "hermes", label: "trending: hermes" })}
+                        onClick={resetToHome}
                         aria-label="Clear active filter"
                         className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none transition"
                         style={{
