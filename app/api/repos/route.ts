@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const topic = params.get("topic") ?? "";
   const query = params.get("q") ?? "";
-  const since = params.get("since") ?? ""; // YYYY-MM-DD; empty = default 30d
+  const since = params.get("since") ?? ""; // YYYY-MM-DD; empty = no cutoff (all-time)
   const page = Math.max(1, parseInt(params.get("page") ?? "1", 10) || 1);
   // Big-page mode: up to 100 per request (GitHub Search API's per_page cap).
   const limit = Math.min(100, Math.max(1, parseInt(params.get("limit") ?? "10", 10) || 10));

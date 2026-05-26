@@ -131,16 +131,33 @@ test.describe("shareable search URLs", () => {
     expect(consoleErrors, consoleErrors.join("\n")).toEqual([]);
   });
 
-  test("malformed ?sort self-heals: invalid dropped, capped at 3", async ({ page }) => {
+  test("malformed ?sort is sanitized into state, canonicalized on interaction", async ({ page }) => {
     await go(page, "/?sort=bogus,stars,velocity,maturity,security");
-    await expectSearch(page, "?sort=stars,velocity,maturity");
+    // parseShareParams drops the unknown key and caps at 3 → 3 active priorities.
     expect(await controlText(page, FILTER)).toContain("3/3");
+    // First-mount guard leaves the incoming URL untouched; once the user changes
+    // the search, the URL serializes the sanitized (canonical) sort.
+    await page.locator('button:text-is("All")').click();
+    await expectSearch(page, "?sort=stars,velocity,maturity&window=all");
   });
 
-  test("invalid ?window and empty ?topic self-heal to a clean URL", async ({ page }) => {
+  test("invalid ?window and empty ?topic are sanitized into the default state", async ({ page }) => {
     await go(page, "/?window=banana&topic=");
-    await expectSearch(page, "");
     expect(await controlText(page, TAGS)).toContain("hermes");
+    await expectWindowActive(page, "1y");
+  });
+
+  test("a landing link keeps foreign params + hash; canonicalizes after interaction", async ({ page }) => {
+    await go(page, "/?topic=cloudflare&utm_source=twitter#section");
+    // First-mount guard: the landing URL is untouched, so tracking params and
+    // the fragment survive (important for links pasted into analytics channels).
+    expect(page.url()).toContain("utm_source=twitter");
+    expect(page.url()).toContain("#section");
+    expect(await controlText(page, TAGS)).toContain("cloudflare");
+    // Once the user changes the search, the URL becomes the clean canonical form.
+    await page.click(TAGS);
+    await page.locator('button:text-is("Gemini")').click();
+    await expectSearch(page, "?topic=cloudflare,gemini");
   });
 
   test("logo reset fully clears topic + sort + window to a clean /", async ({ page }) => {

@@ -442,7 +442,19 @@ export function RepoRadarApp({
   //
   // Keyed on lastQuery (not queryRef, which is a ref): runQuery sets lastQuery and
   // queryRef together, so the effect fires and reads the fresh freeform query.
+  //
+  // First-mount guard: skip the initial hydration pass so we don't rewrite the
+  // URL the instant a shared link loads. The incoming params are already parsed
+  // + sanitized server-side (parseShareParams), so the view is correct; leaving
+  // the URL untouched on arrival preserves any #fragment and non-schema params
+  // (utm_*, ref, gclid) on a freshly opened link. We only start writing the
+  // canonical URL once the user actually changes the search.
+  const isFirstUrlSync = useRef(true);
   useEffect(() => {
+    if (isFirstUrlSync.current) {
+      isFirstUrlSync.current = false;
+      return;
+    }
     const freeform = !activeCategory;
     const url = buildShareUrl({
       topic: freeform ? undefined : activeCategory,
@@ -472,6 +484,18 @@ export function RepoRadarApp({
     runQuery({ topic, query, label: lastQuery || "trending" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeWindow]);
+
+  // "Take me home" — reset EVERY dimension the URL serializes (topic → hermes,
+  // sort → Most Stars, window → default 1y) so the address bar collapses to a
+  // clean "/". Shared by the logo and the active-filter ✕. Fetches once with an
+  // explicit window override and suppresses the time-window effect's duplicate
+  // fetch (see skipNextWindowEffect) to avoid a redundant call + race.
+  const resetToHome = () => {
+    setPriorities(["stars"]);
+    if (timeWindow !== "365") skipNextWindowEffect.current = true;
+    setTimeWindow("365");
+    runQuery({ topic: "hermes", label: "trending: hermes", window: "365" });
+  };
 
   // IntersectionObserver — when the sentinel scrolls into view, load more.
   useEffect(() => {
@@ -526,6 +550,10 @@ export function RepoRadarApp({
       setLastQuery(summary ?? trimmedQuery ?? normalizedTopic ?? "");
       if (normalizedTopic) setActiveCategory(normalizedTopic);
       else if (trimmedQuery) setActiveCategory("");
+      // Keep queryRef in sync (as runQuery does) so the URL-sync effect and
+      // infinite-scroll see this Copilot search, not the previous one — without
+      // this, a freeform ask via chat would serialize a stale ?q= into the URL.
+      queryRef.current = { topic: normalizedTopic || undefined, query: trimmedQuery || undefined };
 
       const params = new URLSearchParams();
       if (normalizedTopic) params.set("topic", normalizedTopic);
@@ -623,16 +651,8 @@ export function RepoRadarApp({
         <button
           type="button"
           onClick={() => {
-            // Logo click = "take me home". Reset to the full default view —
-            // Hermes, Most Stars, AND the default 1-year window — so the URL
-            // collapses to a clean "/" and the user gets a true clean starting
-            // point during the demo without a full page reload. We fetch once
-            // with an explicit window override and suppress the time-window
-            // effect's duplicate fetch (see skipNextWindowEffect).
-            setPriorities(["stars"]);
-            if (timeWindow !== "365") skipNextWindowEffect.current = true;
-            setTimeWindow("365");
-            runQuery({ topic: "hermes", label: "trending: hermes", window: "365" });
+            // Logo click = "take me home". Full default reset → clean "/".
+            resetToHome();
           }}
           className="flex items-center gap-3 rounded-md transition hover:opacity-80"
           title="Reset to the default Hermes trending view"
@@ -842,7 +862,7 @@ export function RepoRadarApp({
                       )}
                       <span style={{ color: "var(--primary)", fontWeight: 600 }}>{value}</span>
                       <button
-                        onClick={() => runQuery({ topic: "hermes", label: "trending: hermes" })}
+                        onClick={resetToHome}
                         aria-label="Clear active filter"
                         className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] leading-none transition"
                         style={{

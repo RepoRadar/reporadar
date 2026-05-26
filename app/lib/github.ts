@@ -12,12 +12,6 @@ function octokit() {
   return _octokit;
 }
 
-const SINCE_ISO = (() => {
-  const d = new Date();
-  d.setDate(d.getDate() - 30);
-  return d.toISOString().slice(0, 10);
-})();
-
 /**
  * Fetch a pool of trending public repos. Tries (in order) topic-filtered
  * recency-windowed → keyword search → all-time keyword. The first non-empty
@@ -27,7 +21,7 @@ const SINCE_ISO = (() => {
 export async function fetchTrending({
   topic,
   query,
-  since,        // ISO date string e.g. "2026-04-10". Defaults to last 30d.
+  since,        // ISO date "YYYY-MM-DD". Omit (undefined) for NO cutoff (all-time).
   page = 1,     // GitHub search pagination — caps at 1000 total results
   perPage = 30,
 }: {
@@ -40,7 +34,13 @@ export async function fetchTrending({
   const tiers: string[][] = [];
   const t = (topic || "").trim().toLowerCase();
   const q = (query || "").trim();
-  const sinceIso = (since || SINCE_ISO).slice(0, 10);
+  // Apply a recency cutoff ONLY when `since` is provided. Omitting it (the
+  // "All" time window) yields no `pushed:>` filter → a true all-time search.
+  // Previously an absent `since` silently fell back to a 30-day window, so
+  // "All" returned a *narrower* set than the 1-year default — the opposite of
+  // intent. `recency` is spread into each tier so it simply vanishes for "All".
+  const sinceIso = since ? since.slice(0, 10) : "";
+  const recency = sinceIso ? [`pushed:>${sinceIso}`] : [];
 
   // Multi-tag support: topic can be a comma-joined list ("hermes,cloudflare")
   // meaning "repos tagged BOTH". Single-tag behavior is preserved when there's
@@ -55,16 +55,16 @@ export async function fetchTrending({
   // Tier 1: keyword in:name,description — surfaces repos NAMED that thing
   // first (Christo's "I expect Peter Steinberg's OpenClaw to be #1" rule).
   if (keyword) {
-    tiers.push([keyword, "in:name,description", `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+    tiers.push([keyword, "in:name,description", ...recency, "is:public", "stars:>10"]);
   }
 
   // Tier 2: topic-tag match within the time window. Multiple topics ANDed.
   if (topics.length > 0) {
-    tiers.push([...topicFilters, `pushed:>${sinceIso}`, "is:public", "stars:>10"]);
+    tiers.push([...topicFilters, ...recency, "is:public", "stars:>10"]);
   }
 
   // Tier 3: broader keyword search (anywhere in repo content).
-  if (keyword) tiers.push([keyword, `pushed:>${sinceIso}`, "is:public", "stars:>50"]);
+  if (keyword) tiers.push([keyword, ...recency, "is:public", "stars:>50"]);
 
   // Tier 4: all-time keyword fallback so we always show *something*.
   if (keyword) tiers.push([keyword, "is:public", "stars:>200"]);
@@ -76,7 +76,7 @@ export async function fetchTrending({
   }
 
   // Tier 5: pure recency (no topic) — final fallback for empty input.
-  if (tiers.length === 0) tiers.push([`pushed:>${sinceIso}`, "is:public", "stars:>50"]);
+  if (tiers.length === 0) tiers.push([...recency, "is:public", "stars:>50"]);
 
   for (const tier of tiers) {
     try {
