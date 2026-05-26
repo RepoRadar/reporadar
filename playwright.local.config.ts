@@ -22,6 +22,11 @@ export default defineConfig({
   testMatch: /share-url\.spec\.ts/,
   fullyParallel: false,
   retries: 1,
+  // Per-test budget must exceed navigationTimeout below: the home route SSR-
+  // prefetches from GitHub (uncached, and `window=all` is a heavier all-time
+  // query), which on a local box can be slow. Default 30s would cut off a slow
+  // goto before navigation even times out.
+  timeout: 90_000,
   reporter: [["list"]],
   use: {
     baseURL: BASE,
