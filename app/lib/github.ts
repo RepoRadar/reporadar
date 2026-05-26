@@ -1,12 +1,33 @@
 import { Octokit } from "octokit";
 import type { Repo } from "./types";
 
+// Total wall-clock budget for one fetchTrending call (across all fallback
+// tiers). Keeps a single request well under the Cloudflare Worker time limit
+// even when anonymous GitHub connections hang under shared-IP rate-limiting.
+const FETCH_BUDGET_MS = 6000;
+
 let _octokit: Octokit | null = null;
 function octokit() {
   if (!_octokit) {
     _octokit = new Octokit({
       auth: process.env.GITHUB_TOKEN || undefined,
       userAgent: "reporadar/0.1",
+      // Fail fast instead of sleeping. Octokit's throttling plugin defaults to
+      // WAITING OUT a rate-limit before retrying — the anon limit is tiny and
+      // shared across all visitors via Cloudflare's egress IPs, so it sleeps
+      // ~48s. In a Cloudflare Worker that blows the request time limit → an
+      // uncatchable 500 on the home page's SSR prefetch. Returning false from
+      // these handlers tells the plugin NOT to retry, so a rate-limited call
+      // throws immediately; fetchTrending's per-tier try/catch then returns
+      // fast (empty) and the client bootstrap fills cards in after hydration.
+      throttle: {
+        onRateLimit: () => false,
+        onSecondaryRateLimit: () => false,
+      },
+      // The octokit meta-package also bundles the retry plugin, which backs off
+      // and retries on transient/abuse responses. Disable it too so nothing
+      // re-attempts (and waits) inside a request — we want a single fast attempt.
+      retry: { enabled: false },
     });
   }
   return _octokit;
@@ -78,16 +99,43 @@ export async function fetchTrending({
   // Tier 5: pure recency (no topic) — final fallback for empty input.
   if (tiers.length === 0) tiers.push([...recency, "is:public", "stars:>50"]);
 
+  // Hard wall-clock bound across ALL tiers via a single abort signal. When the
+  // shared anonymous quota is exhausted, GitHub connections can hang for ~50s —
+  // which blows the Cloudflare Worker request limit (uncatchable 500 on the home
+  // SSR). AbortSignal aborts at the network layer (a JS setTimeout race does not
+  // cancel a hung socket), so each call fails fast once the budget is spent and
+  // the remaining tiers abort immediately. We degrade to [] → client bootstrap.
+  const deadline = AbortSignal.timeout(FETCH_BUDGET_MS);
+  // Call the Search API with a plain fetch rather than octokit. The octokit
+  // meta-package's throttling plugin proactively SLEEPS (~48s) to respect the
+  // anonymous rate limit and ignores attempts to disable it — that sleep blows
+  // the Worker time limit. A direct fetch has no hidden ret/throttle: it returns
+  // immediately (403 when limited) and the shared AbortSignal aborts any hung
+  // socket at the network layer. Token used when present (raises the limit).
+  const token = process.env.GITHUB_TOKEN;
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "reporadar/0.1",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   for (const tier of tiers) {
+    if (deadline.aborted) break;
     try {
-      const { data } = await octokit().rest.search.repos({
-        q: tier.join(" "),
-        sort: "stars",
-        order: "desc",
-        per_page: perPage,
-        page,
-      });
-      if (data.items.length > 0) return data.items.map(toRepo);
+      const url = new URL("https://api.github.com/search/repositories");
+      url.searchParams.set("q", tier.join(" "));
+      url.searchParams.set("sort", "stars");
+      url.searchParams.set("order", "desc");
+      url.searchParams.set("per_page", String(perPage));
+      url.searchParams.set("page", String(page));
+      const res = await fetch(url, { headers, signal: deadline });
+      if (!res.ok) {
+        console.warn(`[fetchTrending] tier ${res.status}: ${res.statusText}`);
+        continue;
+      }
+      const data = (await res.json()) as { items?: Parameters<typeof toRepo>[0][] };
+      if (data.items && data.items.length > 0) return data.items.map(toRepo);
     } catch (err) {
       console.warn("[fetchTrending] tier failed:", err instanceof Error ? err.message : err);
     }

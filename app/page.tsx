@@ -26,6 +26,20 @@ function sinceFor(window: TimeWindow): string | undefined {
   return new Date(Date.now() - days * 86400 * 1000).toISOString().slice(0, 10);
 }
 
+// Hard cap on the SSR prefetch. Even with fail-fast GitHub (see github.ts), a
+// cold/slow upstream must never let this server-render exceed the Cloudflare
+// Worker time limit — that turns into an uncatchable 500. If the cap trips we
+// degrade exactly like a failed fetch: empty initialRepos → client bootstrap.
+const SSR_PREFETCH_BUDGET_MS = 4000;
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("ssr prefetch budget exceeded")), ms),
+    ),
+  ]);
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -45,15 +59,20 @@ export default async function Home({
   // tag click) which keeps the module-level translation cache populated.
   let initialRepos: Repo[] = [];
   try {
-    initialRepos = await fetchTrending({
-      topic: state.topic,
-      query: state.query,
-      since: sinceFor(state.timeWindow),
-      page: 1,
-      perPage: 100,
-    });
+    initialRepos = await withTimeout(
+      fetchTrending({
+        topic: state.topic,
+        query: state.query,
+        since: sinceFor(state.timeWindow),
+        page: 1,
+        perPage: 100,
+      }),
+      SSR_PREFETCH_BUDGET_MS,
+    );
   } catch (e) {
-    console.error("[home] SSR prefetch failed:", e);
+    // Timed out or upstream error — render without prefetched cards; the
+    // client bootstrap fetches them after hydration. Never blocks first paint.
+    console.error("[home] SSR prefetch skipped:", e instanceof Error ? e.message : e);
   }
   return (
     <RepoRadarApp
