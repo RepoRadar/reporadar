@@ -36,6 +36,21 @@ async function controlText(page: Page, selector: string): Promise<string> {
   return (await page.locator(selector).textContent())?.trim() ?? "";
 }
 
+// The active time-window button gets a secondary-blue border. Poll + match the
+// rgb channels (the computed value may be rgb() or rgba() and animates via a
+// CSS transition, so an exact string is brittle).
+async function expectWindowActive(page: Page, label: string) {
+  await expect
+    .poll(
+      () =>
+        page
+          .locator(`button:text-is("${label}")`)
+          .evaluate((el) => getComputedStyle(el).borderColor),
+      { timeout: 4000 },
+    )
+    .toContain("59, 130, 246");
+}
+
 test.describe("shareable search URLs", () => {
   test("default home view has a clean URL (no params)", async ({ page }) => {
     await go(page, "/");
@@ -105,10 +120,7 @@ test.describe("shareable search URLs", () => {
     expect(await controlText(page, TAGS)).toContain("cloudflare");
     expect(await controlText(page, FILTER)).toContain("2/3");
     // "All" window button is the active one (secondary-blue border).
-    const allBorder = await page
-      .locator('button:text-is("All")')
-      .evaluate((el) => getComputedStyle(el).borderColor);
-    expect(allBorder).toBe("rgb(59, 130, 246)");
+    await expectWindowActive(page, "All");
 
     // Cards arrive in the first paint (SSR-prefetched the shared topic).
     await expect(page.locator('button:has-text("Deploy")').first()).toBeVisible({ timeout: 10000 });
@@ -131,13 +143,15 @@ test.describe("shareable search URLs", () => {
     expect(await controlText(page, TAGS)).toContain("hermes");
   });
 
-  test("logo reset clears topic + sort back to the default view", async ({ page }) => {
-    // Build up a non-default state, then click home.
-    await go(page, "/?topic=cloudflare&sort=stars,velocity");
+  test("logo reset fully clears topic + sort + window to a clean /", async ({ page }) => {
+    // Build up a fully non-default state (incl. a non-default window), click home.
+    await go(page, "/?topic=cloudflare&sort=stars,velocity&window=all");
     await page.click(LOGO);
-    // Topic resets to default (hermes → omitted) and sort resets to default
-    // ("stars" → omitted). Window was already default, so the URL is clean.
+    // Topic → default hermes (omitted), sort → default stars (omitted), AND the
+    // time window resets to the default 1y (omitted) — so the URL is a clean "/".
     await expectSearch(page, "");
     expect(await controlText(page, TAGS)).toContain("hermes");
+    // The 1y window button is the active one again (secondary-blue border).
+    await expectWindowActive(page, "1y");
   });
 });

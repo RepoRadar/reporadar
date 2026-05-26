@@ -281,14 +281,17 @@ export function RepoRadarApp({
   // The scoring heuristic (app/lib/scoring.ts) falls back to description
   // length and pushedAt freshness when readmeLength/recentCommits are 0.
   const buildParams = (
-    overrides: { topic?: string; query?: string; page?: number; limit?: number } = {},
+    overrides: { topic?: string; query?: string; window?: TimeWindow; page?: number; limit?: number } = {},
   ) => {
     const p = new URLSearchParams();
     const topic = overrides.topic ?? queryRef.current.topic;
     const query = overrides.query ?? queryRef.current.query;
     if (topic) p.set("topic", topic);
     if (query) p.set("q", query);
-    const since = sinceIsoFor(timeWindow);
+    // `window` override lets a caller fetch at a specific window in the same
+    // tick a setTimeWindow() is scheduled (state hasn't committed yet) — used
+    // by the logo "home" reset so its single fetch uses the default window.
+    const since = sinceIsoFor(overrides.window ?? timeWindow);
     if (since) p.set("since", since);
     p.set("page", String(overrides.page ?? 1));
     p.set("limit", String(overrides.limit ?? 100));
@@ -347,7 +350,7 @@ export function RepoRadarApp({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runQuery = async ({ topic, query, label }: { topic?: string; query?: string; label: string }) => {
+  const runQuery = async ({ topic, query, label, window }: { topic?: string; query?: string; label: string; window?: TimeWindow }) => {
     setBootstrapping(true);
     setLoadMoreError(null);
     setSelectedRepo(null);
@@ -362,7 +365,7 @@ export function RepoRadarApp({
     setLastQuery(label);
     queryRef.current = { topic, query };
     try {
-      const res = await fetch(`/api/repos?${buildParams({ topic, query, page: 1, limit: 100 })}`);
+      const res = await fetch(`/api/repos?${buildParams({ topic, query, window, page: 1, limit: 100 })}`);
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         const fresh = rankRepos(data, weights, priorities);
@@ -452,9 +455,17 @@ export function RepoRadarApp({
 
   // Re-run on time-window change (after initial mount).
   const isFirstWindow = useRef(true);
+  // Set when another handler (logo "home" reset) changes the window AND issues
+  // its own fetch — suppresses this effect's duplicate fetch (and the race
+  // between the two) for that one change.
+  const skipNextWindowEffect = useRef(false);
   useEffect(() => {
     if (isFirstWindow.current) {
       isFirstWindow.current = false;
+      return;
+    }
+    if (skipNextWindowEffect.current) {
+      skipNextWindowEffect.current = false;
       return;
     }
     const { topic, query } = queryRef.current;
@@ -612,11 +623,16 @@ export function RepoRadarApp({
         <button
           type="button"
           onClick={() => {
-            // Logo click = "take me home". Reset to default trending pull
-            // (Hermes, Most Stars) so the user always has a clean starting
-            // point during the demo without a full page reload.
+            // Logo click = "take me home". Reset to the full default view —
+            // Hermes, Most Stars, AND the default 1-year window — so the URL
+            // collapses to a clean "/" and the user gets a true clean starting
+            // point during the demo without a full page reload. We fetch once
+            // with an explicit window override and suppress the time-window
+            // effect's duplicate fetch (see skipNextWindowEffect).
             setPriorities(["stars"]);
-            runQuery({ topic: "hermes", label: "trending: hermes" });
+            if (timeWindow !== "365") skipNextWindowEffect.current = true;
+            setTimeWindow("365");
+            runQuery({ topic: "hermes", label: "trending: hermes", window: "365" });
           }}
           className="flex items-center gap-3 rounded-md transition hover:opacity-80"
           title="Reset to the default Hermes trending view"
