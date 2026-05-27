@@ -22,7 +22,6 @@ import { DeployForm } from "@/app/components/DeployForm";
 import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { Footer } from "@/app/components/Footer";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
-import type { NotificationDigestItem } from "@/app/lib/notifications";
 import { track } from "@/app/lib/analytics";
 
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
@@ -295,17 +294,6 @@ export function RepoRadarApp({
     if (repos.length === 0) return [] as ScoredRepo[];
     return rankRepos(repos as Repo[], weights, priorities);
   }, [repos, weights, priorities]);
-
-  const notificationDigest = useMemo<NotificationDigestItem[]>(
-    () =>
-      ranked.slice(0, 3).map((repo) => ({
-        title: repo.fullName,
-        subtitle: `${formatCompact(repo.stars)} stars${repo.language ? ` · ${repo.language}` : ""}`,
-        score: Math.round(repo.scores.overall * 100),
-        source: "RepoRadar",
-      })),
-    [ranked],
-  );
 
   // Build params for /api/repos including current time window + page.
   // We do NOT pass enrich=1 by default — that would chain 2 extra anon
@@ -864,7 +852,7 @@ export function RepoRadarApp({
             />
           )}
 
-          <NotificationSignup digest={notificationDigest} />
+          <NotificationSignup />
 
         </aside>
 
@@ -1096,12 +1084,6 @@ export function RepoRadarApp({
       />
     </div>
   );
-}
-
-function formatCompact(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}m`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}k`;
-  return String(value);
 }
 
 function DimSlider({
