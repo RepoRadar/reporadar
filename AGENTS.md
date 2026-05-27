@@ -51,4 +51,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - For UI changes, run `npm run lint` and `npm run build`.
 - For visual/card/slider changes, also run a browser check against the local dev server and inspect rendered dimensions or screenshots.
+- For ANY search/query/tag/filter change, verify the **results, not just the mechanics**: type real queries into the field (TYPE), click tags (TAGS), and confirm the returned cards actually MATCH the input (e.g. type "Cloudflare Workers" → the top cards are Cloudflare/Workers repos). Asserting the URL, chip, or `?q=` updated is NOT enough — a slow/failed fetch can leave stale cards under a new chip. Also confirm a failed/slow query never shows mismatched cards.
 - If `/qa` is requested, use browser-based QA. Do not substitute lint/build for QA.

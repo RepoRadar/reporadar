@@ -170,4 +170,30 @@ test.describe("shareable search URLs", () => {
     // The 1y window button is the active one again (secondary-blue border).
     await expectWindowActive(page, "1y");
   });
+
+  // RESULTS must match the input — not just the URL/chip. This is the check
+  // that catches the "typed a query, got stale cards from a previous search"
+  // bug: a query whose fetch is slow/failed must never leave mismatched cards.
+  test("a typed query returns cards that actually match it (not stale)", async ({ page }) => {
+    await go(page, "/");
+    await page.click(TYPE);
+    await page.locator(TYPE_INPUT).fill("cloudflare");
+    await page.locator(TYPE_INPUT).press("Enter");
+    await expectSearch(page, "?q=cloudflare");
+    // Wait for the grid to render (not the loader/error), then assert the actual
+    // repo cards mention the query — checking `.rr-card` text, NOT the chip
+    // (which always echoes "cloudflare" and would be a false positive).
+    await expect(page.locator('button:has-text("Deploy")').first()).toBeVisible({ timeout: 20000 });
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            [...document.querySelectorAll(".rr-card")].filter((c) =>
+              /cloudflare/i.test(c.textContent || ""),
+            ).length,
+          ),
+        { timeout: 20000 },
+      )
+      .toBeGreaterThan(0);
+  });
 });

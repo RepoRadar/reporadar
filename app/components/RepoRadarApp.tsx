@@ -181,6 +181,14 @@ export function RepoRadarApp({
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  // Stale-response guard: every runQuery bumps this; a response only applies if
+  // it's still the latest, so a slow/out-of-order query can't overwrite a newer
+  // one's results (no stale cards under a new chip).
+  const queryReqIdRef = useRef(0);
+  // When the latest query's fetch fails/times out, stash it so the grid can show
+  // a retry instead of silently leaving the previous (mismatched) cards.
+  type QueryArgs = { topic?: string; query?: string; label: string; window?: TimeWindow };
+  const [queryError, setQueryError] = useState<QueryArgs | null>(null);
   // Stash the last successful query so infinite-scroll knows what to fetch next.
   // Hydrated from a shared link when present so the slow-path bootstrap + load-more
   // fetch the shared view, not the default.
@@ -351,9 +359,16 @@ export function RepoRadarApp({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runQuery = async ({ topic, query, label, window }: { topic?: string; query?: string; label: string; window?: TimeWindow }) => {
+  const runQuery = async ({ topic, query, label, window }: QueryArgs) => {
+    // Bump the request id; only THIS call's response may touch state. Guards
+    // against a slow earlier query resolving after a newer one and overwriting
+    // it with stale results (cards must always match the current chip).
+    const reqId = ++queryReqIdRef.current;
+    const isLatest = () => reqId === queryReqIdRef.current;
+
     setBootstrapping(true);
     setLoadMoreError(null);
+    setQueryError(null);
     setSelectedRepo(null);
     if (topic) setActiveCategory(topic);
     else setActiveCategory("");
@@ -365,13 +380,13 @@ export function RepoRadarApp({
     queryRef.current = { topic, query };
     try {
       // Bound the request so the "Loading…" state can't hang forever if
-      // /api/repos is slow/unresponsive — on timeout the fetch rejects, the
-      // finally clears bootstrapping, and the previous cards (if any) remain.
+      // /api/repos is slow/unresponsive.
       const res = await fetch(`/api/repos?${buildParams({ topic, query, window, page: 1, limit: 100 })}`, {
         signal: AbortSignal.timeout(15000),
       });
-      if (res.ok) {
-        const data = (await res.json()) as Repo[];
+      const data = res.ok ? ((await res.json()) as Repo[]) : null;
+      if (!isLatest()) return; // a newer query superseded this one — drop it.
+      if (data) {
         const fresh = rankRepos(data, weights, priorities);
         setRepos(fresh);
         setLastRefresh(Date.now());
@@ -384,12 +399,19 @@ export function RepoRadarApp({
         if (fresh.length > 0) {
           selectRepoProfile(fresh[0]);
         }
+      } else {
+        // Non-OK response — surface it rather than leave stale cards.
+        setQueryError({ topic, query, label, window });
       }
     } catch (e) {
-      // Timed out or network error — stop the loader; the prior view stays.
+      // Timed out or network error. Only the latest query reports — and we show
+      // a retry instead of silently leaving the previous (mismatched) cards.
       console.error("[runQuery] fetch failed:", e instanceof Error ? e.message : e);
+      if (isLatest()) setQueryError({ topic, query, label, window });
     } finally {
-      setBootstrapping(false);
+      // Only the latest query clears the loader (a stale one finishing must not
+      // unblock the UI while the current query is still in flight).
+      if (isLatest()) setBootstrapping(false);
     }
   };
 
@@ -843,6 +865,32 @@ export function RepoRadarApp({
               <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
                 Pulling the latest from GitHub…
               </span>
+            </div>
+          ) : queryError ? (
+            // A query whose fetch failed/timed out. We show this instead of the
+            // previous cards so a failed search never masquerades as results
+            // under a mismatched chip — the user can retry the exact query.
+            <div
+              className="flex min-h-[28rem] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-6 text-center rr-fade-up"
+              style={{ borderColor: "var(--danger)", background: "rgba(239,68,68,0.05)" }}
+              role="alert"
+            >
+              <span className="text-sm" style={{ color: "var(--fg)" }}>
+                Couldn&apos;t load{" "}
+                <span className="font-mono" style={{ color: "var(--danger)" }}>
+                  &quot;{queryError.label.replace(/^[^:]+:\s*/, "")}&quot;
+                </span>
+              </span>
+              <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
+                GitHub may be busy or rate-limited — give it another go.
+              </span>
+              <button
+                onClick={() => runQuery(queryError)}
+                className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-xs font-mono transition"
+                style={{ borderColor: "var(--danger)", background: "rgba(239,68,68,0.08)", color: "var(--danger)" }}
+              >
+                retry
+              </button>
             </div>
           ) : ranked.length === 0 ? (
             <div
