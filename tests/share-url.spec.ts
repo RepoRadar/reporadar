@@ -58,17 +58,16 @@ test.describe("shareable search URLs", () => {
     expect(await controlText(page, TAGS)).toContain("hermes");
   });
 
-  test("topic search writes ?topic, and multiple topics comma-join", async ({ page }) => {
+  test("topic search writes ?topic; picking another replaces it (single-select)", async ({ page }) => {
     await go(page, "/");
     await page.click(TAGS);
-    // Default active topic is hermes; clicking Cloudflare combines them.
+    // Single-select: clicking a tag loads JUST that topic and closes the panel.
     await page.locator('button:text-is("Cloudflare")').click();
-    await expectSearch(page, "?topic=hermes,cloudflare");
-    // Comma stays literal (not %2C) for readable shared links.
-    expect(page.url()).toContain("topic=hermes,cloudflare");
-    // Toggling a topic off updates the URL.
-    await page.locator('button:text-is("Hermes")').click();
     await expectSearch(page, "?topic=cloudflare");
+    // Picking another tag replaces (not combines) — reopen the panel first.
+    await page.click(TAGS);
+    await page.locator('button:text-is("Gemini")').click();
+    await expectSearch(page, "?topic=gemini");
   });
 
   test("freeform ask writes ?q and replaces any topic", async ({ page }) => {
@@ -102,8 +101,7 @@ test.describe("shareable search URLs", () => {
   test("topic + sort + window compose into one URL", async ({ page }) => {
     await go(page, "/");
     await page.click(TAGS);
-    await page.locator('button:text-is("Cloudflare")').click();
-    await page.locator('button:text-is("Hermes")').click(); // drop default hermes
+    await page.locator('button:text-is("Cloudflare")').click(); // single-select → ?topic=cloudflare (panel closes)
     await page.click(FILTER);
     await page.locator('#panel-filter button:has-text("Shipping Velocity")').click();
     await page.locator('button:text-is("All")').click();
@@ -155,9 +153,10 @@ test.describe("shareable search URLs", () => {
     expect(page.url()).toContain("#section");
     expect(await controlText(page, TAGS)).toContain("cloudflare");
     // Once the user changes the search, the URL becomes the clean canonical form.
+    // Single-select: picking Gemini replaces cloudflare (and drops utm/hash).
     await page.click(TAGS);
     await page.locator('button:text-is("Gemini")').click();
-    await expectSearch(page, "?topic=cloudflare,gemini");
+    await expectSearch(page, "?topic=gemini");
   });
 
   test("logo reset fully clears topic + sort + window to a clean /", async ({ page }) => {

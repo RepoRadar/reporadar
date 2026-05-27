@@ -63,13 +63,9 @@ export function HeaderControls({
     {
       key: "tags",
       label: "TAGS",
-      sub:
-        activeTopics.length === 0
-          ? undefined
-          : activeTopics.length === 1
-            ? activeTopics[0]
-            : `${activeTopics.length} tags`,
-      title: "Pick one or more popular GitHub topics — click chips to combine them.",
+      // Single-select: activeTopics is always 0 or 1, so just show the active one.
+      sub: activeTopics[0] ?? undefined,
+      title: "Pick a popular GitHub topic to load.",
     },
     { key: "talk", label: "TALK", title: "Talk to RepoRadar with your voice." },
     { key: "type", label: "TYPE", title: "Type what you're looking for in natural language." },
@@ -152,13 +148,12 @@ export function HeaderControls({
       {active === "tags" && (
         <TagsPanel
           activeTopics={activeTopics}
-          onPick={(topics, label) => {
-            // Multi-tag: keep the panel open so the user can keep
-            // adding/removing chips. Each toggle fires this with the
-            // new combination as a comma-joined topic string.
-            onRunQuery({ topic: topics.join(",") || undefined, label });
+          onPick={(topic, label) => {
+            // Single-select: load just this topic and close the panel
+            // immediately (like TYPE/TALK do) — one click switches topics.
+            onRunQuery({ topic, label });
+            setActive(null);
           }}
-          onClose={() => setActive(null)}
         />
       )}
       {active === "talk" && (

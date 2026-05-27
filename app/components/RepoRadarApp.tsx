@@ -357,16 +357,19 @@ export function RepoRadarApp({
     setSelectedRepo(null);
     if (topic) setActiveCategory(topic);
     else setActiveCategory("");
-    // Optimistic pill update — the status chip + tag-button sub-label should
-    // reflect the user's *intent* immediately, not 1-3s later when the GitHub
-    // fetch resolves. Without this the user clicks "Claude Code" and sees the
-    // chip still say "trending: hermes" while old hermes cards linger, and it
-    // looks broken. The grid still shows previous cards during the fetch, but
-    // they're dimmed via the bootstrapping flag (see card-grid wrapper below).
+    // Optimistic pill update — the status chip + tag-button sub-label reflect
+    // the user's *intent* immediately. While bootstrapping is true the card
+    // grid is replaced by the centered "Loading…" state (see the card-area
+    // render below), so the user gets a clear signal the query is running.
     setLastQuery(label);
     queryRef.current = { topic, query };
     try {
-      const res = await fetch(`/api/repos?${buildParams({ topic, query, window, page: 1, limit: 100 })}`);
+      // Bound the request so the "Loading…" state can't hang forever if
+      // /api/repos is slow/unresponsive — on timeout the fetch rejects, the
+      // finally clears bootstrapping, and the previous cards (if any) remain.
+      const res = await fetch(`/api/repos?${buildParams({ topic, query, window, page: 1, limit: 100 })}`, {
+        signal: AbortSignal.timeout(15000),
+      });
       if (res.ok) {
         const data = (await res.json()) as Repo[];
         const fresh = rankRepos(data, weights, priorities);
@@ -382,6 +385,9 @@ export function RepoRadarApp({
           selectRepoProfile(fresh[0]);
         }
       }
+    } catch (e) {
+      // Timed out or network error — stop the loader; the prior view stays.
+      console.error("[runQuery] fetch failed:", e instanceof Error ? e.message : e);
     } finally {
       setBootstrapping(false);
     }
@@ -807,27 +813,42 @@ export function RepoRadarApp({
         </aside>
 
         <section className="col-span-12 flex flex-col gap-4 lg:col-span-9">
-          {ranked.length === 0 ? (
+          {bootstrapping ? (
+            // Loading takes precedence over the grid: knock out the cards and
+            // show a centered "Loading…" so it's obvious a query is running.
+            // Same container as the empty state so the layout doesn't jump.
+            <div
+              className="flex min-h-[28rem] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-6 text-center rr-fade-up"
+              style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="flex items-center gap-2" aria-hidden>
+                <span
+                  className="inline-block h-2 w-2 rounded-full animate-bounce"
+                  style={{ background: "var(--primary)", animationDelay: "0ms" }}
+                />
+                <span
+                  className="inline-block h-2 w-2 rounded-full animate-bounce"
+                  style={{ background: "var(--primary)", animationDelay: "150ms" }}
+                />
+                <span
+                  className="inline-block h-2 w-2 rounded-full animate-bounce"
+                  style={{ background: "var(--primary)", animationDelay: "300ms" }}
+                />
+              </div>
+              <span className="text-sm font-mono" style={{ color: "var(--fg)" }}>
+                Loading…
+              </span>
+              <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
+                Pulling the latest from GitHub…
+              </span>
+            </div>
+          ) : ranked.length === 0 ? (
             <div
               className="flex min-h-[28rem] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-6 text-center rr-fade-up"
               style={{ borderColor: "var(--border-strong)", background: "var(--surface)" }}
             >
-              {bootstrapping && (
-                <div className="flex items-center gap-2" aria-label="Loading">
-                  <span
-                    className="inline-block h-2 w-2 rounded-full animate-bounce"
-                    style={{ background: "var(--primary)", animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="inline-block h-2 w-2 rounded-full animate-bounce"
-                    style={{ background: "var(--primary)", animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="inline-block h-2 w-2 rounded-full animate-bounce"
-                    style={{ background: "var(--primary)", animationDelay: "300ms" }}
-                  />
-                </div>
-              )}
               <span className="text-sm" style={{ color: "var(--fg)" }}>
                 Try:{" "}
                 <span className="font-mono" style={{ color: "var(--primary)" }}>
@@ -835,9 +856,7 @@ export function RepoRadarApp({
                 </span>
               </span>
               <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
-                {bootstrapping
-                  ? "Pulling the latest from GitHub…"
-                  : "Repo cards will materialize here, agent-summarized and ranked by your sliders + sort priorities."}
+                Repo cards will materialize here, agent-summarized and ranked by your sliders + sort priorities.
               </span>
             </div>
           ) : (
