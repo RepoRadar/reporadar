@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
+type FeedbackMode = "feedback" | "feature";
 type FeedbackStatus = "idle" | "sending" | "created" | "queued" | "error";
 
 type FeedbackResponse = {
@@ -16,8 +17,33 @@ type FeedbackResponse = {
   };
 };
 
+// External open hook event name. Dispatch this from anywhere (e.g. footer link) to open
+// the widget. Optionally pass { type: "feature" } to open in feature mode:
+//   window.dispatchEvent(new CustomEvent("reporadar:open-feedback", { detail: { type: "feature" } }))
+const OPEN_EVENT = "reporadar:open-feedback";
+
+const COPY = {
+  feedback: {
+    title: "Send review",
+    helper: "AI verifies the note, then opens a triage issue when GitHub is configured.",
+    label: "Review or feedback",
+    placeholder: "What should be fixed, improved, or preserved?",
+    submit: "Send feedback",
+    sending: "Sending...",
+  },
+  feature: {
+    title: "Suggest a feature",
+    helper: "Describe what you need — AI scopes it into a feature request on GitHub.",
+    label: "Feature suggestion",
+    placeholder: "What feature would make RepoRadar more useful for you?",
+    submit: "Send suggestion",
+    sending: "Sending...",
+  },
+} as const;
+
 export function FeedbackWidget({ context }: { context: string }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<FeedbackMode>("feedback");
   const [feedback, setFeedback] = useState("");
   const [contact, setContact] = useState("");
   const [status, setStatus] = useState<FeedbackStatus>("idle");
@@ -26,6 +52,7 @@ export function FeedbackWidget({ context }: { context: string }) {
   const [issueUrl, setIssueUrl] = useState("");
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  // Outside-click / Escape close
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -41,6 +68,32 @@ export function FeedbackWidget({ context }: { context: string }) {
       window.removeEventListener("pointerdown", onPointer);
     };
   }, [open]);
+
+  // External open hook — dispatch `reporadar:open-feedback` with optional { type: "feature" }
+  useEffect(() => {
+    const onOpenEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ type?: string }>).detail;
+      setMode(detail?.type === "feature" ? "feature" : "feedback");
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_EVENT, onOpenEvent);
+    return () => window.removeEventListener(OPEN_EVENT, onOpenEvent);
+  }, []);
+
+  const copy = COPY[mode];
+
+  const resetForm = () => {
+    setStatus("idle");
+    setMessage("");
+    setIssueTitle("");
+    setIssueUrl("");
+    setFeedback("");
+  };
+
+  const handleModeChange = (next: FeedbackMode) => {
+    setMode(next);
+    resetForm();
+  };
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,6 +118,7 @@ export function FeedbackWidget({ context }: { context: string }) {
           contact: contact.trim() || undefined,
           pageUrl: window.location.href,
           context,
+          type: mode,
         }),
       });
       const body = (await res.json()) as FeedbackResponse;
@@ -109,14 +163,40 @@ export function FeedbackWidget({ context }: { context: string }) {
             boxShadow: "0 20px 60px rgba(0,0,0,0.45)",
           }}
         >
+          {/* Segmented toggle: Review / Suggest a feature */}
+          <div
+            className="mb-3 flex rounded-md border text-[11px] font-mono font-semibold uppercase tracking-[0.1em] overflow-hidden"
+            style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+            role="group"
+            aria-label="Feedback mode"
+          >
+            {(["feedback", "feature"] as FeedbackMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => handleModeChange(m)}
+                aria-pressed={mode === m}
+                className="flex-1 px-2 py-1.5 transition"
+                style={{
+                  background: mode === m ? "rgba(34,197,94,0.14)" : "transparent",
+                  color: mode === m ? "var(--primary)" : "var(--fg-dim)",
+                  borderRight: m === "feedback" ? "1px solid var(--border)" : undefined,
+                  boxShadow: mode === m ? "inset 0 0 0 1px var(--primary)" : "none",
+                }}
+              >
+                {m === "feedback" ? "Review" : "Suggest a feature"}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={submit} className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold" style={{ color: "var(--fg)" }}>
-                  Send review
+                  {copy.title}
                 </h2>
                 <p className="mt-1 text-xs leading-5" style={{ color: "var(--fg-dim)" }}>
-                  AI verifies the note, then opens a triage issue when GitHub is configured.
+                  {copy.helper}
                 </p>
               </div>
               <button
@@ -131,7 +211,7 @@ export function FeedbackWidget({ context }: { context: string }) {
             </div>
 
             <label className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--fg-muted)" }}>
-              Review or feedback
+              {copy.label}
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
@@ -143,7 +223,7 @@ export function FeedbackWidget({ context }: { context: string }) {
                   background: "#080b12",
                   color: "var(--fg)",
                 }}
-                placeholder="What should be fixed, improved, or preserved?"
+                placeholder={copy.placeholder}
               />
             </label>
 
@@ -173,7 +253,7 @@ export function FeedbackWidget({ context }: { context: string }) {
                 color: "#08070d",
               }}
             >
-              {status === "sending" ? "Sending..." : "Send feedback"}
+              {status === "sending" ? copy.sending : copy.submit}
             </button>
           </form>
 
