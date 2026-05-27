@@ -17,7 +17,7 @@
  * Run: node --test tests/alerts.sweep.test.mjs
  */
 
-import { test, describe, beforeEach } from "node:test";
+import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
 import { runAlertSweep, alreadyNotified } from "../app/lib/alerts.ts";
@@ -200,7 +200,7 @@ describe("runAlertSweep — idempotency (ALRT-03 headline)", () => {
     const fakeEnv = { DB: db };
 
     let sendCount = 0;
-    const sendSpy = async (_sub, _crossing, _unsubUrl) => {
+    const sendSpy = async () => {
       sendCount++;
     };
     const deps = {
@@ -330,25 +330,16 @@ describe("runAlertSweep — detect-before-write order (Pitfall 2)", () => {
     const fakeEnv = { DB: db };
 
     let sendCount = 0;
-    let snapshotWritten = false;
-    let sendHappenedBeforeWrite = false;
 
     const deps = {
       fetchTrending: async () => [{ fullName: "rust-lang/rust", stars: 1200 }],
       send: async () => {
         sendCount++;
-        // At the moment send is called, snapshot must NOT yet be written for this run
-        sendHappenedBeforeWrite = !snapshotWritten;
       },
-      now: () => {
-        // First call is for setLastNotified; second is for capturedAt in writeSnapshots.
-        // We use a counter to distinguish.
-        snapshotWritten = true; // by the time now() is called for capturedAt, we flag it
-        return "2026-05-27T00:00:00Z";
-      },
+      now: () => "2026-05-27T00:00:00Z",
     };
 
-    const result = await runAlertSweep(fakeEnv, deps);
+    await runAlertSweep(fakeEnv, deps);
     assert.equal(sendCount, 1, "stars_pct crossing should be detected using prior snapshot");
   });
 

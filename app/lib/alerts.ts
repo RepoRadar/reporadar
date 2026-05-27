@@ -267,12 +267,25 @@ export async function runAlertSweep(
 ): Promise<{ sent: number; scanned: number }> {
   // Apply production defaults for injected deps (lazy dynamic imports avoid loading
   // the Cloudflare-coupled modules in plain-Node test environments).
-  const fetchTrending = deps.fetchTrending ?? (await import("./trendingCache.ts").then((m) => m.fetchTrendingCached));
-  const sendFn = deps.send ?? (async (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => {
-    const { buildAlertEmail } = await import("./notifications.ts");
-    const { sendEmail } = await import("./email.ts");
-    return sendEmail(buildAlertEmail({ term: sub.term, crossing, unsubUrl }));
-  });
+  let fetchTrending: (params: { topic?: string; query?: string }) => Promise<Repo[]>;
+  if (deps.fetchTrending) {
+    fetchTrending = deps.fetchTrending;
+  } else {
+    const { fetchTrendingCached } = await import("./trendingCache.ts");
+    fetchTrending = fetchTrendingCached;
+  }
+
+  let sendFn: (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => Promise<unknown>;
+  if (deps.send) {
+    sendFn = deps.send;
+  } else {
+    sendFn = async (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => {
+      const { buildAlertEmail } = await import("./notifications.ts");
+      const { sendEmail } = await import("./email.ts");
+      const { subject, html } = buildAlertEmail({ term: sub.term, crossing, unsubUrl });
+      return sendEmail({ to: sub.email, subject, html });
+    };
+  }
   const now = deps.now ?? (() => new Date().toISOString());
 
   const terms = await listDistinctTerms(env.DB);

@@ -1,6 +1,10 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	// Custom entrypoint: wraps the OpenNext-generated fetch handler and adds
+	// the Cloudflare Cron Trigger `scheduled()` export (see worker.ts).
+	// The generated .open-next/worker.js must be produced by `opennextjs-cloudflare build`
+	// before wrangler bundles this — see the A1 deploy note in 03-04-SUMMARY.md.
+	"main": "worker.ts",
 	"name": "reporadar",
 	"compatibility_date": "2026-05-09",
 	"compatibility_flags": [
@@ -42,6 +46,13 @@
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
+	},
+	// Cron Trigger: fires the `scheduled()` export in worker.ts on this cadence.
+	// Every 6 hours balances alert freshness vs GitHub API rate budget (RESEARCH Open Q 1).
+	// Owner can tune the expression in this file; changes take effect at the next deploy.
+	// Ref: developers.cloudflare.com/workers/configuration/cron-triggers
+	"triggers": {
+		"crons": ["0 */6 * * *"]
 	},
 	"d1_databases": [
 		{
