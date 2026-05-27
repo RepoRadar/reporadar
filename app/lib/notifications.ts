@@ -13,6 +13,15 @@ import { escapeHtml } from "./email.ts";
 import type { Crossing } from "./alerts.ts";
 
 // ---------------------------------------------------------------------------
+// Email scheme (from / reply-to). Automated alert + verify mail sends FROM the
+// dedicated alerts@ address (its own sending reputation) with replies routed to
+// the monitored hello@ inbox. Everything else (contact form, admin/deploy mail)
+// uses the global RESEND_FROM default, which is hello@.
+// ---------------------------------------------------------------------------
+export const ALERTS_FROM = "RepoRadar Alerts <alerts@reporadar.io>";
+export const REPLY_TO_EMAIL = "hello@reporadar.io";
+
+// ---------------------------------------------------------------------------
 // Legacy types (kept for backward compatibility — other files may import these)
 // ---------------------------------------------------------------------------
 

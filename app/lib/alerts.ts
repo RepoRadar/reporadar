@@ -280,10 +280,10 @@ export async function runAlertSweep(
     sendFn = deps.send;
   } else {
     sendFn = async (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => {
-      const { buildAlertEmail } = await import("./notifications.ts");
+      const { buildAlertEmail, ALERTS_FROM, REPLY_TO_EMAIL } = await import("./notifications.ts");
       const { sendEmail } = await import("./email.ts");
       const { subject, html } = buildAlertEmail({ term: sub.term, crossing, unsubUrl });
-      return sendEmail({ to: sub.email, subject, html });
+      return sendEmail({ to: sub.email, subject, html, from: ALERTS_FROM, replyTo: REPLY_TO_EMAIL });
     };
   }
   const now = deps.now ?? (() => new Date().toISOString());
