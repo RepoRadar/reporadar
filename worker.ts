@@ -21,7 +21,7 @@ import type {
   ExecutionContext,
   ExportedHandler,
 } from "@cloudflare/workers-types";
-// @ts-expect-error `.open-next/worker.js` is generated at build time and may not exist yet
+// @ts-ignore — `.open-next/worker.js` is generated at build time; types absent until after first build
 import { default as handler } from "./.open-next/worker.js";
 import { runAlertSweep } from "./app/lib/alerts";
 
@@ -59,5 +59,5 @@ export default {
 // When wrangler bundles THIS file as the entry instead of the generated file, these classes
 // must be re-exported so wrangler can register the DO bindings.
 // Dropping them breaks the R2 incremental cache at deploy (RESEARCH Anti-Pattern).
-// @ts-expect-error generated at build time
+// @ts-ignore — types for DO classes absent until after first build
 export { DOQueueHandler, DOShardedTagCache } from "./.open-next/worker.js";

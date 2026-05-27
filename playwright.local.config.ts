@@ -5,13 +5,15 @@ import { defineConfig, devices } from "@playwright/test";
 //
 // The default playwright.config.ts is prod-only (reporadar.io) per Christo's
 // "prod only" smoke rule. That suite can't validate an undeployed feature, so
-// this config runs the shareable-URL spec against a local dev server instead.
-// AGENTS.md explicitly sanctions local dev-server browser checks for UI work.
+// this config runs the shareable-URL spec and the alerts-panel spec against a
+// local dev server instead. AGENTS.md explicitly sanctions local dev-server
+// browser checks for UI work.
 //
 //   npx playwright test -c playwright.local.config.ts
+//   npx playwright test tests/alerts-panel.spec.ts -c playwright.local.config.ts
 //
-// After the feature ships, tests/share-url.spec.ts (relative gotos) also runs
-// against prod via the normal `npm run test:smoke`.
+// After features ship, share-url.spec.ts (relative gotos) also runs against
+// prod via the normal `npm run test:smoke`.
 // ========================================================================
 
 const PORT = 3000;
@@ -19,7 +21,7 @@ const BASE = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: /share-url\.spec\.ts/,
+  testMatch: /(share-url|alerts-panel)\.spec\.ts/,
   fullyParallel: false,
   retries: 1,
   // Per-test budget must exceed navigationTimeout below: the home route SSR-

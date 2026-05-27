@@ -463,9 +463,9 @@ export function NotificationSignup() {
                     {/* Metric + threshold + window */}
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
                       <span style={{ color: color }}>
-                        {alert.threshold}
-                        {alert.metric === "stars_pct" ? "%" : ""}{" "}
-                        {METRIC_LABELS[alert.metric]}
+                        {alert.metric === "stars_pct"
+                          ? `${alert.threshold}% growth`
+                          : `${alert.threshold} ${METRIC_LABELS[alert.metric]}`}
                       </span>
                       <span style={{ color: "var(--fg-dim)" }}>
                         / {alert.window_days}d
