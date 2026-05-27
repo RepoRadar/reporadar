@@ -3,6 +3,7 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { fetchRepo } from "@/app/lib/github";
 import type { A2UISurface } from "@/app/lib/a2ui-types";
 import { A2UI_FORM_FACTORS } from "@/app/lib/a2ui-types";
+import { sendEmail, escapeHtml } from "@/app/lib/email";
 
 export const runtime = "nodejs";
 
@@ -203,35 +204,14 @@ async function notifyContact({
       Sent by RepoRadar · <a href="https://reporadar.io" style="color:#22d3ee;text-decoration:none">reporadar.io</a>
     </p>
   </div></body></html>`;
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: contact,
-        subject: `${repo} → ${formFactor} live at ${url.replace(/^https?:\/\//, "")}`,
-        html,
-      }),
-    });
-    if (res.ok) {
-      log(`email sent via Resend to ${contact}`);
-      return "sent";
-    }
-    const t = await res.text();
-    log(`Resend send failed (${res.status}): ${t.slice(0, 120)}`);
-    return "queued";
-  } catch (err) {
-    log(`Resend exception: ${err instanceof Error ? err.message : String(err)}`);
-    return "queued";
+  const subject = `${repo} → ${formFactor} live at ${url.replace(/^https?:\/\//, "")}`;
+  const result = await sendEmail({ to: contact, subject, html, from });
+  if (result.ok) {
+    log(`email sent via Resend to ${contact}`);
+    return "sent";
   }
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
+  log(`Resend send failed${result.status ? ` (${result.status})` : ""}: ${(result.error ?? "").slice(0, 120)}`);
+  return "queued";
 }
 
 async function generateSurface(

@@ -1,0 +1,41 @@
+{
+  "source_path": "/Users/cro/dev/reporadar/BUILD-BRIEF.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "RepoRadar — Build Brief (next milestone)",
+  "summary": "A milestone build plan defining sequenced workstreams (credibility, alerts, repo intelligence, audio, premium, launch) with data models, jobs, and acceptance gates for RepoRadar.",
+  "scope": [
+    "RepoRadar dashboard",
+    "GitHub trending fetch (fetchTrending)",
+    "threshold alerts / notifications",
+    "D1 subscriptions and repo_snapshots schema",
+    "Cloudflare Cron Trigger scheduled job",
+    "email delivery (sendEmail / Resend)",
+    "Repo Intelligence adoption report + concierge",
+    "CopilotKit chat",
+    "ElevenLabs per-repo audio overview",
+    "R2 audio caching",
+    "Stripe premium / entitlements",
+    "Cloudflare Web Analytics",
+    "changelog / blog / contact / suggestion box / donation"
+  ],
+  "cross_refs": [
+    "AGENTS.md",
+    "node_modules/next/dist/docs/",
+    "wrangler.jsonc",
+    "app/lib/shareUrl.ts",
+    "app/api/notifications/subscribe",
+    "tests/notifications.spec.ts",
+    "app/api/feedback",
+    "app/lib/github.ts",
+    "app/api/repos/route.ts",
+    "app/components/RepoRadarApp.tsx",
+    "app/lib/translate.ts",
+    "playwright.local.config.ts",
+    "workers/deploy"
+  ],
+  "locked": false,
+  "precedence": 0,
+  "notes": "Manifest declared type SPEC and precedence 0; honored without heuristic/LLM override. Content reads as a sequenced build plan with data schemas, scheduled-job contracts, and acceptance criteria, which is consistent with a SPEC-leaning technical brief (though it also carries PRD-flavored goals/out-of-scope sections)."
+}
