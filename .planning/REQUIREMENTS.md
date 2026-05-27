@@ -23,7 +23,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 - [x] **CRED-02
 **: `/blog` renders MDX/markdown posts with 1–2 "how & why we built it" posts and a "30-day check-in" template.
 - [ ] **CRED-03**: Contact form + `POST /api/contact` emails the team via `sendEmail()` (or queues to D1), validated and rate-limited.
-- [ ] **CRED-04**: Suggestion box extends existing `/api/feedback` + `FeedbackWidget` with a "suggest a feature" path (no duplication).
+- [x] **CRED-04
+**: Suggestion box extends existing `/api/feedback` + `FeedbackWidget` with a "suggest a feature" path (no duplication).
 - [ ] **CRED-05**: Donation "Buy us a coffee" outbound link (Ko-fi/BMC/Stripe Payment Link); no integration.
 - [ ] **CRED-06**: Privacy-respecting analytics fire pageviews + key events (search run, tag picked, deploy clicked, alert signup).
 
