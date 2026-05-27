@@ -6,6 +6,9 @@
 	// before wrangler bundles this — see the A1 deploy note in 03-04-SUMMARY.md.
 	"main": "worker.ts",
 	"name": "reporadar",
+	// Pin the account so wrangler stays non-interactive when the logged-in token
+	// has access to more than one Cloudflare account ("Let's Go Christo").
+	"account_id": "8eed363c07a698cda288e143e9496070",
 	"compatibility_date": "2026-05-09",
 	"compatibility_flags": [
 		"nodejs_compat",

@@ -21,6 +21,8 @@ import {
   normalizeThreshold,
   normalizeWindowDays,
   buildVerifyEmail,
+  ALERTS_FROM,
+  REPLY_TO_EMAIL,
 } from "@/app/lib/notifications";
 
 export const runtime = "nodejs";
@@ -173,7 +175,7 @@ export async function POST(req: NextRequest) {
   const verifyUrl = `${origin}/api/notifications/verify?token=${verify_token}`;
   const { subject, html } = buildVerifyEmail({ email, verifyUrl });
 
-  await sendEmail({ to: email, subject, html }).catch((err) => {
+  await sendEmail({ to: email, subject, html, from: ALERTS_FROM, replyTo: REPLY_TO_EMAIL }).catch((err) => {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("[subscribe] sendEmail exception:", msg);
   });
