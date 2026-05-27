@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 02-05: Analytics beacon + track() helper"
-last_updated: "2026-05-27T09:30:41.322Z"
+stopped_at: "Completed 03-01: D1 migration + db.ts data foundation"
+last_updated: "2026-05-27T10:07:45.706Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_plans: 12
+  completed_plans: 8
+  percent: 67
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | Phase 02-credibility-batch-analytics P02 | 175 | 2 tasks | 3 files |
 | Phase 02-credibility-batch-analytics P04 | 2 | 2 tasks | 3 files |
 | Phase 02-credibility-batch-analytics P05 | 7 | 2 tasks | 6 files |
+| Phase 03-threshold-alerts P01 | 7 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,10 @@ Recent decisions affecting current work:
 - Option B centralization in runQuery — label-prefix discrimination covers all tag-pick entry points without touching call sites
 - Track() events backend deferred product decision — CF Zaraz / Plausible / Umami options documented in analytics.ts
 - CF Web Analytics beacon via next/script strategy=afterInteractive — renders only when NEXT_PUBLIC_CF_BEACON_TOKEN is set (D-11)
+- node --test glob pattern required (not directory) on Node v25
+- D1Database type import explicit in Next.js app — not globally ambient from @cloudflare/workers-types
+- writeSnapshots uses ON CONFLICT DO UPDATE for idempotent re-insert of snapshots
+- Remote D1 migration (--remote) is owner-gated handoff — not applied by executor (D-11)
 
 ### Pending Todos
 
@@ -120,8 +125,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T09:30:41.317Z
-Stopped at: Completed 02-05: Analytics beacon + track() helper
+Last session: 2026-05-27T10:07:45.701Z
+Stopped at: Completed 03-01: D1 migration + db.ts data foundation
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
