@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchRepo, fetchTrending } from "@/app/lib/github";
+import { fetchRepo } from "@/app/lib/github";
+import { fetchTrendingCached } from "@/app/lib/trendingCache";
 import { translateRepoDescriptions } from "@/app/lib/translate";
-import type { Repo } from "@/app/lib/types";
 
 export const runtime = "nodejs";
-
-// 5-minute in-memory cache to keep the demo within GitHub's anon rate limit.
-const cache = new Map<string, { at: number; data: Repo[] }>();
-const TTL_MS = 5 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
@@ -19,16 +15,13 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(params.get("limit") ?? "10", 10) || 10));
   const enrich = params.get("enrich") === "1";
 
-  const cacheKey = `t:${topic}|q:${query}|s:${since}|p:${page}|n:${limit}|e:${enrich ? 1 : 0}`;
-  const hit = cache.get(cacheKey);
-  if (hit && Date.now() - hit.at < TTL_MS) {
-    return NextResponse.json(hit.data, {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" },
-    });
-  }
-
   try {
-    const base = await fetchTrending({
+    // fetchTrendingCached owns TTL caching + in-flight coalescing (D-11).
+    // Cache key = topic|query|since|page|perPage (lowercased topic).
+    // The enrich dimension is NOT part of the cache key — the wrapper caches
+    // the base trending pool; the route re-applies enrich after (keeps the
+    // wrapper reusable by the cron which never enriches).
+    const base = await fetchTrendingCached({
       topic: topic || undefined,
       query: query || undefined,
       since: since || undefined,
@@ -64,7 +57,6 @@ export async function GET(req: NextRequest) {
       new Promise<void>((resolve) => setTimeout(resolve, 4000)),
     ]);
 
-    cache.set(cacheKey, { at: Date.now(), data });
     // Edge-cache the default trending pulls so subsequent page loads are
     // ~10ms instead of 1-3s. stale-while-revalidate keeps the experience
     // instant while the cache refreshes in the background.

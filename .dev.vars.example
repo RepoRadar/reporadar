@@ -1,0 +1,14 @@
+# RepoRadar local env contract — copy to .dev.vars and fill in. NEVER commit .dev.vars (only this .example).
+# App-owned, fine-scoped (public-repo read) GitHub token. HUMAN HANDOFF: owner mints it and sets prod via
+# `wrangler secret put GITHUB_TOKEN`. Code reads process.env.GITHUB_TOKEN (app/lib/github.ts, app/api/feedback/route.ts).
+GITHUB_TOKEN=
+# Resend email delivery key (already exists for reporadar; prod secret already set). sendEmail() no-ops when absent.
+RESEND_API_KEY=
+# Optional sender override; defaults to "RepoRadar <onboarding@resend.dev>" (sandbox sender).
+RESEND_FROM=
+# Gemini key for A2UI surface generation + description translation. Features no-op/stub when absent.
+GOOGLE_API_KEY=
+# ElevenLabs TTS (Phase 5 audio). Optional today.
+ELEVENLABS_API_KEY=
+# Next.js env mode passthrough for OpenNext/Cloudflare.
+NEXTJS_ENV=
