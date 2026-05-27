@@ -50,8 +50,19 @@ export async function GET(req: NextRequest) {
     }
     // Translate non-English descriptions to English (batched single Gemini
     // call). Mutates repos in place; cached at module level so repeat hits
-    // are free.
-    await translateRepoDescriptions(data);
+    // are free. BOUND it: translation must never block the repo results —
+    // when Gemini is slow/rate-limited this could stall the response 20-30s,
+    // which pushes past the client's fetch timeout and makes searches fail.
+    // Cap the wait; on timeout we return untranslated (RepoCard falls back to
+    // the raw description) and the background call still populates the cache
+    // for the next hit. Its own .catch keeps a Gemini error from 500-ing.
+    const translation = translateRepoDescriptions(data).catch((e) =>
+      console.warn("[api/repos] translate failed:", e instanceof Error ? e.message : e),
+    );
+    await Promise.race([
+      translation,
+      new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+    ]);
 
     cache.set(cacheKey, { at: Date.now(), data });
     // Edge-cache the default trending pulls so subsequent page loads are
