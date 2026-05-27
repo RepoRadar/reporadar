@@ -39,7 +39,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 **: Cloudflare Cron Trigger diffs distinct subscribed terms against latest snapshots over `window_days`, detects crossings, and is idempotent and rate-limit-safe.
 - [x] **ALRT-03
 **: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
-- [ ] **ALRT-04**: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
+- [x] **ALRT-04
+**: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
 - [ ] **ALRT-05**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
 
 ### Repo Intelligence (WS3)

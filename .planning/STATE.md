@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 03-02: pure detectCrossings module + TDD fixture tests"
-last_updated: "2026-05-27T10:12:47.685Z"
+stopped_at: "Completed 03-03: D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails + API tests"
+last_updated: "2026-05-27T10:28:21.076Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
-  percent: 75
+  completed_plans: 10
+  percent: 83
 ---
 
 # Project State
@@ -61,6 +61,7 @@ Progress: [████████░░] 75%
 | Phase 02-credibility-batch-analytics P05 | 7 | 2 tasks | 6 files |
 | Phase 03-threshold-alerts P01 | 7 | 3 tasks | 6 files |
 | Phase 03-threshold-alerts P02 | 3 | 2 tasks | 2 files |
+| Phase 03-threshold-alerts P03 | 13 | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - void (sub.metric as never) exhaustive switch default — TypeScript completeness without lint warning
 - alerts.ts uses import type from db.ts — types-only, no runtime DB dependency (purity preserved)
 - Math.max(1, window_days) in velocity guard — callers don't need to special-case zero window
+- allowImportingTsExtensions: true added to tsconfig — required for ./email.ts imports in node --test while keeping noEmit: true
+- cloudflare-env.d.ts created to type CloudflareEnv.DB binding (wrangler types convention)
+- T-03-08: verify/unsubscribe routes return 200 for both matched/unmatched tokens (no oracle)
 
 ### Pending Todos
 
@@ -129,8 +133,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:12:47.679Z
-Stopped at: Completed 03-02: pure detectCrossings module + TDD fixture tests
+Last session: 2026-05-27T10:28:21.070Z
+Stopped at: Completed 03-03: D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails + API tests
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
