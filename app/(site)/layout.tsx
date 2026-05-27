@@ -7,6 +7,7 @@
  * Does NOT touch the dashboard header, cards, or sliders (hackathon freeze).
  */
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
@@ -25,7 +26,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
         }}
       >
         <nav style={{ marginBottom: "2rem" }}>
-          <a
+          <Link
             href="/"
             style={{
               color: "var(--primary)",
@@ -36,7 +37,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
             }}
           >
             ← RepoRadar
-          </a>
+          </Link>
         </nav>
         {children}
       </div>
