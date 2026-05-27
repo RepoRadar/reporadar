@@ -35,8 +35,10 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **ALRT-01
 **: D1 schema for `subscriptions` (email, kind, term, metric, threshold, window_days, verified_at, last_notified_at, unsub_token) and `repo_snapshots` (term, full_name, stars, captured_at).
-- [ ] **ALRT-02**: Cloudflare Cron Trigger diffs distinct subscribed terms against latest snapshots over `window_days`, detects crossings, and is idempotent and rate-limit-safe.
-- [ ] **ALRT-03**: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
+- [x] **ALRT-02
+**: Cloudflare Cron Trigger diffs distinct subscribed terms against latest snapshots over `window_days`, detects crossings, and is idempotent and rate-limit-safe.
+- [x] **ALRT-03
+**: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
 - [ ] **ALRT-04**: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
 - [ ] **ALRT-05**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
 

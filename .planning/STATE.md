@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 03-01: D1 migration + db.ts data foundation"
-last_updated: "2026-05-27T10:07:45.706Z"
+stopped_at: "Completed 03-02: pure detectCrossings module + TDD fixture tests"
+last_updated: "2026-05-27T10:12:47.685Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 12
-  completed_plans: 8
-  percent: 67
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [███████░░░] 67%
 | Phase 02-credibility-batch-analytics P04 | 2 | 2 tasks | 3 files |
 | Phase 02-credibility-batch-analytics P05 | 7 | 2 tasks | 6 files |
 | Phase 03-threshold-alerts P01 | 7 | 3 tasks | 6 files |
+| Phase 03-threshold-alerts P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,9 @@ Recent decisions affecting current work:
 - D1Database type import explicit in Next.js app — not globally ambient from @cloudflare/workers-types
 - writeSnapshots uses ON CONFLICT DO UPDATE for idempotent re-insert of snapshots
 - Remote D1 migration (--remote) is owner-gated handoff — not applied by executor (D-11)
+- void (sub.metric as never) exhaustive switch default — TypeScript completeness without lint warning
+- alerts.ts uses import type from db.ts — types-only, no runtime DB dependency (purity preserved)
+- Math.max(1, window_days) in velocity guard — callers don't need to special-case zero window
 
 ### Pending Todos
 
@@ -125,8 +129,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:07:45.701Z
-Stopped at: Completed 03-01: D1 migration + db.ts data foundation
+Last session: 2026-05-27T10:12:47.679Z
+Stopped at: Completed 03-02: pure detectCrossings module + TDD fixture tests
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
