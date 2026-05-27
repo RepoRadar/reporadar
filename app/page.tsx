@@ -3,9 +3,12 @@ import { fetchTrending } from "@/app/lib/github";
 import type { Repo } from "@/app/lib/types";
 import { parseShareParams, labelFor, type TimeWindow } from "@/app/lib/shareUrl";
 
-// No caching at the page level. We're iterating on this every few minutes —
-// every visit must hit the latest deployed bundle. (Without this, OpenNext +
-// Cloudflare were caching the page HTML for s-maxage=31536000 — a year.)
+// No caching of the rendered PAGE/HTML. We're iterating on this every few
+// minutes — every visit must hit the latest deployed bundle. (Without this,
+// OpenNext + Cloudflare were caching the page HTML for s-maxage=31536000 — a
+// year.) NOTE: the prefetched repo *data* IS cached in-memory below
+// (prefetchCache) so first paint isn't gated on a GitHub round-trip per
+// request; that's independent of this page-render directive.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -40,6 +43,70 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+// In-memory SSR data cache (mirrors the pattern in app/api/repos/route.ts). The
+// page stays `force-dynamic` so every visit renders the latest bundle, but the
+// *prefetched repo data* is cached per (topic|query|window) so first paint
+// isn't gated on a live GitHub round-trip on every request. The default Hermes
+// view dominates traffic, so this makes the vast majority of loads instant.
+//
+// Two tiers, stale-while-revalidate style:
+//   age < FRESH_MS  → serve cached, no refresh
+//   age < STALE_MS  → serve cached immediately + refresh in the background
+//   otherwise/miss  → fetch synchronously (bounded), then cache
+// Per-isolate (like the API cache); a warm isolate serves cached after its
+// first miss. We only cache non-empty results so a transient failure can't
+// poison the cache, and fall back to expired-but-present data if a fetch fails.
+const PREFETCH_FRESH_MS = 60_000; // 1 min
+const PREFETCH_STALE_MS = 10 * 60_000; // 10 min
+const prefetchCache = new Map<string, { at: number; data: Repo[] }>();
+
+type PrefetchKey = { topic?: string; query?: string; timeWindow: TimeWindow };
+
+function prefetchOnce(k: PrefetchKey): Promise<Repo[]> {
+  return withTimeout(
+    fetchTrending({
+      topic: k.topic,
+      query: k.query,
+      since: sinceFor(k.timeWindow),
+      page: 1,
+      perPage: 100,
+    }),
+    SSR_PREFETCH_BUDGET_MS,
+  );
+}
+
+async function getPrefetch(k: PrefetchKey): Promise<Repo[]> {
+  const key = `${k.topic ?? ""}|${k.query ?? ""}|${k.timeWindow}`;
+  const hit = prefetchCache.get(key);
+  const now = Date.now();
+
+  if (hit) {
+    const age = now - hit.at;
+    if (age < PREFETCH_FRESH_MS) return hit.data;
+    if (age < PREFETCH_STALE_MS) {
+      // Best-effort background refresh; if the isolate is torn down after the
+      // response it simply refreshes on a later request. Never blocks paint.
+      void prefetchOnce(k)
+        .then((fresh) => {
+          if (fresh.length > 0) prefetchCache.set(key, { at: Date.now(), data: fresh });
+        })
+        .catch(() => {});
+      return hit.data;
+    }
+  }
+
+  try {
+    const data = await prefetchOnce(k);
+    if (data.length > 0) prefetchCache.set(key, { at: now, data });
+    return data;
+  } catch (e) {
+    // Timed out or upstream error — serve expired cache if we have it, else
+    // empty (client bootstrap fills in after hydration). Never blocks paint.
+    console.error("[home] SSR prefetch skipped:", e instanceof Error ? e.message : e);
+    return hit?.data ?? [];
+  }
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -57,23 +124,11 @@ export default async function Home({
   // (RepoCard renders descriptionEn || description). The client will pick
   // up translations on any later /api/repos fetch (infinite scroll, search,
   // tag click) which keeps the module-level translation cache populated.
-  let initialRepos: Repo[] = [];
-  try {
-    initialRepos = await withTimeout(
-      fetchTrending({
-        topic: state.topic,
-        query: state.query,
-        since: sinceFor(state.timeWindow),
-        page: 1,
-        perPage: 100,
-      }),
-      SSR_PREFETCH_BUDGET_MS,
-    );
-  } catch (e) {
-    // Timed out or upstream error — render without prefetched cards; the
-    // client bootstrap fetches them after hydration. Never blocks first paint.
-    console.error("[home] SSR prefetch skipped:", e instanceof Error ? e.message : e);
-  }
+  const initialRepos = await getPrefetch({
+    topic: state.topic,
+    query: state.query,
+    timeWindow: state.timeWindow,
+  });
   return (
     <RepoRadarApp
       initialRepos={initialRepos}
