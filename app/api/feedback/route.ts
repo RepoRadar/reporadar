@@ -9,6 +9,7 @@ type FeedbackBody = {
   contact?: unknown;
   pageUrl?: unknown;
   context?: unknown;
+  type?: unknown; // "feedback" | "feature" — defaults to "feedback"
 };
 
 type VerifiedIssue = {
@@ -44,8 +45,10 @@ export async function POST(req: NextRequest) {
   const contact = normalizeText(body.contact, MAX_CONTACT_CHARS);
   const pageUrl = normalizeText(body.pageUrl, 500) || req.headers.get("referer") || undefined;
   const context = normalizeText(body.context, MAX_CONTEXT_CHARS);
+  // Normalize type to strict enum — any value other than "feature" is treated as "feedback"
+  const type: "feedback" | "feature" = body.type === "feature" ? "feature" : "feedback";
   const submittedAt = new Date().toISOString();
-  const verified = await verifyFeedback({ feedback, contact, pageUrl, context, submittedAt });
+  const verified = await verifyFeedback({ feedback, contact, pageUrl, context, submittedAt, type });
   const created = await createGitHubIssue(verified);
 
   return NextResponse.json({
@@ -71,29 +74,39 @@ async function verifyFeedback({
   pageUrl,
   context,
   submittedAt,
+  type,
 }: {
   feedback: string;
   contact?: string;
   pageUrl?: string;
   context?: string;
   submittedAt: string;
+  type: "feedback" | "feature";
 }): Promise<VerifiedIssue> {
-  const fallback = buildFallbackIssue({ feedback, contact, pageUrl, context, submittedAt });
+  const fallback = buildFallbackIssue({ feedback, contact, pageUrl, context, submittedAt, type });
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) return fallback;
+
+  const isFeature = type === "feature";
+  const systemInstruction = isFeature
+    ? "You turn RepoRadar user feature suggestions into well-scoped GitHub feature requests. Capture the user's desired outcome and motivation, separate the request from assumptions, never invent scope, and output only JSON."
+    : "You turn RepoRadar user reviews into verified GitHub issues. Preserve the user's concrete claims, separate facts from assumptions, never invent steps or environment details, and output only JSON.";
+  const titlePrefix = isFeature ? "Feature:" : "Feedback:";
+  const baseLabels = isFeature
+    ? '["user-feedback", "triage", "feature-request", "<one of enhancement|ux>"]'
+    : '["user-feedback", "triage", "<one of bug|enhancement|ux>"]';
 
   try {
     const client = new GoogleGenerativeAI(apiKey);
     const model = client.getGenerativeModel({
       model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-      systemInstruction:
-        "You turn RepoRadar user reviews into verified GitHub issues. Preserve the user's concrete claims, separate facts from assumptions, never invent steps or environment details, and output only JSON.",
+      systemInstruction,
       generationConfig: {
         responseMimeType: "application/json",
         temperature: 0.2,
       },
     });
-    const result = await model.generateContent(`Feedback:
+    const result = await model.generateContent(`${isFeature ? "Feature suggestion" : "Feedback"}:
 ${feedback}
 
 Contact: ${contact || "(not provided)"}
@@ -103,12 +116,12 @@ Submitted at: ${submittedAt}
 
 Return JSON:
 {
-  "title": "Feedback: <concise issue title>",
+  "title": "${titlePrefix} <concise issue title>",
   "summary": "<one sentence>",
   "verifiedDetails": ["<fact from feedback or context>", "..."],
   "openQuestions": ["<unknown that needs human follow-up>", "..."],
   "impact": "<user impact>",
-  "labels": ["user-feedback", "triage", "<one of bug|enhancement|ux>"],
+  "labels": ${baseLabels},
   "confidence": "low|medium|high"
 }`);
     const parsed = JSON.parse(extractJson(result.response.text())) as {
@@ -120,8 +133,8 @@ Return JSON:
       labels?: unknown;
       confidence?: unknown;
     };
-    const title = normalizeTitle(parsed.title) || fallback.title;
-    const labels = normalizeLabels(parsed.labels);
+    const title = normalizeTitle(parsed.title, type) || fallback.title;
+    const labels = normalizeLabels(parsed.labels, type);
     const confidence = normalizeConfidence(parsed.confidence);
     return {
       title,
@@ -178,25 +191,40 @@ function buildFallbackIssue({
   pageUrl,
   context,
   submittedAt,
+  type,
 }: {
   feedback: string;
   contact?: string;
   pageUrl?: string;
   context?: string;
   submittedAt: string;
+  type: "feedback" | "feature";
 }): VerifiedIssue {
+  const isFeature = type === "feature";
+  const titlePrefix = isFeature ? "Feature:" : "Feedback:";
+  const labels: string[] = isFeature
+    ? ["user-feedback", "triage", "feature-request"]
+    : ["user-feedback", "triage"];
   return {
-    title: `Feedback: ${makeTitle(feedback)}`,
-    labels: ["user-feedback", "triage"],
+    title: `${titlePrefix} ${makeTitle(feedback)}`,
+    labels,
     confidence: "medium",
     body: issueBody({
       summary: makeTitle(feedback),
       verifiedDetails: [
-        "A user submitted this through the RepoRadar feedback control.",
+        isFeature
+          ? "A user submitted this feature suggestion through the RepoRadar feedback control."
+          : "A user submitted this through the RepoRadar feedback control.",
         pageUrl ? `Submitted from ${pageUrl}.` : "No page URL was provided.",
       ],
-      openQuestions: ["Human triage should confirm severity, reproduction steps, and ownership."],
-      impact: "User feedback needs product/engineering triage.",
+      openQuestions: [
+        isFeature
+          ? "Human triage should clarify scope, motivation, and priority."
+          : "Human triage should confirm severity, reproduction steps, and ownership.",
+      ],
+      impact: isFeature
+        ? "User feature suggestion needs product triage."
+        : "User feedback needs product/engineering triage.",
       feedback,
       contact,
       pageUrl,
@@ -260,10 +288,13 @@ function normalizeText(value: unknown, max: number): string | undefined {
   return text ? text.slice(0, max) : undefined;
 }
 
-function normalizeTitle(value: unknown): string | undefined {
+function normalizeTitle(value: unknown, type: "feedback" | "feature" = "feedback"): string | undefined {
   const title = normalizeText(value, 120);
   if (!title) return undefined;
-  return title.startsWith("Feedback:") ? title : `Feedback: ${title}`;
+  const prefix = type === "feature" ? "Feature:" : "Feedback:";
+  // Accept either prefix when present; otherwise prepend the correct one
+  if (title.startsWith("Feedback:") || title.startsWith("Feature:")) return title;
+  return `${prefix} ${title}`;
 }
 
 function normalizeStringList(value: unknown): string[] {
@@ -274,12 +305,16 @@ function normalizeStringList(value: unknown): string[] {
     .slice(0, 6);
 }
 
-function normalizeLabels(value: unknown): string[] {
+function normalizeLabels(value: unknown, type: "feedback" | "feature" = "feedback"): string[] {
   const labels = normalizeStringList(value)
     .map((label) => label.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, ""))
     .filter(Boolean)
     .slice(0, 5);
-  return Array.from(new Set(["user-feedback", "triage", ...labels]));
+  const baseLabels =
+    type === "feature"
+      ? ["user-feedback", "triage", "feature-request"]
+      : ["user-feedback", "triage"];
+  return Array.from(new Set([...baseLabels, ...labels]));
 }
 
 function normalizeConfidence(value: unknown): VerifiedIssue["confidence"] {

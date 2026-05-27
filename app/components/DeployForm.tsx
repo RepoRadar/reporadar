@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { track } from "@/app/lib/analytics";
 
 type DeployStage =
   | { kind: "form" }
@@ -61,6 +62,8 @@ export function DeployForm({
     }, 250);
 
     try {
+      // Fire-and-forget — never awaited, never delays the deploy action (T-02-17).
+      track("deploy_clicked", { repo });
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "content-type": "application/json" },
