@@ -14,16 +14,17 @@ test.describe("home page", () => {
   test("loads with the right title and key chrome", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/RepoRadar/i);
-    // The animated LIVE indicator appears in the header. Use a strict
-    // locator on the exact string with the leading bullet so we don't match
-    // tooltip <title> nodes that contain the substring "alive".
-    await expect(page.locator("text=● LIVE")).toBeVisible();
-    // The gradient logo text
+    // The gradient logo wordmark.
     await expect(page.locator("h1", { hasText: "RepoRadar" })).toBeVisible();
+    // The four header control buttons are the stable chrome.
+    for (const panel of ["tags", "talk", "type", "filter"]) {
+      await expect(page.locator(`button[aria-controls="panel-${panel}"]`)).toBeVisible();
+    }
   });
 
-  test("the 10 quick-scan tag chips are rendered", async ({ page }) => {
+  test("the quick-scan tag chips render in the TAGS panel", async ({ page }) => {
     await page.goto("/");
+    await page.click('button[aria-controls="panel-tags"]'); // tags live inside the panel
     for (const label of [
       "Hermes",
       "OpenClaw",
@@ -37,26 +38,24 @@ test.describe("home page", () => {
       "Gemini",
     ]) {
       await expect(
-        page.locator(`button:has-text("${label}")`).first(),
+        page.locator(`#panel-tags button:has-text("${label}")`).first(),
       ).toBeVisible();
     }
   });
 
-  test("the inline white search input is rendered", async ({ page }) => {
+  test("the freeform search input renders in the TYPE panel", async ({ page }) => {
     await page.goto("/");
-    await expect(
-      page.locator('input[placeholder*="type your own topic" i]'),
-    ).toBeVisible();
+    await page.click('button[aria-controls="panel-type"]'); // search input lives inside the panel
+    await expect(page.locator('#panel-type input[type="text"]')).toBeVisible();
   });
 
-  test("sort-priority chips are rendered (Stars first, plus the 10 dims)", async ({ page }) => {
+  test("sort-priority chips render in the FILTER panel (Stars + the 10 dims)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle").catch(() => {});
-    // The "Most Stars" virtual sort priority sits first and is auto-selected
+    await page.click('button[aria-controls="panel-filter"]'); // sort priorities live inside the panel
+    // The "Most Stars" virtual sort priority sits first and is auto-selected.
     await expect(
-      page.locator('button:has-text("Most Stars")').first(),
+      page.locator('#panel-filter button:has-text("Most Stars")').first(),
     ).toBeVisible({ timeout: 8000 });
-    // Each dimension chip uses its phrase-form label
     for (const label of [
       "Trending Momentum",
       "Shipping Velocity",
@@ -70,21 +69,18 @@ test.describe("home page", () => {
       "Ecosystem Pull",
     ]) {
       await expect(
-        page.locator(`button:has-text("${label}")`).first(),
+        page.locator(`#panel-filter button:has-text("${label}")`).first(),
       ).toBeVisible({ timeout: 8000 });
     }
   });
 
-  test("the 3 default sliders + caret expand are rendered", async ({ page }) => {
+  test("the radar sliders render", async ({ page }) => {
     await page.goto("/");
-    // Tune your radar header
-    await expect(page.locator("text=Tune your radar")).toBeVisible();
-    // Top-3 slider labels
-    for (const label of ["Momentum", "Velocity", "Maturity"]) {
+    // The "Slide to tune" panel with dimension sliders is visible on load.
+    await expect(page.getByText("Slide to tune", { exact: false })).toBeVisible();
+    for (const label of ["Trending Momentum", "Shipping Velocity", "Project Maturity"]) {
       await expect(page.locator("label", { hasText: label }).first()).toBeVisible();
     }
-    // Caret to expand the rest
-    await expect(page.locator("text=more dimensions")).toBeVisible();
   });
 
   test("the InteractiveRadar SVG renders with 10 axis spokes", async ({ page }) => {
@@ -116,31 +112,22 @@ test.describe("home page", () => {
 test.describe("interactions", () => {
   test("clicking a sort-priority chip adds a priority number badge", async ({ page }) => {
     await page.goto("/");
-    // Default priorities = ["stars"] (auto-selected priority 1) so clear
-    // first to start from a known state.
-    const clear = page.locator('button:has-text("clear")').first();
-    if (await clear.isVisible().catch(() => false)) await clear.click();
-    // Click "Trending Momentum" in the SORT BY row
-    const chip = page
-      .locator('button:has-text("Trending Momentum")')
-      .first();
+    await page.click('button[aria-controls="panel-filter"]'); // open the FILTER panel
+    const chip = page.locator('#panel-filter button:has-text("Trending Momentum")').first();
     await chip.click();
-    // After click, the chip should show a numeric priority badge
-    await expect(
-      chip.locator("span", { hasText: /^[123]$/ }),
-    ).toBeVisible({ timeout: 3000 });
+    // After click, the chip shows a numeric priority badge.
+    await expect(chip.locator("span", { hasText: /^[123]$/ })).toBeVisible({ timeout: 3000 });
   });
 
-  test("typing in the search box and pressing Enter changes the activity state", async ({ page }) => {
+  test("typing a query in the TYPE panel updates the URL", async ({ page }) => {
     await page.goto("/");
-    await page.waitForTimeout(1500);
-    const input = page.locator('input[placeholder*="type your own topic" i]');
+    await page.click('button[aria-controls="panel-type"]');
+    const input = page.locator('#panel-type input[type="text"]');
     await input.fill("podcast");
     await input.press("Enter");
-    // The status line under the cards should reflect a new query
-    await page.waitForTimeout(2500);
-    const lastQuery = page.locator("text=/search:|trending:/i").first();
-    await expect(lastQuery).toBeVisible();
+    // The freeform query is reflected in the shareable URL (client-side, so this
+    // is robust even if the GitHub fetch is slow/rate-limited).
+    await expect.poll(() => new URL(page.url()).search, { timeout: 8000 }).toContain("q=podcast");
   });
 
   test("clicking a card snaps weights (selected border + glow)", async ({ page }) => {
