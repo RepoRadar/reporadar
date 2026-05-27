@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 02-04: on-brand Footer component"
-last_updated: "2026-05-27T09:25:02.299Z"
+stopped_at: "Completed 02-05: Analytics beacon + track() helper"
+last_updated: "2026-05-27T09:30:41.322Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████████░] 86%
 | Phase 02-credibility-batch-analytics P03 | 166 | 2 tasks | 2 files |
 | Phase 02-credibility-batch-analytics P02 | 175 | 2 tasks | 3 files |
 | Phase 02-credibility-batch-analytics P04 | 2 | 2 tasks | 3 files |
+| Phase 02-credibility-batch-analytics P05 | 7 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - Footer 'use client' required for window.dispatchEvent in Suggest-a-feature onClick
 - DONATION_URL constant with env-var override for human-handoff Ko-fi handle (NEXT_PUBLIC_DONATION_URL)
 - Suggest a feature is a <button> not a link — dispatches reporadar:open-feedback CustomEvent (no URL)
+- Option B centralization in runQuery — label-prefix discrimination covers all tag-pick entry points without touching call sites
+- Track() events backend deferred product decision — CF Zaraz / Plausible / Umami options documented in analytics.ts
+- CF Web Analytics beacon via next/script strategy=afterInteractive — renders only when NEXT_PUBLIC_CF_BEACON_TOKEN is set (D-11)
 
 ### Pending Todos
 
@@ -116,8 +120,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T09:25:02.294Z
-Stopped at: Completed 02-04: on-brand Footer component
+Last session: 2026-05-27T09:30:41.317Z
+Stopped at: Completed 02-05: Analytics beacon + track() helper
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z

@@ -28,7 +28,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 **: Suggestion box extends existing `/api/feedback` + `FeedbackWidget` with a "suggest a feature" path (no duplication).
 - [x] **CRED-05
 **: Donation "Buy us a coffee" outbound link (Ko-fi/BMC/Stripe Payment Link); no integration.
-- [ ] **CRED-06**: Privacy-respecting analytics fire pageviews + key events (search run, tag picked, deploy clicked, alert signup).
+- [x] **CRED-06
+**: Privacy-respecting analytics fire pageviews + key events (search run, tag picked, deploy clicked, alert signup).
 
 ### Threshold Alerts (WS2)
 
