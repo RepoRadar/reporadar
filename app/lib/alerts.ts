@@ -1,8 +1,12 @@
 /**
- * app/lib/alerts.ts — pure crossing-detection module for the alert engine.
+ * app/lib/alerts.ts — pure crossing-detection module + sweep orchestrator.
  *
- * PURE: no I/O, no fetch, no DB access. Takes data in, returns crossings.
+ * PURE section (detectCrossings): no I/O, no fetch, no DB access.
  * Fully unit-testable with fixtures (node --test tests/alerts.detectCrossings.test.mjs).
+ *
+ * Sweep orchestrator (runAlertSweep): env-injected, NOT context-coupled to the Cloudflare request.
+ * This allows it to run from both the scheduled() handler in worker.ts AND from
+ * unit tests with a fake/local DB adapter. Do NOT use the cloudflare context API here.
  *
  * Three supported metrics (D-04):
  *   stars_abs  — absolute star count passed threshold
@@ -13,9 +17,27 @@
  *   T-03-04: Skip repos with no prior baseline (missing from priorSnapshot) or
  *            prior <= 0 for pct/velocity — prevents divide-by-zero and false fires.
  *   T-03-05: reason is plain text; HTML escaping is the email layer's job (Plan 03/04).
+ *   T-03-12: alreadyNotified() skips standing crossings so the sweep is idempotent.
+ *   T-03-15: listVerifiedSubsForTerm returns only verified_at IS NOT NULL rows.
  */
 
-import type { SubscriptionRow } from "./db";
+import type { D1Database } from "@cloudflare/workers-types";
+import type { SubscriptionRow } from "./db.ts";
+import {
+  listDistinctTerms,
+  listVerifiedSubsForTerm,
+  getLatestSnapshot,
+  writeSnapshots,
+  setLastNotified,
+} from "./db.ts";
+import type { Repo } from "./types.ts";
+
+// NOTE: fetchTrendingCached, buildAlertEmail, and sendEmail are imported
+// dynamically in runAlertSweep when no dep overrides are provided. This avoids
+// loading trendingCache → github (which references env/process) at module parse
+// time, keeping the module loadable in plain-Node test environments that don't
+// have Cloudflare bindings. The injected-deps path (used in tests) never
+// exercises the dynamic branches.
 
 // ---------------------------------------------------------------------------
 // Types
@@ -181,4 +203,114 @@ function evaluateVelocity(
  */
 function formatStars(n: number): string {
   return n.toLocaleString("en-US");
+}
+
+// ---------------------------------------------------------------------------
+// Idempotency guard (T-03-12 / Pitfall 1)
+// ---------------------------------------------------------------------------
+
+/**
+ * V1 crossing-identity dedupe rule (pinned per D-11 / A3):
+ *
+ * Once a subscription has last_notified_at set, skip sending again until the
+ * metric value drops back below threshold and re-crosses. This is the simplest
+ * robust rule that guarantees "exactly one email per standing crossing" and
+ * passes the twice-run idempotency test.
+ *
+ * Rationale: last_notified_at is set for the WHOLE subscription (not per-repo).
+ * A finer per-repo crossing identity can be added in v2 if needed (deferred).
+ * For v1 the acceptance criterion is "never double-send" — this achieves it.
+ */
+export function alreadyNotified(sub: Pick<SubscriptionRow, "last_notified_at">): boolean {
+  return sub.last_notified_at !== null && sub.last_notified_at !== undefined;
+}
+
+// ---------------------------------------------------------------------------
+// runAlertSweep — scheduled sweep orchestrator (D-05)
+// ---------------------------------------------------------------------------
+
+/**
+ * Injected dependencies for testability. Production defaults are applied inside
+ * runAlertSweep when the optional `deps` arg is omitted or partially provided.
+ *
+ * - fetchTrending: replaces fetchTrendingCached so tests can return fixtures
+ *   without a real GitHub token.
+ * - send: replaces the sendEmail+buildAlertEmail pair so tests can spy on calls
+ *   without a real Resend key.
+ * - now: replaces new Date().toISOString() so tests can produce deterministic
+ *   timestamps (also enables snapshot ordering assertions).
+ */
+export type SweepDeps = {
+  fetchTrending?: (params: { topic?: string; query?: string }) => Promise<Repo[]>;
+  send?: (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => Promise<unknown>;
+  now?: () => string;
+};
+
+/**
+ * Run one complete alert sweep.
+ *
+ * Sweep order (Pitfall 2 — detect BEFORE write):
+ *   1. Dedupe distinct verified terms via listDistinctTerms (Pitfall 3 — rate budget).
+ *   2. For each term: fetch once (fetchTrendingCached or injected stub).
+ *   3. Load prior snapshot for that term (getLatestSnapshot).
+ *   4. Detect crossings for each VERIFIED subscriber via detectCrossings.
+ *   5. For subs not already notified (T-03-12): send email + setLastNotified.
+ *   6. THEN writeSnapshots (fresh baselines, after detection).
+ *
+ * @param env  - Worker env object supplying DB binding. Pass env directly; do not reach for the context API.
+ * @param deps - Optional testability overrides for fetchTrending, send, now.
+ * @returns    { sent, scanned } counts (useful for tests + Cron Past-Events logs).
+ */
+export async function runAlertSweep(
+  env: { DB: D1Database; APP_ORIGIN?: string },
+  deps: SweepDeps = {},
+): Promise<{ sent: number; scanned: number }> {
+  // Apply production defaults for injected deps (lazy dynamic imports avoid loading
+  // the Cloudflare-coupled modules in plain-Node test environments).
+  const fetchTrending = deps.fetchTrending ?? (await import("./trendingCache.ts").then((m) => m.fetchTrendingCached));
+  const sendFn = deps.send ?? (async (sub: SubscriptionRow, crossing: Crossing, unsubUrl: string) => {
+    const { buildAlertEmail } = await import("./notifications.ts");
+    const { sendEmail } = await import("./email.ts");
+    return sendEmail(buildAlertEmail({ term: sub.term, crossing, unsubUrl }));
+  });
+  const now = deps.now ?? (() => new Date().toISOString());
+
+  const terms = await listDistinctTerms(env.DB);
+  let sent = 0;
+
+  for (const t of terms) {
+    // Fetch once per DISTINCT term — Pitfall 3 / D-05 rate-budget guard.
+    const repos = await fetchTrending(
+      t.kind === "topic" ? { topic: t.term } : { query: t.term }
+    );
+
+    // Load the PRIOR snapshot BEFORE detection (Pitfall 2: detect vs old baseline).
+    const prior = await getLatestSnapshot(env.DB, t.term);
+
+    const subs = await listVerifiedSubsForTerm(env.DB, t.term);
+
+    for (const sub of subs) {
+      // T-03-15: listVerifiedSubsForTerm already gates on verified_at IS NOT NULL.
+      // T-03-12: skip if already notified about a standing crossing (idempotency v1).
+      if (alreadyNotified(sub)) continue;
+
+      const crossings = detectCrossings(sub, repos, prior);
+
+      for (const crossing of crossings) {
+        const unsubUrl = `${env.APP_ORIGIN ?? "https://reporadar.io"}/api/notifications/unsubscribe?token=${sub.unsub_token}`;
+        await sendFn(sub, crossing, unsubUrl);
+        await setLastNotified(env.DB, sub.id, now());
+        sent++;
+        // Once we've sent for this sub, mark notified and move to the next sub
+        // (v1 rule: one notification per standing crossing per sub).
+        break;
+      }
+    }
+
+    // Pitfall 2: write fresh baselines AFTER detection (not before).
+    const capturedAt = now();
+    await writeSnapshots(env.DB, t.term, repos, capturedAt);
+  }
+
+  return { sent, scanned: terms.length };
 }
