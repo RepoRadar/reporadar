@@ -53,7 +53,9 @@ export function TagsPanel({
     const label =
       labels.length === 1
         ? `trending: ${labels[0]}`
-        : `trending: ${labels.join(" + ")}`;
+        : // "and" (not "+") makes the AND/intersection semantics explicit — tags
+          // narrow results to repos tagged with ALL of them (see fetchTrending).
+          `trending: ${labels.join(" and ")}`;
     onPick(next, label);
   };
 
