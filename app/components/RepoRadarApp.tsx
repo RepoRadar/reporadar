@@ -23,6 +23,7 @@ import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { Footer } from "@/app/components/Footer";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
+import { track } from "@/app/lib/analytics";
 
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
 // Header chip rendering moved to <HeaderControls>; this type is still used
@@ -387,6 +388,17 @@ export function RepoRadarApp({
     // it with stale results (cards must always match the current chip).
     const reqId = ++queryReqIdRef.current;
     const isLatest = () => reqId === queryReqIdRef.current;
+
+    // Analytics: discriminate by label prefix so both card tag-chips and the
+    // header TAGS panel fire "tag_picked", while TYPE/TALK fire "search_run".
+    // Refresh / bootstrap / time-window calls (label "trending:…") do not fire
+    // an event — they are system actions, not user-initiated searches.
+    // track() is fire-and-forget and never throws (D-12, T-02-17).
+    if (label?.startsWith("tag: ")) {
+      track("tag_picked", { topic });
+    } else if (label?.startsWith("ask: ") || label?.startsWith("voice: ")) {
+      track("search_run", { hasQuery: Boolean(query || topic), label });
+    }
 
     setBootstrapping(true);
     setLoadMoreError(null);

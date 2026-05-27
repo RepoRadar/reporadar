@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { track } from "@/app/lib/analytics";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
 
 const STORAGE_KEY = "reporadar-notification-profile-v1";
@@ -92,6 +93,8 @@ export function NotificationSignup({
           updatedAt: new Date().toISOString(),
         } satisfies StoredProfile),
       );
+      // source count only — no email/PII in the payload (T-02-14).
+      track("alert_signup", { sources: selectedSources.length });
       setEmail(body.email);
       setState({
         kind: "queued",
