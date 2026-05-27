@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-02: fetchTrendingCached cache+coalesce wrapper"
-last_updated: "2026-05-27T08:39:26.815Z"
+stopped_at: "Completed 02-01: (site) route group + Prose + content surfaces"
+last_updated: "2026-05-27T09:11:04.850Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_plans: 7
+  completed_plans: 3
+  percent: 43
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [██████████] 100%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [██████████] 100%
 *Updated after each plan completion*
 | Phase 01-prerequisites P01 | 5 | 2 tasks | 2 files |
 | Phase 01-prerequisites P02 | 2 | 2 tasks | 3 files |
+| Phase 02-credibility-batch-analytics P01 | 4 | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - D-10: Only non-empty results cached — rate-limited [] does not persist for TTL
 - D-11: repos route local Map+TTL_MS removed; SWR headers + 4s translation race preserved
 - D-12/D-13: .dev.vars.example committed with GITHUB_TOKEN human-handoff note; executor did not mint the token
+- Content as bundled TS modules — no runtime fs reads (D-00 Cloudflare Workers constraint)
+- react-markdown without rehype-raw — HTML/script in markdown intentionally inert (T-02-01)
+- dynamicParams=false on /blog/[slug] — unknown slugs 404 cleanly
 
 ### Pending Todos
 
@@ -101,8 +105,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T08:39:26.810Z
-Stopped at: Completed 01-02: fetchTrendingCached cache+coalesce wrapper
+Last session: 2026-05-27T09:11:04.845Z
+Stopped at: Completed 02-01: (site) route group + Prose + content surfaces
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
