@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 03-03: D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails + API tests"
-last_updated: "2026-05-27T10:28:21.076Z"
+stopped_at: "Completed 03-04: runAlertSweep orchestrator + custom worker.ts cron entrypoint + idempotency tests"
+last_updated: "2026-05-27T10:41:39.950Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [████████░░] 75%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 75%
 | Phase 03-threshold-alerts P01 | 7 | 3 tasks | 6 files |
 | Phase 03-threshold-alerts P02 | 3 | 2 tasks | 2 files |
 | Phase 03-threshold-alerts P03 | 13 | 3 tasks | 9 files |
+| Phase 03-threshold-alerts P04 | 9 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - allowImportingTsExtensions: true added to tsconfig — required for ./email.ts imports in node --test while keeping noEmit: true
 - cloudflare-env.d.ts created to type CloudflareEnv.DB binding (wrangler types convention)
 - T-03-08: verify/unsubscribe routes return 200 for both matched/unmatched tokens (no oracle)
+- Crossing-identity dedupe rule v1 (A3 pinned): alreadyNotified() fires once per standing crossing (last_notified_at IS NOT NULL), never double-sends; per-repo identity deferred to v2
+- A1 deploy command: opennextjs-cloudflare build + wrangler deploy (plain) correctly bundles worker.ts scheduled handler + DO re-exports; confirmed via --dry-run
+- Dynamic imports for production deps in runAlertSweep: avoids ERR_MODULE_NOT_FOUND in plain-Node test context while keeping production paths intact
 
 ### Pending Todos
 
@@ -133,8 +137,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:28:21.070Z
-Stopped at: Completed 03-03: D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails + API tests
+Last session: 2026-05-27T10:41:39.945Z
+Stopped at: Completed 03-04: runAlertSweep orchestrator + custom worker.ts cron entrypoint + idempotency tests
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
