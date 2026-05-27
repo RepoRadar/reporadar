@@ -45,7 +45,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A visitor can suggest a feature through the existing FeedbackWidget's "suggest a feature" path (not a duplicate widget), and can follow a "Buy us a coffee" donation link out.
   4. Analytics records pageviews and fires on the core events (search run, tag picked, deploy clicked, alert signup).
   5. The dashboard is not regressed and the hackathon-frozen UI contracts are intact.
-**Plans**: TBD (split into the discrete deliverables: changelog, blog, contact, suggestion box, donation, analytics — each its own branch → PR)
+**Plans**: 5 plans
+- [ ] 02-01-PLAN.md — (site) route group + Prose + bundled content + static /changelog, /blog, /blog/[slug] (CRED-01, CRED-02)
+- [ ] 02-02-PLAN.md — /contact static page + POST /api/contact (validated, rate-limited, sendEmail) (CRED-03)
+- [ ] 02-03-PLAN.md — extend FeedbackWidget + /api/feedback with a feature-suggestion type path (CRED-04)
+- [ ] 02-04-PLAN.md — on-brand Footer + donation link + nav links, mounted after the grid (CRED-05)
+- [ ] 02-05-PLAN.md — CF Web Analytics beacon + provider-agnostic track() wired at 4 core events (CRED-06)
 **UI hint**: yes
 
 ### Phase 3: Threshold Alerts
@@ -111,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Prerequisites | 0/2 | Not started | - |
-| 2. Credibility Batch + Analytics | 0/TBD | Not started | - |
+| 2. Credibility Batch + Analytics | 0/5 | Not started | - |
 | 3. Threshold Alerts | 0/TBD | Not started | - |
 | 4. Repo Intelligence | 0/TBD | Not started | - |
 | 5. Audio Overview | 0/TBD | Not started | - |
