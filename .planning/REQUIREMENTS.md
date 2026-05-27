@@ -11,7 +11,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [ ] **PRE-01**: Prod `GITHUB_TOKEN` is a fine-scoped, app-owned token (public-repo read), not a personal `gh` token (human-supplied secret).
 - [ ] **PRE-02**: `fetchTrending` caches/batches distinct tags so scheduled polling does not exhaust the rate budget; rate-limit failures traced to the shared token no longer occur.
-- [ ] **PRE-03**: An email delivery provider (Resend or equivalent) is configured behind a `sendEmail()` lib; real API key is human-supplied (stub the key, build the lib + routes).
+- [x] **PRE-03
+**: An email delivery provider (Resend or equivalent) is configured behind a `sendEmail()` lib; real API key is human-supplied (stub the key, build the lib + routes).
 
 ### Credibility (WS1)
 
