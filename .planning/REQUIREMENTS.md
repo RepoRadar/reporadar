@@ -26,7 +26,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 **: Contact form + `POST /api/contact` emails the team via `sendEmail()` (or queues to D1), validated and rate-limited.
 - [x] **CRED-04
 **: Suggestion box extends existing `/api/feedback` + `FeedbackWidget` with a "suggest a feature" path (no duplication).
-- [ ] **CRED-05**: Donation "Buy us a coffee" outbound link (Ko-fi/BMC/Stripe Payment Link); no integration.
+- [x] **CRED-05
+**: Donation "Buy us a coffee" outbound link (Ko-fi/BMC/Stripe Payment Link); no integration.
 - [ ] **CRED-06**: Privacy-respecting analytics fire pageviews + key events (search run, tag picked, deploy clicked, alert signup).
 
 ### Threshold Alerts (WS2)

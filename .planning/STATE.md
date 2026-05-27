@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 02-02: /contact page + POST /api/contact"
-last_updated: "2026-05-27T09:20:42.601Z"
+stopped_at: "Completed 02-04: on-brand Footer component"
+last_updated: "2026-05-27T09:25:02.299Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [███████░░░] 71%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 71%
 | Phase 02-credibility-batch-analytics P01 | 4 | 3 tasks | 12 files |
 | Phase 02-credibility-batch-analytics P03 | 166 | 2 tasks | 2 files |
 | Phase 02-credibility-batch-analytics P02 | 175 | 2 tasks | 3 files |
+| Phase 02-credibility-batch-analytics P04 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - CONTACT_TO unset → 200 queued + console.warn, never 500 — graceful owner-handoff degradation
 - escapeHtml applied to name/email/message in HTML body — T-02-04 HTML injection prevention
 - In-memory fixed-window rate-limiter: 5 req/60s per IP — per-isolate acceptable for v1
+- Footer 'use client' required for window.dispatchEvent in Suggest-a-feature onClick
+- DONATION_URL constant with env-var override for human-handoff Ko-fi handle (NEXT_PUBLIC_DONATION_URL)
+- Suggest a feature is a <button> not a link — dispatches reporadar:open-feedback CustomEvent (no URL)
 
 ### Pending Todos
 
@@ -112,8 +116,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T09:20:42.596Z
-Stopped at: Completed 02-02: /contact page + POST /api/contact
+Last session: 2026-05-27T09:25:02.294Z
+Stopped at: Completed 02-04: on-brand Footer component
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
