@@ -22,7 +22,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 **: `/changelog` route renders a human-curated `CHANGELOG.md`, on-brand, linked from footer/header.
 - [x] **CRED-02
 **: `/blog` renders MDX/markdown posts with 1–2 "how & why we built it" posts and a "30-day check-in" template.
-- [ ] **CRED-03**: Contact form + `POST /api/contact` emails the team via `sendEmail()` (or queues to D1), validated and rate-limited.
+- [x] **CRED-03
+**: Contact form + `POST /api/contact` emails the team via `sendEmail()` (or queues to D1), validated and rate-limited.
 - [x] **CRED-04
 **: Suggestion box extends existing `/api/feedback` + `FeedbackWidget` with a "suggest a feature" path (no duplication).
 - [ ] **CRED-05**: Donation "Buy us a coffee" outbound link (Ko-fi/BMC/Stripe Payment Link); no integration.
