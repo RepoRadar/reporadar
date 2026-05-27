@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 03-04: runAlertSweep orchestrator + custom worker.ts cron entrypoint + idempotency tests"
-last_updated: "2026-05-27T10:41:39.950Z"
-last_activity: 2026-05-27 -- Phase --phase execution started
+stopped_at: "Finalized 03-04: checkpoint approved, deploy owner-gated (D-11)"
+last_updated: "2026-05-27T10:44:32.594Z"
+last_activity: 2026-05-27 — 03-04 checkpoint approved, plan finalized (no deploy)
 progress:
   total_phases: 7
   completed_phases: 2
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** A builder can reliably find — and be alerted to — the most meaningful repo to build upon, and get an honest, reasoned read on whether and how to adopt it.
-**Current focus:** Phase --phase — 1
+**Current focus:** Phase 3 (Threshold Alerts) — plan 03-04 complete, 03-05 (Alerts UI) next
 
 ## Current Position
 
-Phase: --phase (1) — EXECUTING
-Plan: 1 of --name
-Status: Executing Phase --phase
-Last activity: 2026-05-27 -- Phase --phase execution started
+Phase: 3 (Threshold Alerts) — EXECUTING
+Plan: 4 of 5 complete (03-05 Alerts UI panel next)
+Status: 03-04 finalized — local gates green; remote migration + cron deploy owner-gated (D-11)
+Last activity: 2026-05-27 — 03-04 checkpoint approved, plan finalized (no deploy)
 
 Progress: [█████████░] 92%
 
@@ -110,6 +110,7 @@ Recent decisions affecting current work:
 - Crossing-identity dedupe rule v1 (A3 pinned): alreadyNotified() fires once per standing crossing (last_notified_at IS NOT NULL), never double-sends; per-repo identity deferred to v2
 - A1 deploy command: opennextjs-cloudflare build + wrangler deploy (plain) correctly bundles worker.ts scheduled handler + DO re-exports; confirmed via --dry-run
 - Dynamic imports for production deps in runAlertSweep: avoids ERR_MODULE_NOT_FOUND in plain-Node test context while keeping production paths intact
+- 03-04 checkpoint approved by owner: local verification accepted; remote D1 migration + custom-worker/cron deploy + live sweep are owner-gated (D-11) and NOT run by the executor
 
 ### Pending Todos
 
@@ -137,8 +138,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:41:39.945Z
-Stopped at: Completed 03-04: runAlertSweep orchestrator + custom worker.ts cron entrypoint + idempotency tests
+Last session: 2026-05-27T10:44:10.631Z
+Stopped at: Finalized 03-04: checkpoint approved, deploy owner-gated (D-11)
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z

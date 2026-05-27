@@ -65,10 +65,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Tests exist at both the API and scheduled-handler level.
 **Plans**: 5 plans
 Plans:
-- [ ] 03-01-PLAN.md — node --test runner + D1 migration (subscriptions + repo_snapshots) + DB binding + db.ts (ALRT-01)
-- [ ] 03-02-PLAN.md — pure detectCrossings(sub, repos, prior) per-metric + unit fixtures (ALRT-02/03)
-- [ ] 03-03-PLAN.md — D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails (ALRT-04)
-- [ ] 03-04-PLAN.md — runAlertSweep orchestrator + custom worker.ts + wrangler cron + twice-run idempotency test (ALRT-02/03)
+- [x] 03-01-PLAN.md — node --test runner + D1 migration (subscriptions + repo_snapshots) + DB binding + db.ts (ALRT-01)
+- [x] 03-02-PLAN.md — pure detectCrossings(sub, repos, prior) per-metric + unit fixtures (ALRT-02/03)
+- [x] 03-03-PLAN.md — D1-backed subscribe/verify/unsubscribe routes + real verify/alert emails (ALRT-04)
+- [x] 03-04-PLAN.md — runAlertSweep orchestrator + custom worker.ts + wrangler cron + twice-run idempotency test (ALRT-02/03)
 - [ ] 03-05-PLAN.md — Alerts UI panel (create/list/remove) + list route + browser QA (ALRT-05)
 **UI hint**: yes
 
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Prerequisites | 0/2 | Not started | - |
 | 2. Credibility Batch + Analytics | 0/5 | Not started | - |
-| 3. Threshold Alerts | 0/5 | Not started | - |
+| 3. Threshold Alerts | 4/5 | In progress | - |
 | 4. Repo Intelligence | 0/TBD | Not started | - |
 | 5. Audio Overview | 0/TBD | Not started | - |
 | 6. Premium + Stripe | 0/TBD | Not started | - |

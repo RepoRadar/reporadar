@@ -114,8 +114,8 @@ Which phases cover which requirements.
 | CRED-05 | Phase 2 | Pending |
 | CRED-06 | Phase 2 | Pending |
 | ALRT-01 | Phase 3 | Pending |
-| ALRT-02 | Phase 3 | Pending |
-| ALRT-03 | Phase 3 | Pending |
+| ALRT-02 | Phase 3 | Complete |
+| ALRT-03 | Phase 3 | Complete |
 | ALRT-04 | Phase 3 | Pending |
 | ALRT-05 | Phase 3 | Pending |
 | INTL-01 | Phase 4 | Pending |
