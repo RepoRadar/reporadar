@@ -12,9 +12,9 @@ This milestone turns RepoRadar from a hackathon demo into a credible, retained, 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Prerequisites** - App-owned GitHub token + tag caching, and an email-delivery `sendEmail()` lib
-- [ ] **Phase 2: Credibility Batch + Analytics** - Changelog, blog, contact, suggestion box, donation, analytics (~5 small PRs)
-- [ ] **Phase 3: Threshold Alerts** - D1 subscriptions/snapshots, cron job, double opt-in email, Alerts UI (retention hook)
+- [x] **Phase 1: Prerequisites** - App-owned GitHub token + tag caching, and an email-delivery `sendEmail()` lib *(code-complete — PR #27, awaiting board review + deploy)*
+- [x] **Phase 2: Credibility Batch + Analytics** - Changelog, blog, contact, suggestion box, donation, analytics (~5 small PRs) *(code-complete — PR #28, awaiting board review + deploy)*
+- [x] **Phase 3: Threshold Alerts** - D1 subscriptions/snapshots, cron job, double opt-in email, Alerts UI (retention hook) *(code-complete — awaiting board review + owner deploy)*
 - [ ] **Phase 4: Repo Intelligence** - Talk-to-a-repo chat, adoption report, concierge recommendation (premium anchor)
 - [ ] **Phase 5: Audio Overview** - On-demand per-repo spoken overview via Gemini → ElevenLabs → R2
 - [ ] **Phase 6: Premium + Stripe** - Stripe Checkout + webhook + D1 entitlements + server-side gating
@@ -121,9 +121,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Prerequisites | 0/2 | Not started | - |
-| 2. Credibility Batch + Analytics | 0/5 | Not started | - |
-| 3. Threshold Alerts | 4/5 | In progress | - |
+| 1. Prerequisites | 2/2 | Code-complete (review+deploy gated) | 2026-05-27 |
+| 2. Credibility Batch + Analytics | 5/5 | Code-complete (review+deploy gated) | 2026-05-27 |
+| 3. Threshold Alerts | 5/5 | Code-complete (review+deploy gated) | 2026-05-27 |
 | 4. Repo Intelligence | 0/TBD | Not started | - |
 | 5. Audio Overview | 0/TBD | Not started | - |
 | 6. Premium + Stripe | 0/TBD | Not started | - |
