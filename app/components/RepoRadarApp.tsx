@@ -234,14 +234,35 @@ export function RepoRadarApp({
     setDeployStatus("form");
   };
 
+  // Re-rank pulse: any user tuning (sliders, radar hex, sort filters) briefly
+  // dims the card grid so the change is always visibly acknowledged — even when
+  // the order doesn't actually move. Honest (it's the real re-rank), not a fake
+  // spinner. Debounced so a continuous drag stays dimmed and settles ~250ms
+  // after the last change.
+  const [reranking, setReranking] = useState(false);
+  const rerankTimerRef = useRef<number | null>(null);
+  const triggerRerankPulse = () => {
+    setReranking(true);
+    if (rerankTimerRef.current) clearTimeout(rerankTimerRef.current);
+    rerankTimerRef.current = window.setTimeout(() => setReranking(false), 250);
+  };
+
   // Wrapper for every "user tuned the radar" code path (hex drag, slider
-  // drag, card-snap). Updates weights AND demotes the lone default "stars"
-  // sort priority — otherwise priority-sort wins over the weighted overall
-  // score and the list never visibly reorders when the user drags. If the
-  // user has explicitly picked other priorities we leave them alone.
+  // drag). Updates weights AND demotes the lone default "stars" sort priority —
+  // otherwise priority-sort wins over the weighted overall score and the list
+  // never visibly reorders when the user drags. If the user has explicitly
+  // picked other priorities we leave them alone. Pulses the grid so the tune
+  // is always acknowledged (card-snap uses setWeights directly and is exempt).
   const tuneWeights = (next: DimensionWeights) => {
     setWeights(next);
     setPriorities((p) => (p.length === 1 && p[0] === "stars" ? [] : p));
+    triggerRerankPulse();
+  };
+
+  // Sort-filter (FILTER panel) changes are tuning too — re-rank with a pulse.
+  const tunePriorities = (next: SortKey[]) => {
+    setPriorities(next);
+    triggerRerankPulse();
   };
 
   // Click a card → snap the radar/sliders to that repo's dimensional profile
@@ -772,7 +793,7 @@ export function RepoRadarApp({
         bootstrapping={bootstrapping}
         priorityCount={priorities.length}
         onRunQuery={runQuery}
-        onSetPriorities={setPriorities}
+        onSetPriorities={tunePriorities}
         onSetTimeWindow={(w) => setTimeWindow(w as TimeWindow)}
       />
 
@@ -964,7 +985,10 @@ export function RepoRadarApp({
                   </>
                 )}
               </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div
+                className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 transition-opacity"
+                style={{ opacity: reranking ? 0.5 : 1, transitionDuration: "180ms" }}
+              >
                 {ranked.map((r, i) => (
                   <div key={r.fullName} className="rr-card" style={{ animationDelay: `${Math.min(i, 11) * 0.04}s` }}>
                     <RepoCard
