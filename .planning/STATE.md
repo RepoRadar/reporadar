@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-01: sendEmail() lib + deploy-route refactor"
-last_updated: "2026-05-27T08:34:21.379Z"
+stopped_at: "Completed 01-02: fetchTrendingCached cache+coalesce wrapper"
+last_updated: "2026-05-27T08:39:26.815Z"
 last_activity: 2026-05-27 -- Phase --phase execution started
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-27 -- Phase --phase execution started
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [█████░░░░░] 50%
 
 *Updated after each plan completion*
 | Phase 01-prerequisites P01 | 5 | 2 tasks | 2 files |
+| Phase 01-prerequisites P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,12 @@ Recent decisions affecting current work:
 - D-01: Resend via plain fetch (no SDK)
 - D-05: escapeHtml extracted to email.ts and imported by deploy route
 - D-06: deploy route refactored to sendEmail() with zero behavior change
+- D-07: trendingCache.ts separate module wrapping fetchTrending (signature unchanged)
+- D-08: Cache key = topic|query|since|page|perPage with lowercased topic normalization
+- D-09: In-flight coalescing Map ensures ONE upstream call per concurrent identical key
+- D-10: Only non-empty results cached — rate-limited [] does not persist for TTL
+- D-11: repos route local Map+TTL_MS removed; SWR headers + 4s translation race preserved
+- D-12/D-13: .dev.vars.example committed with GITHUB_TOKEN human-handoff note; executor did not mint the token
 
 ### Pending Todos
 
@@ -94,8 +101,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T08:34:21.373Z
-Stopped at: Completed 01-01: sendEmail() lib + deploy-route refactor
+Last session: 2026-05-27T08:39:26.810Z
+Stopped at: Completed 01-02: fetchTrendingCached cache+coalesce wrapper
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
