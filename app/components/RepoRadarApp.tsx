@@ -20,6 +20,7 @@ import { HeaderControls, type TimeWindow as HeaderTimeWindow } from "@/app/compo
 import { buildShareUrl } from "@/app/lib/shareUrl";
 import { DeployForm } from "@/app/components/DeployForm";
 import { FeedbackWidget } from "@/app/components/FeedbackWidget";
+import { Footer } from "@/app/components/Footer";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import type { NotificationDigestItem } from "@/app/lib/notifications";
 
@@ -1066,6 +1067,8 @@ export function RepoRadarApp({
           )}
         </section>
       </main>
+
+      <Footer />
 
       <CopilotPopup
         instructions={
