@@ -30,7 +30,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. `fetchTrending` runs on an app-owned, fine-scoped token (not a personal `gh` token), with distinct tags cached/batched so scheduled polling stays within the rate budget. (Minting the secret is a human handoff — code + config land; the executor flags where the owner must supply the token.)
   2. A `sendEmail()` lib exists and can deliver real email through a configured provider (Resend or equivalent); the real API key is a human-supplied secret, so the lib + routes build and pass with the key stubbed.
   3. Existing repo browsing/search keeps working unchanged — no regression from the token swap or caching.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 01-01-PLAN.md — sendEmail() lib (Resend) + refactor deploy route to use it (PRE-03)
+- [ ] 01-02-PLAN.md — fetchTrendingCached() cache+coalesce wrapper + repos-route refactor + .dev.vars.example env contract (PRE-01, PRE-02)
 **Human handoff**: PRE-01 prod token and PRE-03 provider API key are owner-only secrets — the autonomous executor stops at a green PR with clearly flagged stubs.
 
 ### Phase 2: Credibility Batch + Analytics
@@ -108,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Prerequisites | 0/TBD | Not started | - |
+| 1. Prerequisites | 0/2 | Not started | - |
 | 2. Credibility Batch + Analytics | 0/TBD | Not started | - |
 | 3. Threshold Alerts | 0/TBD | Not started | - |
 | 4. Repo Intelligence | 0/TBD | Not started | - |
