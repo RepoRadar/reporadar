@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Finalized 03-04: checkpoint approved, deploy owner-gated (D-11)"
-last_updated: "2026-05-27T10:44:32.594Z"
-last_activity: 2026-05-27 — 03-04 checkpoint approved, plan finalized (no deploy)
+stopped_at: "Completed 03-05: Alerts UI panel, list route, Playwright QA — all gates green"
+last_updated: "2026-05-27T11:08:50.353Z"
+last_activity: 2026-05-27
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-27)
 ## Current Position
 
 Phase: 3 (Threshold Alerts) — EXECUTING
-Plan: 4 of 5 complete (03-05 Alerts UI panel next)
-Status: 03-04 finalized — local gates green; remote migration + cron deploy owner-gated (D-11)
-Last activity: 2026-05-27 — 03-04 checkpoint approved, plan finalized (no deploy)
+Plan: 5 of 5 complete (03-05 Alerts UI panel next)
+Status: Ready to execute
+Last activity: 2026-05-27
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [█████████░] 92%
 | Phase 03-threshold-alerts P02 | 3 | 2 tasks | 2 files |
 | Phase 03-threshold-alerts P03 | 13 | 3 tasks | 9 files |
 | Phase 03-threshold-alerts P04 | 9 | 2 tasks | 4 files |
+| Phase 03-threshold-alerts P05 | 20 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - A1 deploy command: opennextjs-cloudflare build + wrangler deploy (plain) correctly bundles worker.ts scheduled handler + DO re-exports; confirmed via --dry-run
 - Dynamic imports for production deps in runAlertSweep: avoids ERR_MODULE_NOT_FOUND in plain-Node test context while keeping production paths intact
 - 03-04 checkpoint approved by owner: local verification accepted; remote D1 migration + custom-worker/cron deploy + live sweep are owner-gated (D-11) and NOT run by the executor
+- dispatchEvent('submit') required for React onSubmit in Playwright — click() on submit button does not propagate through React's synthetic event delegation in Next.js 16/Turbopack dev mode
+- METRIC_LABELS excludes unit character; threshold rendering adds units (20% growth not 20% % growth)
 
 ### Pending Todos
 
@@ -138,8 +141,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T10:44:10.631Z
-Stopped at: Finalized 03-04: checkpoint approved, deploy owner-gated (D-11)
+Last session: 2026-05-27T11:08:50.348Z
+Stopped at: Completed 03-05: Alerts UI panel, list route, Playwright QA — all gates green
 Resume file: None
 
 **Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z

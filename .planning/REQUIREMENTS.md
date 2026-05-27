@@ -41,7 +41,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 **: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
 - [x] **ALRT-04
 **: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
-- [ ] **ALRT-05**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
+- [x] **ALRT-05
+**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
 
 ### Repo Intelligence (WS3)
 
