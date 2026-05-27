@@ -42,5 +42,17 @@
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
-	}
+	},
+	"d1_databases": [
+		{
+			// Reuse the existing reporadar D1 database (same DB used by workers/deploy).
+			// Adding new tables (subscriptions, repo_snapshots) is additive — does not
+			// touch the existing `deploys` table. database_id must NOT be changed.
+			// DO NOT apply --remote in CI; that is an owner-gated deploy step (D-11).
+			"binding": "DB",
+			"database_name": "reporadar",
+			"database_id": "ba6ce5a3-54e5-449a-9371-178eda6de8a3",
+			"migrations_dir": "migrations"
+		}
+	]
 }
