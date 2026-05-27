@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import "@copilotkit/react-ui/styles.css";
 import { Providers } from "@/app/components/Providers";
@@ -26,6 +27,11 @@ export const metadata: Metadata = {
   },
 };
 
+// CF Web Analytics beacon token. NEXT_PUBLIC_ prefix makes it available at
+// build-time in client bundles. The beacon renders ONLY when this is set —
+// no empty script tag, no token leak when unset (D-11).
+const beaconToken = process.env.NEXT_PUBLIC_CF_BEACON_TOKEN;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +45,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
         <Providers>{children}</Providers>
       </body>
+      {beaconToken && (
+        <Script
+          id="cf-beacon"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          strategy="afterInteractive"
+          data-cf-beacon={JSON.stringify({ token: beaconToken })}
+        />
+      )}
     </html>
   );
 }

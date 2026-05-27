@@ -12,3 +12,29 @@ GOOGLE_API_KEY=
 ELEVENLABS_API_KEY=
 # Next.js env mode passthrough for OpenNext/Cloudflare.
 NEXTJS_ENV=
+
+# ── Phase 2 handoffs ──────────────────────────────────────────────────────────
+# HUMAN HANDOFF: set CONTACT_TO to the team email address that should receive
+# contact-form submissions (02-02 contact route). When unset the route returns
+# 200 + queues the message in logs — graceful degradation, never 500.
+CONTACT_TO=
+
+# HUMAN HANDOFF: set NEXT_PUBLIC_DONATION_URL to your Ko-fi or Buy Me a Coffee
+# handle/URL (e.g. "https://ko-fi.com/yourhandle"). Used by the Footer donation
+# link (02-04). When unset the footer shows a placeholder link.
+NEXT_PUBLIC_DONATION_URL=
+
+# HUMAN HANDOFF: set NEXT_PUBLIC_CF_BEACON_TOKEN to your Cloudflare Web Analytics
+# site token (CF dashboard → Web Analytics → Add site → copy the token).
+# NEXT_PUBLIC_ prefix embeds it client-side at build time — this is by design;
+# CF Web Analytics tokens are public read-only identifiers (T-02-15).
+# When unset, NO beacon script is rendered (no empty tag, no leak).
+NEXT_PUBLIC_CF_BEACON_TOKEN=
+
+# NOTE — custom event tracking backend (track() in app/lib/analytics.ts):
+# The four core events (search_run, tag_picked, deploy_clicked, alert_signup) are
+# already wired. Choose a backend when ready and wire it inside analytics.ts:
+#   CF Zaraz:  window.zaraz.track(event, props)
+#   Plausible: window.plausible(event, { props })
+#   Umami:     window.umami.track(event, props)
+# No call sites need to change. This is a deferred product decision.
