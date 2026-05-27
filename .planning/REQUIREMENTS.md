@@ -33,11 +33,16 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Threshold Alerts (WS2)
 
-- [ ] **ALRT-01**: D1 schema for `subscriptions` (email, kind, term, metric, threshold, window_days, verified_at, last_notified_at, unsub_token) and `repo_snapshots` (term, full_name, stars, captured_at).
-- [ ] **ALRT-02**: Cloudflare Cron Trigger diffs distinct subscribed terms against latest snapshots over `window_days`, detects crossings, and is idempotent and rate-limit-safe.
-- [ ] **ALRT-03**: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
-- [ ] **ALRT-04**: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
-- [ ] **ALRT-05**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
+- [x] **ALRT-01
+**: D1 schema for `subscriptions` (email, kind, term, metric, threshold, window_days, verified_at, last_notified_at, unsub_token) and `repo_snapshots` (term, full_name, stars, captured_at).
+- [x] **ALRT-02
+**: Cloudflare Cron Trigger diffs distinct subscribed terms against latest snapshots over `window_days`, detects crossings, and is idempotent and rate-limit-safe.
+- [x] **ALRT-03
+**: On a crossing, a matched subscriber receives ONE email (repo card + why it fired); `last_notified_at` dedupes repeats; fresh snapshots are written.
+- [x] **ALRT-04
+**: Double opt-in (verify email) + one-click unsubscribe (`unsub_token`) + digest-vs-instant option, via `sendEmail()`.
+- [x] **ALRT-05
+**: Alerts UI panel to create/manage subscriptions (term + metric + threshold), list active alerts, and unsubscribe, reusing dashboard styling.
 
 ### Repo Intelligence (WS3)
 
@@ -110,8 +115,8 @@ Which phases cover which requirements.
 | CRED-05 | Phase 2 | Pending |
 | CRED-06 | Phase 2 | Pending |
 | ALRT-01 | Phase 3 | Pending |
-| ALRT-02 | Phase 3 | Pending |
-| ALRT-03 | Phase 3 | Pending |
+| ALRT-02 | Phase 3 | Complete |
+| ALRT-03 | Phase 3 | Complete |
 | ALRT-04 | Phase 3 | Pending |
 | ALRT-05 | Phase 3 | Pending |
 | INTL-01 | Phase 4 | Pending |

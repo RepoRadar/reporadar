@@ -11,7 +11,9 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "test:smoke": "playwright test --reporter=list"
+    "test": "node --test --test-concurrency=1 'tests/*.test.*'",
+    "test:smoke": "playwright test --reporter=list",
+    "test:alerts": "playwright test tests/alerts-panel.spec.ts -c playwright.local.config.ts --reporter=list"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.57.1",
