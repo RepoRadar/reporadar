@@ -16,11 +16,24 @@ import assert from "node:assert/strict";
 import {
   buildVerifyEmail,
   buildAlertEmail,
+  describeAlert,
+  repoFilterUrl,
   normalizeMetric,
   normalizeKind,
   normalizeThreshold,
   normalizeWindowDays,
 } from "../app/lib/notifications.ts";
+
+// Shared alert fields now required by buildVerifyEmail (names the alert being
+// confirmed). A topic + stars_abs alert keeps assertions simple.
+const ALERT_FIELDS = {
+  origin: "https://reporadar.app",
+  kind: "topic",
+  term: "cloudflare",
+  metric: "stars_abs",
+  threshold: 50000,
+  window_days: 30,
+};
 
 // ---------------------------------------------------------------------------
 // buildVerifyEmail
@@ -31,6 +44,7 @@ describe("buildVerifyEmail", () => {
     const result = buildVerifyEmail({
       email: "user@example.com",
       verifyUrl: "https://reporadar.app/api/notifications/verify?token=abc",
+      ...ALERT_FIELDS,
     });
     assert.ok(typeof result.subject === "string", "subject should be a string");
     assert.ok(typeof result.html === "string", "html should be a string");
@@ -40,10 +54,30 @@ describe("buildVerifyEmail", () => {
 
   test("html contains the verify URL as a link", () => {
     const verifyUrl = "https://reporadar.app/api/notifications/verify?token=abc123";
-    const result = buildVerifyEmail({ email: "user@example.com", verifyUrl });
+    const result = buildVerifyEmail({ email: "user@example.com", verifyUrl, ...ALERT_FIELDS });
     assert.ok(
       result.html.includes(verifyUrl),
       "html should contain the verify URL"
+    );
+  });
+
+  test("html names the confirmed alert and links to the matching repos", () => {
+    const result = buildVerifyEmail({
+      email: "user@example.com",
+      verifyUrl: "https://reporadar.app/api/notifications/verify?token=abc",
+      ...ALERT_FIELDS,
+    });
+    assert.ok(
+      result.html.includes("the cloudflare tag"),
+      "html should name the alert's target tag"
+    );
+    assert.ok(
+      result.html.includes("passes 50,000 stars"),
+      "html should describe the threshold condition"
+    );
+    assert.ok(
+      result.html.includes("https://reporadar.app/?topic=cloudflare"),
+      "html should link to the term-filtered dashboard"
     );
   });
 
@@ -52,6 +86,7 @@ describe("buildVerifyEmail", () => {
     const result = buildVerifyEmail({
       email: hostileEmail,
       verifyUrl: "https://reporadar.app/api/notifications/verify?token=x",
+      ...ALERT_FIELDS,
     });
     // The raw script tag must NOT appear unescaped in the output
     assert.ok(
@@ -69,10 +104,73 @@ describe("buildVerifyEmail", () => {
     const result = buildVerifyEmail({
       email: hostileEmail,
       verifyUrl: "https://reporadar.app/api/notifications/verify?token=x",
+      ...ALERT_FIELDS,
     });
     assert.ok(
       !result.html.includes("<img"),
       "html must not contain unescaped <img tag"
+    );
+  });
+
+  test("html escapes a hostile term in the alert summary (T-03-07)", () => {
+    const result = buildVerifyEmail({
+      email: "user@example.com",
+      verifyUrl: "https://reporadar.app/api/notifications/verify?token=x",
+      ...ALERT_FIELDS,
+      kind: "query",
+      term: "<img src=x onerror=alert(1)>",
+    });
+    assert.ok(
+      !result.html.includes("<img src=x"),
+      "hostile term must not appear unescaped in the verify email"
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describeAlert + repoFilterUrl
+// ---------------------------------------------------------------------------
+
+describe("describeAlert", () => {
+  test("stars_abs topic reads naturally with a thousands-separated threshold", () => {
+    assert.equal(
+      describeAlert({ kind: "topic", term: "hermes", metric: "stars_abs", threshold: 1500, window_days: 30 }),
+      "the hermes tag, when a repo passes 1,500 stars"
+    );
+  });
+
+  test("stars_pct query includes the window in days", () => {
+    assert.equal(
+      describeAlert({ kind: "query", term: "vector db", metric: "stars_pct", threshold: 20, window_days: 14 }),
+      'the search "vector db", when a repo gains more than 20% stars over 14 days'
+    );
+  });
+
+  test("velocity reads as stars per day", () => {
+    assert.equal(
+      describeAlert({ kind: "topic", term: "rust", metric: "velocity", threshold: 5, window_days: 7 }),
+      "the rust tag, when a repo gains more than 5 stars per day"
+    );
+  });
+
+  test("contains no em dash", () => {
+    const s = describeAlert({ kind: "topic", term: "ai", metric: "stars_abs", threshold: 100, window_days: 30 });
+    assert.ok(!s.includes("—"), "summary must not contain an em dash");
+  });
+});
+
+describe("repoFilterUrl", () => {
+  test("topic alerts filter by ?topic=", () => {
+    assert.equal(
+      repoFilterUrl("https://reporadar.io", { kind: "topic", term: "cloudflare workers" }),
+      "https://reporadar.io/?topic=cloudflare%20workers"
+    );
+  });
+
+  test("query alerts filter by ?q=", () => {
+    assert.equal(
+      repoFilterUrl("https://reporadar.io", { kind: "query", term: "rag" }),
+      "https://reporadar.io/?q=rag"
     );
   });
 });
