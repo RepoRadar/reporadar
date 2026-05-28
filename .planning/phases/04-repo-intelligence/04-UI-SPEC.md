@@ -118,7 +118,7 @@ Three lines, top of the pane:
 
 1. **Repo name:** `{repoName}`, `text-xl font-bold`, `color: var(--fg)`. Truncated with ellipsis if too long (`max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap`).
 2. **Trust line:** `Grounded in this repo's README, file tree, and RepoRadar scores`, `text-xs`, `color: var(--fg-muted)`. Exact copy, sentence case.
-3. **Not-saved note:** `Not saved, conversations end when you close this tab.`, `text-xs font-mono`, `color: var(--fg-dim)`. Exact copy. Rendered with a lock or info icon (SVG inline, 10px, `aria-hidden`).
+3. **Not-saved note:** `Not saved. Conversations end when you close this tab.`, `text-xs font-mono`, `color: var(--fg-dim)`. Exact copy (period-split phrasing, no dash). Rendered with a lock or info icon (SVG inline, 10px, `aria-hidden`).
 
 Header bottom border: `1px solid var(--border)`, `padding-bottom: 12px`, `margin-bottom: 16px`.
 
@@ -391,7 +391,7 @@ All copy must follow the avoid-ai-writing rules: no em dashes, no AI-isms, sente
 | Element | Copy |
 |---------|------|
 | Trust line | `Grounded in this repo's README, file tree, and RepoRadar scores` |
-| Not-saved note | `Not saved, conversations end when you close this tab.` |
+| Not-saved note | `Not saved. Conversations end when you close this tab.` |
 | Chip 1 | `Why did you score it this way?` |
 | Chip 2 | `I'm building something, does this fit?` |
 | Chip 3 | `Tell me what's so special about this repo.` |
@@ -414,7 +414,7 @@ All copy must follow the avoid-ai-writing rules: no em dashes, no AI-isms, sente
 | README section heading | `Readme` |
 | Back link | `← Back to dashboard` |
 
-**No em dashes in any of the above.** The "not saved" note uses a parenthetical dash style, this is unavoidable for that phrasing, replace if a better option exists. Alternative: `Not saved. Conversations end when you close this tab.`
+**No em dashes in any of the above.** The not-saved note is locked to the period-split phrasing `Not saved. Conversations end when you close this tab.` (no comma-splice, no dash). 04-03 and 04-04 use this exact string.
 
 ---
 

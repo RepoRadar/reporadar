@@ -972,22 +972,25 @@ async function sendMessage(userText: string) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`getContent` vs `getReadme` for `get_repo_file`**
    - What we know: `repos.getContent` returns base64 for files; `getReadme` uses raw format for one specific file.
    - What's unclear: Whether we should use a raw media type for `getContent` too.
    - Recommendation: Use `repos.getContent` with default JSON response (base64 content), decode with `Buffer.from`. The raw media type for `getContent` is `"application/vnd.github.raw+json"` but the standard base64 path is more stable.
+   - RESOLVED: Use `repos.getContent` for `get_repo_file` with the default JSON (base64) response and decode with `Buffer.from(data.content, "base64")`. Do not use the raw media type. `getReadme` stays reserved for the README in `fetchRepoContext` only.
 
 2. **Parallel vs serial fetch in `fetchRepoContext`**
    - What we know: Three API calls are needed (repos.get, getReadme, git.getTree). The getTree call needs the default branch from repos.get.
    - What's unclear: Whether to do repos.get first, then the other two in parallel.
    - Recommendation: Call repos.get first for `default_branch`, then `getReadme` and `getTree` in parallel with `Promise.all`. This is one round trip overhead but avoids the Promise.allSettled workaround above.
+   - RESOLVED: Call `repos.get` first to read `default_branch`, then run `getReadme` and `getTree` in parallel (await both, tolerate each failing independently so a missing README or tree degrades to empty rather than failing the whole fetch).
 
 3. **Worker CPU time limit and GitHub latency**
    - What we know: Cloudflare Workers have a 30-second CPU time limit (subrequest time does not count against CPU). The existing TTS route makes one external call. fetchRepoContext makes 3 calls.
    - What's unclear: Whether repos with very large trees (close to the 7 MB limit) can be fetched within acceptable latency.
    - Recommendation: Add an AbortSignal timeout to the tree fetch (similar to `fetchTrending`'s `FETCH_BUDGET_MS = 6000`). If the tree fetch times out, proceed without it.
+   - RESOLVED: Wrap the tree fetch in `AbortSignal.timeout(6000)`. On timeout (or any tree error) degrade to an empty `treePaths` array with `treePathsTruncated = false`; identity, scores, and README still render and the chat still grounds on what it has.
 
 ---
 
