@@ -95,10 +95,8 @@ export default async function ChatWorkspace({
         {/* Right: back link */}
         <a
           href="/"
-          className="text-xs font-mono"
-          style={{ color: "var(--secondary)", flexShrink: 0, textDecoration: "none" }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--fg)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)"; }}
+          className="text-xs font-mono rr-link-back"
+          style={{ flexShrink: 0, textDecoration: "none" }}
         >
           &larr; Back to dashboard
         </a>

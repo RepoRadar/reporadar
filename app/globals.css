@@ -111,6 +111,16 @@
     animation: rr-shimmer 1.4s ease-in-out infinite;
     border-radius: 6px;
   }
+  /* Chat workspace link hovers. CSS hover so the right pane stays a server */
+  /* component (server components cannot pass onMouseEnter/onMouseLeave). */
+  .rr-link-back { color: var(--secondary); transition: color 0.15s; }
+  .rr-link-back:hover { color: var(--fg); }
+  .rr-gh-btn { border-color: var(--border); color: var(--secondary); transition: color 0.15s, border-color 0.15s; }
+  .rr-gh-btn:hover { border-color: var(--secondary); color: var(--accent); }
+  .rr-tree-link { color: var(--fg-muted); transition: color 0.15s; }
+  .rr-tree-link:hover { color: var(--secondary); }
+  .rr-tree-more { color: var(--fg-dim); transition: color 0.15s; }
+  .rr-tree-more:hover { color: var(--secondary); }
   .rr-card      { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .rr-card:nth-child(1) { animation-delay: 0.02s; }
   .rr-card:nth-child(2) { animation-delay: 0.06s; }

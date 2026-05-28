@@ -202,21 +202,11 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Open ${owner}/${repo} on GitHub`}
-            className="inline-flex items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition"
+            className="inline-flex items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] rr-gh-btn"
             style={{
-              borderColor: "var(--border)",
               background: "var(--surface-3)",
-              color: "var(--secondary)",
               flexShrink: 0,
               height: "28px",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--secondary)";
-              (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-              (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
             }}
           >
             <GitHubMark size={13} />
@@ -451,14 +441,8 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 py-1 text-xs font-mono"
-                    style={{ color: "var(--fg-muted)", textDecoration: "none" }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.color = "var(--fg-muted)";
-                    }}
+                    className="flex items-center gap-2 py-1 text-xs font-mono rr-tree-link"
+                    style={{ textDecoration: "none" }}
                   >
                     {isDir ? <FolderIcon /> : <FileIcon />}
                     <span>{path}</span>
@@ -470,14 +454,8 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
                   href={treeRootUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 py-1 text-xs font-mono"
-                  style={{ color: "var(--fg-dim)", textDecoration: "none", marginTop: "2px" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--fg-dim)";
-                  }}
+                  className="flex items-center gap-2 py-1 text-xs font-mono rr-tree-more"
+                  style={{ textDecoration: "none", marginTop: "2px" }}
                 >
                   {remainingCount > 0 ? `${remainingCount} more paths, browse on GitHub` : "More paths available, browse on GitHub"} &rarr;
                 </a>
