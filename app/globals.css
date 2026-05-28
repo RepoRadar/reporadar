@@ -83,6 +83,10 @@
   0%, 100% { transform: translateY(-1px); opacity: 0.55; }
   50% { transform: translateY(3px); opacity: 1; }
 }
+@keyframes rr-think {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.9); }
+  40%           { opacity: 1;    transform: scale(1);   }
+}
 
 @layer utilities {
   .rr-fade-up   { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
@@ -101,6 +105,12 @@
   }
   .rr-slide-text { animation: rr-slide-text 0.35s ease-out both; }
   .rr-scroll-cue { animation: rr-scroll-cue 1.2s ease-in-out infinite; }
+  .rr-shimmer {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: rr-shimmer 1.4s ease-in-out infinite;
+    border-radius: 6px;
+  }
   .rr-card      { animation: rr-fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .rr-card:nth-child(1) { animation-delay: 0.02s; }
   .rr-card:nth-child(2) { animation-delay: 0.06s; }
@@ -138,7 +148,7 @@
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 24px rgba(34, 197, 94, 0.14);
   }
 
-  /* Four-stop gradient using the new palette: green → blue → yellow → red */
+  /* Four-stop gradient using the new palette: green / blue / yellow / red */
   .rr-grad-text {
     background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 35%, var(--accent) 70%, var(--danger) 100%);
     -webkit-background-clip: text;
@@ -161,6 +171,16 @@
     pointer-events: none;
     opacity: 0.6;
   }
+}
+
+/* ---- reduced-motion overrides ---- */
+@media (prefers-reduced-motion: reduce) {
+  .rr-shimmer { animation: none; background: var(--surface-2); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rr-think-dot { animation: rr-think 1.2s ease-in-out infinite; }
+  .rr-think-dot:nth-child(2) { animation-delay: 0.2s; }
+  .rr-think-dot:nth-child(3) { animation-delay: 0.4s; }
 }
 
 /* ---- form chrome ---- */
