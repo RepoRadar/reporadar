@@ -4,12 +4,17 @@
  * Renders: identity row (one GitHub link), 10 RepoRadar dimension bars,
  * overall score bar, README via react-markdown, and capped file-tree links.
  *
- * Security: react-markdown used in safe mode (no raw HTML plugin, no dangerouslySetInnerHTML).
+ * Security: many GitHub READMEs are written in raw HTML (centered logos,
+ * shields.io badges, <picture>, etc.). We render that HTML with rehype-raw so
+ * it does not show as literal text, then run rehype-sanitize to strip anything
+ * unsafe (scripts, event handlers, javascript: URLs). No dangerouslySetInnerHTML.
  * All file-tree and README links open in a new tab with noopener noreferrer.
  * Title tooltips are scoped to small label elements only (not the whole pane).
  */
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { Components } from "react-markdown";
 import type { RepoContext } from "@/app/lib/repoContext";
 import { blobUrl, treeUrl } from "@/app/lib/repoContext";
@@ -378,7 +383,11 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
               background: "var(--surface-2)",
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={readmeComponents}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+              components={readmeComponents}
+            >
               {readme.text}
             </ReactMarkdown>
           </div>
