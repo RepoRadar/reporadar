@@ -31,7 +31,7 @@ type SuggestionItem = {
   name: string;
   description: string;
   created_at: string;
-  status: "awaiting" | "accepted" | "declined";
+  status: "awaiting" | "accepted" | "declined" | "delivered";
   eta: string | null;
   github_issue_url: string | null;
   votes_up: number;
@@ -39,6 +39,13 @@ type SuggestionItem = {
 };
 
 type SubmitStatus = "idle" | "sending" | "sent" | "error";
+
+type SortKey =
+  | "recent"
+  | "earliest"
+  | "most-votes"
+  | "least-votes"
+  | "velocity";
 
 type BoardState =
   | { phase: "loading" }
@@ -99,6 +106,45 @@ function formatDate(iso: string): string {
   }
 }
 
+function daysSince(iso: string): number {
+  try {
+    const ms = Date.now() - new Date(iso).getTime();
+    return ms / (1000 * 60 * 60 * 24);
+  } catch {
+    return 1;
+  }
+}
+
+function sortSuggestions(
+  list: SuggestionItem[],
+  key: SortKey
+): SuggestionItem[] {
+  const copy = [...list];
+  switch (key) {
+    case "recent":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    case "earliest":
+      return copy.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    case "most-votes":
+      return copy.sort((a, b) => b.votes_up - a.votes_up);
+    case "least-votes":
+      return copy.sort((a, b) => a.votes_up - b.votes_up);
+    case "velocity": {
+      const vel = (s: SuggestionItem) =>
+        s.votes_up / Math.max(1, daysSince(s.created_at));
+      return copy.sort((a, b) => vel(b) - vel(a));
+    }
+    default:
+      return copy;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -129,6 +175,29 @@ function StatusBadge({
       >
         <span aria-hidden="true">✓</span>
         Accepted{eta ? ` · ETA ${eta}` : ""}
+      </span>
+    );
+  }
+
+  if (status === "delivered") {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.25rem",
+          fontSize: "0.75rem",
+          fontFamily: "var(--font-geist-mono)",
+          background: "rgba(59,130,246,0.12)",
+          color: "var(--secondary)",
+          border: "1px solid rgba(59,130,246,0.25)",
+          borderRadius: "6px",
+          padding: "0.1875rem 0.5rem",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span aria-hidden="true">✓</span>
+        Delivered
       </span>
     );
   }
@@ -172,27 +241,21 @@ function StatusBadge({
   );
 }
 
-function VoteButton({
-  direction,
+function UpvoteButton({
   count,
   onClick,
   disabled,
 }: {
-  direction: "up" | "down";
   count: number;
   onClick: () => void;
   disabled?: boolean;
 }) {
-  const isUp = direction === "up";
-  const label = isUp ? "Upvote" : "Downvote";
-  const symbol = isUp ? "▲" : "▼";
-
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={`${label} (${count} vote${count !== 1 ? "s" : ""})`}
+      aria-label={`Upvote (${count} vote${count !== 1 ? "s" : ""})`}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -202,7 +265,7 @@ function VoteButton({
         borderRadius: "6px",
         padding: "0.25rem 0.5625rem",
         cursor: disabled ? "not-allowed" : "pointer",
-        color: isUp ? "var(--primary)" : "var(--fg-dim)",
+        color: "var(--primary)",
         fontSize: "0.8125rem",
         fontFamily: "var(--font-geist-mono)",
         fontWeight: 600,
@@ -211,21 +274,21 @@ function VoteButton({
       }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLButtonElement).style.background = isUp
-            ? "rgba(34,197,94,0.1)"
-            : "rgba(107,115,132,0.15)";
-          (e.currentTarget as HTMLButtonElement).style.borderColor = isUp
-            ? "rgba(34,197,94,0.4)"
-            : "var(--border-strong)";
+          (e.currentTarget as HTMLButtonElement).style.background =
+            "rgba(34,197,94,0.1)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor =
+            "rgba(34,197,94,0.4)";
         }
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-3)";
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+        (e.currentTarget as HTMLButtonElement).style.background =
+          "var(--surface-3)";
+        (e.currentTarget as HTMLButtonElement).style.borderColor =
+          "var(--border)";
       }}
     >
       <span aria-hidden="true" style={{ fontSize: "0.625rem" }}>
-        {symbol}
+        ▲
       </span>
       {count}
     </button>
@@ -239,7 +302,7 @@ function SuggestionCard({
   voteLoading,
 }: {
   suggestion: SuggestionItem;
-  onVote: (id: string, direction: "up" | "down") => void;
+  onVote: (id: string) => void;
   voteError: string | null;
   voteLoading: boolean;
 }) {
@@ -293,7 +356,7 @@ function SuggestionCard({
         {suggestion.description}
       </p>
 
-      {/* Footer: date + votes + GitHub link */}
+      {/* Footer: date + upvote + GitHub link */}
       <div
         style={{
           display: "flex",
@@ -313,20 +376,11 @@ function SuggestionCard({
           {formatDate(suggestion.created_at)}
         </span>
 
-        <div style={{ display: "flex", gap: "0.375rem", alignItems: "center" }}>
-          <VoteButton
-            direction="up"
-            count={suggestion.votes_up}
-            onClick={() => onVote(suggestion.id, "up")}
-            disabled={voteLoading}
-          />
-          <VoteButton
-            direction="down"
-            count={suggestion.votes_down}
-            onClick={() => onVote(suggestion.id, "down")}
-            disabled={voteLoading}
-          />
-        </div>
+        <UpvoteButton
+          count={suggestion.votes_up}
+          onClick={() => onVote(suggestion.id)}
+          disabled={voteLoading}
+        />
 
         {suggestion.github_issue_url && (
           <a
@@ -380,6 +434,7 @@ function SuggestionCard({
 
 export default function SuggestionsBoard() {
   const [board, dispatch] = useReducer(boardReducer, { phase: "loading" });
+  const [sortKey, setSortKey] = useState<SortKey>("recent");
 
   // Bootstrap: fetch suggestions once on mount.
   // Uses setTimeout(..., 0) inside the effect so that setState is called
@@ -424,6 +479,25 @@ export default function SuggestionsBoard() {
   );
   const loading = board.phase === "loading";
   const loadError = board.phase === "error" ? board.message : null;
+
+  // Sorted view — re-computed whenever suggestions or sortKey changes.
+  // Voting patches the base suggestions array; the sorted view follows.
+  const sortedSuggestions = useMemo(
+    () => sortSuggestions(suggestions, sortKey),
+    [suggestions, sortKey]
+  );
+
+  // Stats derived from the full (unsorted) suggestions array.
+  const stats = useMemo(() => {
+    if (suggestions.length === 0) return null;
+    return {
+      awaiting: suggestions.filter((s) => s.status === "awaiting").length,
+      accepted: suggestions.filter((s) => s.status === "accepted").length,
+      delivered: suggestions.filter((s) => s.status === "delivered").length,
+      withIssues: suggestions.filter((s) => s.github_issue_url !== null).length,
+      totalVotes: suggestions.reduce((sum, s) => sum + s.votes_up, 0),
+    };
+  }, [suggestions]);
 
   // Submit form state
   const [name, setName] = useState("");
@@ -500,24 +574,21 @@ export default function SuggestionsBoard() {
     }
   };
 
-  // Vote handler with optimistic update
+  // Upvote toggle handler with optimistic update
   const handleVote = useCallback(
-    async (suggestionId: string, direction: "up" | "down") => {
+    async (suggestionId: string) => {
       if (voteLoading) return;
 
-      // Optimistic: find current counts before mutation
+      // Optimistic toggle: if current votes_up > 0 assume we're removing,
+      // otherwise adding. The server is authoritative; we reconcile after.
       const current = suggestions.find((s) => s.id === suggestionId);
-      const optimistic = {
-        votes_up:
-          (current?.votes_up ?? 0) + (direction === "up" ? 1 : 0),
-        votes_down:
-          (current?.votes_down ?? 0) + (direction === "down" ? 1 : 0),
-      };
+      const optimisticUp = (current?.votes_up ?? 0) + 1;
 
       dispatch({
         type: "patch-votes",
         id: suggestionId,
-        ...optimistic,
+        votes_up: optimisticUp,
+        votes_down: current?.votes_down ?? 0,
       });
 
       setVoteLoading(true);
@@ -529,7 +600,7 @@ export default function SuggestionsBoard() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             suggestion_id: suggestionId,
-            direction,
+            direction: "up",
           }),
         });
 
@@ -549,8 +620,8 @@ export default function SuggestionsBoard() {
           dispatch({
             type: "patch-votes",
             id: suggestionId,
-            votes_up: data.votes_up ?? optimistic.votes_up,
-            votes_down: data.votes_down ?? optimistic.votes_down,
+            votes_up: data.votes_up ?? optimisticUp,
+            votes_down: data.votes_down ?? (current?.votes_down ?? 0),
           });
         }
 
@@ -797,16 +868,104 @@ export default function SuggestionsBoard() {
 
       {/* ---- Suggestions list ---- */}
       <section>
-        <h2
+        {/* Heading row with sort control */}
+        <div
           style={{
-            color: "var(--fg)",
-            fontSize: "1.125rem",
-            fontWeight: 600,
-            margin: "0 0 1rem",
+            display: "flex",
+            alignItems: "baseline",
+            gap: "1rem",
+            flexWrap: "wrap",
+            marginBottom: "0.625rem",
           }}
         >
-          All suggestions
-        </h2>
+          <h2
+            style={{
+              color: "var(--fg)",
+              fontSize: "1.125rem",
+              fontWeight: 600,
+              margin: 0,
+              flex: "1 1 auto",
+            }}
+          >
+            All suggestions
+            {suggestions.length > 0 && (
+              <span style={{ color: "var(--fg-dim)", fontWeight: 400 }}>
+                {" "}
+                ({suggestions.length})
+              </span>
+            )}
+          </h2>
+
+          {suggestions.length > 1 && (
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                fontSize: "0.75rem",
+                color: "var(--fg-dim)",
+                fontFamily: "var(--font-geist-mono)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Sort:
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                style={{
+                  background: "var(--surface-3)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "6px",
+                  padding: "0.1875rem 0.5rem",
+                  color: "var(--fg)",
+                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  cursor: "pointer",
+                  outline: "none",
+                }}
+              >
+                <option value="recent">Most recent</option>
+                <option value="earliest">Earliest</option>
+                <option value="most-votes">Most upvotes</option>
+                <option value="least-votes">Least upvotes</option>
+                <option value="velocity">Top velocity</option>
+              </select>
+            </label>
+          )}
+        </div>
+
+        {/* Stats summary line */}
+        {stats && (
+          <p
+            style={{
+              margin: "0 0 1rem",
+              fontSize: "0.78rem",
+              fontFamily: "var(--font-geist-mono)",
+              color: "var(--fg-dim)",
+              lineHeight: 1.6,
+            }}
+          >
+            {stats.awaiting} awaiting assignment
+            {" · "}
+            {stats.accepted} accepted
+            {" · "}
+            {stats.delivered} delivered
+            {" · "}
+            <a
+              href="https://github.com/RepoRadar/reporadar/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--primary)",
+                textDecoration: "none",
+              }}
+            >
+              {stats.withIssues} with GitHub issues
+            </a>
+            {" · "}
+            {stats.totalVotes} total votes
+          </p>
+        )}
 
         {loading && (
           <div
@@ -850,11 +1009,11 @@ export default function SuggestionsBoard() {
           </div>
         )}
 
-        {suggestions.length > 0 && (
+        {sortedSuggestions.length > 0 && (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >
-            {suggestions.map((s) => (
+            {sortedSuggestions.map((s) => (
               <SuggestionCard
                 key={s.id}
                 suggestion={s}
