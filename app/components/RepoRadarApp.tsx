@@ -767,7 +767,7 @@ export function RepoRadarApp({
                 const { topic, query } = queryRef.current;
                 runQuery({ topic, query, label: lastQuery || "trending" });
               }}
-              title="Refresh the data — re-runs your current search and reloads the cards"
+              title="Refresh the data: re-runs your current search and reloads the cards"
               aria-label="Refresh data"
               className="ml-1.5 rounded px-1 transition"
               style={{ color: "var(--secondary)", border: "1px solid transparent" }}
@@ -907,7 +907,7 @@ export function RepoRadarApp({
                 </span>
               </span>
               <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
-                GitHub may be busy or rate-limited — give it another go.
+                GitHub may be busy or rate-limited. Give it another go.
               </span>
               <button
                 onClick={() => runQuery(queryError)}
@@ -1080,7 +1080,7 @@ export function RepoRadarApp({
         labels={{
           title: "RepoRadar",
           initial:
-            "Hey — ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface on a reporadar.io subdomain.",
+            "Hey. Ask me to find you a repo, like 'show me trending security repos' or 'find me a Rust project for a weekend'. I'll plot them and you can deploy any one as its own interactive surface on a reporadar.io subdomain.",
         }}
         defaultOpen={false}
         clickOutsideToClose={false}

@@ -49,7 +49,7 @@ export function InteractMenu() {
   const handleRefer = useCallback(async () => {
     try {
       await navigator.clipboard.writeText("https://reporadar.io");
-      alert("Link copied — share RepoRadar with a friend!");
+      alert("Link copied. Share RepoRadar with a friend!");
     } catch {
       // Fallback: show the URL
       window.prompt("Copy this link to share:", "https://reporadar.io");

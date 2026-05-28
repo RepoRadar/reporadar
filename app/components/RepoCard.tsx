@@ -305,7 +305,7 @@ function RankMedal({ rank }: { rank?: number }) {
         boxShadow: `${medal.glow}, inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.3)`,
         border: `1px solid ${medal.border}`,
       }}
-      title={`${medal.label} place — ranked ${rank} given your current sliders + sort priorities`}
+      title={`${medal.label} place, ranked ${rank} given your current sliders + sort priorities`}
       aria-label={`${medal.label} place medal`}
     >
       {rank}

@@ -271,7 +271,7 @@ export function TalkPanel({
         )}
 
         <p className="text-[10px] font-mono uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-          Click TALK again to refine — or close to fine-tune with the widgets on the left
+          Click TALK again to refine, or close to fine-tune with the widgets on the left
         </p>
       </div>
 
