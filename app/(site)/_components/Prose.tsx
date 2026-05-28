@@ -107,6 +107,37 @@ const components: Components = {
       {children}
     </a>
   ),
+  img: ({ src, alt, title }) => (
+    // Rendered with <span>s (not <figure>) because react-markdown nests images
+    // inside <p>; block elements there would be invalid HTML.
+    <span style={{ display: "block", margin: "1.5rem 0" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={typeof src === "string" ? src : ""}
+        alt={alt || ""}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          borderRadius: "8px",
+          border: "1px solid var(--border)",
+        }}
+      />
+      {title ? (
+        <span
+          style={{
+            display: "block",
+            marginTop: "0.5rem",
+            fontSize: "0.85rem",
+            color: "var(--fg-dim)",
+            textAlign: "center",
+          }}
+        >
+          {title}
+        </span>
+      ) : null}
+    </span>
+  ),
   strong: ({ children }) => (
     <strong style={{ color: "var(--fg)", fontWeight: 600 }}>
       {children}

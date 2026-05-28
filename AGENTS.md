@@ -28,12 +28,12 @@ Run new or edited copy through the skill before shipping it. When the app genera
 - Prefer persistent repo instructions in this file over one-off assumptions. If you learn a durable rule, add it here.
 - Before editing any Next.js code, read the relevant local doc under `node_modules/next/dist/docs/`. This repo uses Next.js 16 and assumptions from older versions can be wrong.
 
-## Hackathon Goal
+## Project Goal (post-hackathon)
 
-- Until the AI Tinkerers Generative UI Hackathon results are declared, make no changes that could reduce demo quality, user clarity, reliability, or the project's chance of winning.
-- During this window, only ship changes that make RepoRadar better for real users or materially improve the hackathon presentation.
-- Track hackathon context in durable memory when it affects decisions: the project was built for the AI Tinkerers Generative UI Hackathon, the header text should stay, and the near-term goal is improving the product for users and judges.
-- Prefer small, verifiable improvements over broad refactors. If a change is not clearly helpful, do not make it.
+- RepoRadar won 2nd place in the AI Tinkerers Generative UI Global Hackathon, finishing second out of 302 teams across all 17 host cities (result declared 2026-05-28). The demo-quality freeze that applied during judging is lifted.
+- The winning differentiator was real Generative UI: every repo card and deploy surface is genuinely AI-rendered, backed by four interconnected Cloudflare Workers and the A2UI, AG-UI/CopilotKit, and MCP protocols running in production. Protect that in future changes.
+- Keep the "AI Tinkerers Generative UI Hackathon" header text and the May 10, 2026 context (see UI contracts) unless the user explicitly asks to change it.
+- Near-term focus is the post-hackathon roadmap: alerts, per-repo audio, premium, and growth. Prefer small, verifiable improvements with browser QA over broad refactors. If a change is not clearly helpful, do not make it.
 
 ## Current UI Contracts
 

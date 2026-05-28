@@ -81,6 +81,24 @@ export default async function BlogPostPage({
         </p>
       </header>
       <Prose markdown={post.body} />
+      {post.linkedinEmbedUrl ? (
+        <div style={{ margin: "2rem 0 0" }}>
+          <iframe
+            src={post.linkedinEmbedUrl}
+            title="LinkedIn announcement"
+            loading="lazy"
+            allowFullScreen
+            style={{
+              width: "100%",
+              maxWidth: 504,
+              height: post.linkedinEmbedHeight ?? 1100,
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              display: "block",
+            }}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
