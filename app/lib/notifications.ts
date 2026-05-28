@@ -125,6 +125,49 @@ export function normalizeDigest(value: unknown): NotificationDigestItem[] {
 }
 
 // ---------------------------------------------------------------------------
+// Alert descriptions — turn a stored subscription into human-readable copy.
+// Used by the verify email + the verify confirmation page so the subscriber
+// sees exactly which alert they are confirming. No em dashes (house style).
+// ---------------------------------------------------------------------------
+
+/** The subscription fields needed to describe an alert in prose + a filter link. */
+export type AlertShape = {
+  kind: "topic" | "query";
+  term: string;
+  metric: "stars_pct" | "stars_abs" | "velocity";
+  threshold: number;
+  window_days: number;
+};
+
+/**
+ * One-line, plain-text summary of what a subscription watches, e.g.
+ *   "the cloudflare tag, when a repo passes 50,000 stars"
+ *   'the search "vector db", when a repo gains more than 20% stars over 30 days'
+ *   "the hermes tag, when a repo gains more than 5 stars per day"
+ * Not HTML — callers escape before embedding.
+ */
+export function describeAlert(opts: AlertShape): string {
+  const target =
+    opts.kind === "topic" ? `the ${opts.term} tag` : `the search "${opts.term}"`;
+  const condition =
+    opts.metric === "stars_abs"
+      ? `passes ${opts.threshold.toLocaleString("en-US")} stars`
+      : opts.metric === "stars_pct"
+        ? `gains more than ${opts.threshold}% stars over ${opts.window_days} days`
+        : `gains more than ${opts.threshold} stars per day`;
+  return `${target}, when a repo ${condition}`;
+}
+
+/** Dashboard URL filtered to the alert's term (?topic= for tags, ?q= for searches). */
+export function repoFilterUrl(
+  origin: string,
+  opts: { kind: "topic" | "query"; term: string }
+): string {
+  const param = opts.kind === "topic" ? "topic" : "q";
+  return `${origin}/?${param}=${encodeURIComponent(opts.term)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Email composers
 // ---------------------------------------------------------------------------
 
@@ -178,23 +221,43 @@ function buildEmailShell(title: string, bodyContent: string): string {
 }
 
 /**
- * Build a double-opt-in verification email.
+ * Build a double-opt-in verification email. Names the exact alert being
+ * confirmed in a highlighted box, with a link to the matching repos.
  *
- * T-03-07: escapeHtml applied to `email` (user-controlled input).
- * The verifyUrl is a server-minted value (UUID token) — included as-is in href + text.
+ * T-03-07: escapeHtml applied to `email` and the alert summary (the summary
+ * contains the user-controlled `term`). verifyUrl + filterUrl are server-built.
  */
-export function buildVerifyEmail(opts: {
-  email: string;
-  verifyUrl: string;
-}): { subject: string; html: string } {
+export function buildVerifyEmail(
+  opts: {
+    email: string;
+    verifyUrl: string;
+    origin: string;
+  } & AlertShape
+): { subject: string; html: string } {
   const safeEmail = escapeHtml(opts.email);
+  const safeSummary = escapeHtml(describeAlert(opts));
+  const filterUrl = repoFilterUrl(opts.origin, { kind: opts.kind, term: opts.term });
 
   const bodyContent = `
 <h2 style="color:${BRAND_COLOR};margin:0 0 1rem;">Confirm your RepoRadar alert</h2>
-<p style="color:${TEXT_COLOR};margin:0 0 0.75rem;">
-  We received a request to send threshold alerts to
-  <strong style="color:${TEXT_COLOR};">${safeEmail}</strong>.
+<p style="color:${TEXT_COLOR};margin:0 0 1rem;">
+  You are confirming <strong style="color:${TEXT_COLOR};">${safeEmail}</strong> for this alert:
 </p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.28);border-radius:8px;margin:0 0 1.5rem;">
+  <tr>
+    <td style="padding:1rem 1.25rem;">
+      <p style="color:${TEXT_COLOR};font-size:1rem;font-weight:600;margin:0 0 0.5rem;">
+        ${safeSummary}
+      </p>
+      <a href="${filterUrl}"
+         style="color:${BRAND_COLOR};font-size:0.875rem;text-decoration:none;"
+         target="_blank" rel="noopener noreferrer">
+        View the matching repos
+      </a>
+    </td>
+  </tr>
+</table>
 <p style="color:${TEXT_COLOR};margin:0 0 1.5rem;">
   Click the button below to confirm and activate your subscription.
   If you did not request this, you can safely ignore this email.
@@ -218,6 +281,49 @@ export function buildVerifyEmail(opts: {
     subject: "Confirm your RepoRadar alert subscription",
     html: buildEmailShell("Confirm your RepoRadar alert", bodyContent),
   };
+}
+
+/**
+ * Build the post-verification confirmation page (served by the verify route).
+ * Names the exact alert the subscriber just confirmed and links to the
+ * matching repos, so confirming feels concrete instead of generic.
+ *
+ * T-03-07: escapeHtml applied to email + summary (both can carry the term).
+ */
+export function buildVerifyConfirmedPage(
+  opts: {
+    email: string;
+    origin: string;
+  } & AlertShape
+): string {
+  const safeEmail = escapeHtml(opts.email);
+  const safeSummary = escapeHtml(describeAlert(opts));
+  const filterUrl = repoFilterUrl(opts.origin, { kind: opts.kind, term: opts.term });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Subscription confirmed | RepoRadar</title>
+</head>
+<body style="font-family:system-ui,sans-serif;background:${BG_COLOR};color:${TEXT_COLOR};margin:0;padding:2rem;text-align:center;">
+  <h1 style="color:${BRAND_COLOR};margin-bottom:1rem;">
+    <span style="color:${TEXT_COLOR};">Repo</span><span style="color:${BRAND_COLOR};">Radar</span>
+  </h1>
+  <h2 style="color:${BRAND_COLOR};margin:0 0 1rem;">Subscription confirmed!</h2>
+  <p style="color:${MUTED_COLOR};max-width:480px;margin:0 auto 1rem;">
+    Thanks. You confirmed <strong style="color:${TEXT_COLOR};">${safeEmail}</strong>. You are now watching:
+  </p>
+  <div style="max-width:480px;margin:0 auto 1.5rem;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.28);border-radius:8px;padding:1rem 1.25rem;text-align:left;">
+    <p style="color:${TEXT_COLOR};font-size:1rem;font-weight:600;margin:0 0 0.5rem;">${safeSummary}</p>
+    <a href="${filterUrl}" style="color:${BRAND_COLOR};font-size:0.875rem;text-decoration:none;">View the matching repos</a>
+  </div>
+  <a href="/" style="display:inline-block;padding:0.75rem 1.5rem;background:${BRAND_COLOR};color:#000;font-weight:600;text-decoration:none;border-radius:6px;">
+    Back to RepoRadar
+  </a>
+</body>
+</html>`;
 }
 
 /**

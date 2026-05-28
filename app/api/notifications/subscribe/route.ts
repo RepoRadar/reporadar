@@ -173,7 +173,16 @@ export async function POST(req: NextRequest) {
   // 6. Send verify email (no-ops without RESEND_API_KEY — D-04)
   const origin = req.nextUrl.origin;
   const verifyUrl = `${origin}/api/notifications/verify?token=${verify_token}`;
-  const { subject, html } = buildVerifyEmail({ email, verifyUrl });
+  const { subject, html } = buildVerifyEmail({
+    email,
+    verifyUrl,
+    origin,
+    kind,
+    term,
+    metric,
+    threshold,
+    window_days,
+  });
 
   await sendEmail({ to: email, subject, html, from: ALERTS_FROM, replyTo: REPLY_TO_EMAIL }).catch((err) => {
     const msg = err instanceof Error ? err.message : String(err);

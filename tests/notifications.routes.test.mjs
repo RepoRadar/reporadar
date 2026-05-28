@@ -185,6 +185,12 @@ describe("buildVerifyEmail — HTML escaping", () => {
     const { html } = buildVerifyEmail({
       email: hostile,
       verifyUrl: "https://reporadar.app/api/notifications/verify?token=safe",
+      origin: "https://reporadar.app",
+      kind: "topic",
+      term: "cloudflare",
+      metric: "stars_abs",
+      threshold: 50000,
+      window_days: 30,
     });
     assert.ok(
       !html.includes("<script>"),
