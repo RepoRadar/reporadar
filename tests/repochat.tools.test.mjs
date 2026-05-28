@@ -90,7 +90,7 @@ describe("validateToolArgs - search_reporadar", () => {
     assert.strictEqual(result.ok, true);
     assert.ok(result.args !== undefined, "args should be present");
     assert.ok(
-      (result.args.limit as number) <= 10,
+      result.args.limit <= 10,
       `limit should be clamped to <= 10, got ${result.args?.limit}`
     );
   });
@@ -100,7 +100,7 @@ describe("validateToolArgs - search_reporadar", () => {
     assert.strictEqual(result.ok, true);
     assert.ok(result.args !== undefined);
     assert.ok(
-      (result.args.limit as number) >= 1,
+      result.args.limit >= 1,
       `limit should be clamped to >= 1, got ${result.args?.limit}`
     );
   });
