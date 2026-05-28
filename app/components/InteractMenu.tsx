@@ -12,19 +12,18 @@ type InteractItem = {
   desc?: string;
 };
 
-const OPEN_EVENT = "reporadar:open-feedback";
-
 /**
  * "Interact" dropdown — replaces the standalone Feedback button in the header.
  *
  * Items:
- *   About       → /blog/why-we-built-reporadar
- *   Blog        → /blog
- *   Contact     → /contact
- *   Donations   → ko-fi (external)
- *   FAQ         → /blog?faq (scrolls to FAQ section, or links to a dedicated FAQ post)
+ *   About          → /blog/why-we-built-reporadar
+ *   Blog           → /blog
+ *   Contact        → /contact
+ *   Donations      → ko-fi (external)
+ *   FAQ            → /blog?faq (scrolls to FAQ section, or links to a dedicated FAQ post)
  *   Refer a Friend → share link / copy
- *   Suggestions → opens the FeedbackWidget panel (dispatches custom event)
+ *   Suggestions    → /suggestions (public voting board)
+ *   Changelog      → /changelog
  */
 export function InteractMenu() {
   const [open, setOpen] = useState(false);
@@ -47,11 +46,6 @@ export function InteractMenu() {
     };
   }, [open]);
 
-  const openSuggestions = useCallback(() => {
-    window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: { type: "feature" } }));
-    setOpen(false);
-  }, []);
-
   const handleRefer = useCallback(async () => {
     try {
       await navigator.clipboard.writeText("https://reporadar.io");
@@ -71,7 +65,7 @@ export function InteractMenu() {
     { label: "Donations", href: DONATION_URL, external: true },
     { label: "FAQ", href: "/blog/why-we-built-reporadar#faq" },
     { label: "Refer a Friend", action: handleRefer },
-    { label: "Suggestions", action: openSuggestions },
+    { label: "Suggestions", href: "/suggestions" },
     { label: "Changelog", href: "/changelog" },
   ];
 

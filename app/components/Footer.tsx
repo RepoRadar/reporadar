@@ -9,12 +9,6 @@ import { DONATION_URL, GITHUB_URL, HACKATHON_URL } from "@/app/lib/links";
  * overlaps the frozen header, cards, or sliders.
  */
 export function Footer() {
-  const handleSuggestFeature = () => {
-    window.dispatchEvent(
-      new CustomEvent("reporadar:open-feedback", { detail: { type: "feature" } })
-    );
-  };
-
   return (
     <footer
       style={{
@@ -71,18 +65,16 @@ export function Footer() {
             Contact
           </Link>
 
-          {/* Suggest a feature — opens FeedbackWidget in feature mode */}
-          <button
-            type="button"
-            onClick={handleSuggestFeature}
-            aria-label="Open feature suggestion widget"
-            className="transition-colors hover:underline underline-offset-2 cursor-pointer"
-            style={{ color: "var(--fg-muted)", background: "none", border: "none", padding: 0, font: "inherit" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--primary)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--fg-muted)"; }}
+          {/* Suggest a feature — links to the public suggestions voting board */}
+          <Link
+            href="/suggestions"
+            className="transition-colors hover:underline underline-offset-2"
+            style={{ color: "var(--fg-muted)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--fg-muted)"; }}
           >
             Suggest a feature
-          </button>
+          </Link>
 
           {/* Donation — outbound, no payment integration (D-10) */}
           <a

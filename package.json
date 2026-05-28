@@ -12,6 +12,7 @@
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "test": "node --test --test-concurrency=1 'tests/*.test.*'",
+    "test:suggestions": "node --test --test-concurrency=1 'tests/suggestions.test.mjs'",
     "test:smoke": "playwright test --reporter=list",
     "test:alerts": "playwright test tests/alerts-panel.spec.ts -c playwright.local.config.ts --reporter=list"
   },
