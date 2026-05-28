@@ -1,10 +1,14 @@
 /**
- * POST /api/suggestions/vote — cast or switch a vote on a suggestion
+ * POST /api/suggestions/vote — toggle an upvote on a suggestion
+ *
+ * This is an upvote-only endpoint. Downvotes are not supported.
+ * Sending direction="up" toggles: adds a vote if none exists, removes it if
+ * the user already voted up (click again to undo).
  *
  * Security:
  *   - IP address is hashed (SHA-256 + SUGGESTIONS_SALT) before storage
- *   - 3 votes per IP per rolling 1-hour window (D1-level check in recordVote)
- *   - One vote per (suggestion_id, ip_hash) — direction switch allowed
+ *   - 3 new votes per IP per rolling 1-hour window (removals don't count)
+ *   - One vote per (suggestion_id, ip_hash)
  */
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -40,13 +44,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const direction = body.direction;
-  if (direction !== "up" && direction !== "down") {
+  // Upvote-only: accept "up" or omit direction entirely (defaults to "up").
+  // Reject explicit "down" requests.
+  const rawDirection = body.direction;
+  if (rawDirection !== undefined && rawDirection !== "up") {
     return NextResponse.json(
-      { ok: false, error: "direction must be 'up' or 'down'." },
+      { ok: false, error: "Only upvotes are supported. direction must be 'up'." },
       { status: 400 }
     );
   }
+  const direction = "up" as const;
 
   // 3. Hash IP (privacy guard — never store raw IP)
   const rawIp =

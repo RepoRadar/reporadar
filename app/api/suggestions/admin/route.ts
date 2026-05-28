@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest) {
   const db = getCloudflareContext().env.DB;
 
   // 4. Apply status + ETA if provided
-  const statusValues = ["awaiting", "accepted", "declined"] as const;
+  const statusValues = ["awaiting", "accepted", "declined", "delivered"] as const;
   type StatusVal = (typeof statusValues)[number];
   const status =
     typeof body.status === "string" &&
