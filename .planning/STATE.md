@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 03-05: Alerts UI panel, list route, Playwright QA — all gates green"
-last_updated: "2026-05-27T11:08:50.353Z"
-last_activity: 2026-05-27
+stopped_at: "Completed 04-04: ChatClient streaming chat UI"
+last_updated: "2026-05-28T09:23:38.665Z"
+last_activity: 2026-05-28 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_plans: 18
+  completed_plans: 17
+  percent: 94
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-27)
 
 **Core value:** A builder can reliably find — and be alerted to — the most meaningful repo to build upon, and get an honest, reasoned read on whether and how to adopt it.
-**Current focus:** Phase 3 (Threshold Alerts) — plan 03-04 complete, 03-05 (Alerts UI) next
+**Current focus:** Phase --phase — 04
 
 ## Current Position
 
-Phase: 3 (Threshold Alerts) — EXECUTING
-Plan: 5 of 5 complete (03-05 Alerts UI panel next)
-Status: Ready to execute
-Last activity: 2026-05-27
+Phase: --phase (04) — EXECUTING
+Plan: 1 of --name
+Status: Executing Phase --phase
+Last activity: 2026-05-28 -- Phase --phase execution started
 
-Progress: [██████████] 100%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -64,6 +64,11 @@ Progress: [██████████] 100%
 | Phase 03-threshold-alerts P03 | 13 | 3 tasks | 9 files |
 | Phase 03-threshold-alerts P04 | 9 | 2 tasks | 4 files |
 | Phase 03-threshold-alerts P05 | 20 | 3 tasks | 7 files |
+| Phase 04-repo-intelligence P01 | 4 | 2 tasks | 3 files |
+| Phase 04-repo-intelligence P05 | 5 | 1 tasks | 1 files |
+| Phase 04-repo-intelligence P02 | 35 | 3 tasks | 5 files |
+| Phase 04-repo-intelligence P03 | 35 | 2 tasks | 4 files |
+| Phase 04-repo-intelligence P04 | 25 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -114,6 +119,17 @@ Recent decisions affecting current work:
 - 03-04 checkpoint approved by owner: local verification accepted; remote D1 migration + custom-worker/cron deploy + live sweep are owner-gated (D-11) and NOT run by the executor
 - dispatchEvent('submit') required for React onSubmit in Playwright — click() on submit button does not propagate through React's synthetic event delegation in Next.js 16/Turbopack dev mode
 - METRIC_LABELS excludes unit character; threshold rendering adds units (20% growth not 20% % growth)
+- repoContext.ts duplicates the octokit singleton from github.ts (not exported from there) - private-singleton pattern
+- scoring.ts import paths updated to .ts extensions for node --test transitive resolution
+- fetchRepoContext: serial repos.get for default_branch, then parallel getReadme + git.getTree with AbortSignal.timeout(6000) on tree
+- href-only anchor for Ask this repo entry point - no onAsk prop or RepoRadarApp.tsx change needed
+- Hybrid Gemini tool loop: buffer round, discard pre-tool text, emit final text once (role:function in 0.24.1)
+- validateToolArgs rejects path traversal (..) and absolute paths (T-04-06); binary extension guard
+- INTL-04: only err.message + coarse metadata in catch blocks; zero message-body logging in /api/repo-chat
+- Not-found state renders styled component (not notFound()) so back link and try-again are always visible (D-04-03-a)
+- 04-04 ChatClient mount point: pass fullName, repoName, ctx (RepoContext), apiKeyPresent to ChatClient in left pane (D-04-03-c)
+- D-04-04-a: sendMessage snapshots history before async fetch to avoid sending empty assistant placeholder
+- D-04-04-b: ChatClient chip-2 gate uses max-height CSS transition for slide-in form; aria-expanded on chip toggle
 
 ### Pending Todos
 
@@ -141,8 +157,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-27T11:08:50.348Z
-Stopped at: Completed 03-05: Alerts UI panel, list route, Playwright QA — all gates green
+Last session: 2026-05-28T09:23:38.659Z
+Stopped at: Completed 04-04: ChatClient streaming chat UI
 Resume file: None
 
-**Planned Phase:** 1 (Prerequisites) — 2 plans — 2026-05-27T08:27:24.356Z
+**Planned Phase:** 04 (repo-intelligence) — 6 plans — 2026-05-28T08:45:39.150Z

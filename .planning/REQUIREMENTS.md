@@ -46,10 +46,12 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Repo Intelligence (WS3)
 
-- [ ] **INTL-01**: "Talk to a repo" CopilotKit chat scoped to one repo, seeded with README + file tree + RepoRadar scores, with suggested prompts; single fast model; answers real questions about that specific repo.
+- [x] **INTL-01
+**: "Talk to a repo" CopilotKit chat scoped to one repo, seeded with README + file tree + RepoRadar scores, with suggested prompts; single fast model; answers real questions about that specific repo.
 - [ ] **INTL-02**: Personalized adoption report (given a pasted stack/repo URL) returns structured benefit, integration difficulty, effort/time as a reasoned RANGE, risks, and an integration sketch.
 - [ ] **INTL-03**: Concierge recommendation (given a pasted product description) returns a relevant, justified shortlist via `fetchTrending` + dimension scores, each with why/pros-cons/integration read — not generic top-stars.
-- [ ] **INTL-04**: Proprietary pasted input is handled explicitly and not logged/retained without consent.
+- [x] **INTL-04
+**: Proprietary pasted input is handled explicitly and not logged/retained without consent.
 
 ### Audio Overview (WS4)
 
