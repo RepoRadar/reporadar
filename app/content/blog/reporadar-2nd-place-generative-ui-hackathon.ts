@@ -16,6 +16,8 @@ The challenge ran on May 9, 2026: one synchronized six-hour build session worldw
 
 We built RepoRadar in those six hours in San Francisco, and it is still live and growing at [reporadar.io](https://reporadar.io).
 
+![The Generative UI Hackathon in San Francisco during demos](/blog-assets/genui-hackathon-sf-room.jpg "Show and tell in the San Francisco room, one of 17 cities building at once.")
+
 ## Why it placed
 
 The organizers described it as the most engineering ambition delivered in the cohort, and a real workflow unlock rather than a demo. In their words: generative UI for discovering the top 10,000 GitHub repos, multi-modal navigation, deployed sub-apps via Gemini-emitted A2UI, and all three hackathon protocols shipped. Under the hood that is:
