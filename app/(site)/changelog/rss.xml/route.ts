@@ -21,7 +21,9 @@ function parseEntries(md: string): { date: string; title: string; body: string }
   const entries: { date: string; title: string; body: string }[] = [];
   let cur: { date: string; title: string; body: string } | null = null;
   for (const line of md.split("\n")) {
-    const m = line.match(/^##\s+(\d{4}-\d{2}-\d{2})\s+[:—-]\s+(.+)$/);
+    // Heading shape: "## YYYY-MM-DD: Title" (colon right after the date) or the
+    // older "## YYYY-MM-DD — Title". \s* before the separator handles both.
+    const m = line.match(/^##\s+(\d{4}-\d{2}-\d{2})\s*[:—-]\s+(.+)$/);
     if (m) {
       if (cur) entries.push(cur);
       cur = { date: m[1], title: m[2].trim(), body: "" };
