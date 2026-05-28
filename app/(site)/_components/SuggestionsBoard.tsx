@@ -434,7 +434,7 @@ function SuggestionCard({
 
 export default function SuggestionsBoard() {
   const [board, dispatch] = useReducer(boardReducer, { phase: "loading" });
-  const [sortKey, setSortKey] = useState<SortKey>("recent");
+  const [sortKey, setSortKey] = useState<SortKey>("most-votes");
 
   // Bootstrap: fetch suggestions once on mount.
   // Uses setTimeout(..., 0) inside the effect so that setState is called
