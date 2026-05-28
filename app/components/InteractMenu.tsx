@@ -63,14 +63,16 @@ export function InteractMenu() {
     setOpen(false);
   }, []);
 
+  // Labels only — no subtitles (Christo's call). Changelog sits under the last item.
   const items: InteractItem[] = [
-    { label: "About", href: "/blog/why-we-built-reporadar", desc: "How it works, why we built it, FAQs" },
-    { label: "Blog", href: "/blog", desc: "Articles and updates" },
-    { label: "Contact", href: "/contact", desc: "Get in touch" },
-    { label: "Donations", href: DONATION_URL, external: true, desc: "Support the project" },
-    { label: "FAQ", href: "/blog/why-we-built-reporadar#faq", desc: "Frequently asked questions" },
-    { label: "Refer a Friend", action: handleRefer, desc: "Share RepoRadar" },
-    { label: "Suggestions", action: openSuggestions, desc: "Suggest a feature or leave feedback" },
+    { label: "About", href: "/blog/why-we-built-reporadar" },
+    { label: "Blog", href: "/blog" },
+    { label: "Contact", href: "/contact" },
+    { label: "Donations", href: DONATION_URL, external: true },
+    { label: "FAQ", href: "/blog/why-we-built-reporadar#faq" },
+    { label: "Refer a Friend", action: handleRefer },
+    { label: "Suggestions", action: openSuggestions },
+    { label: "Changelog", href: "/changelog" },
   ];
 
   return (

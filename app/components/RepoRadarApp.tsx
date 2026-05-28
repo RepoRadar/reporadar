@@ -733,7 +733,7 @@ export function RepoRadarApp({
           className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-[11px] font-mono"
           style={{ color: "var(--fg-dim)" }}
         >
-          <span style={{ color: "var(--accent)" }}>{process.env.NEXT_PUBLIC_APP_VERSION || "v0.4"}</span>
+          <span style={{ color: "var(--accent)" }}>{process.env.NEXT_PUBLIC_APP_VERSION || "v0.5"}</span>
           <span>·</span>
           <span>
             built at the{" "}
@@ -806,6 +806,8 @@ export function RepoRadarApp({
           className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
+          <NotificationSignup />
+
           <div className="flex flex-col gap-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
               Drag to tune
@@ -854,8 +856,6 @@ export function RepoRadarApp({
               onClose={() => setActiveDeploy(null)}
             />
           )}
-
-          <NotificationSignup />
 
         </aside>
 
