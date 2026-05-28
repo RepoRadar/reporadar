@@ -21,7 +21,7 @@ export type SuggestionRow = {
   name: string;
   description: string;
   created_at: string;
-  status: "awaiting" | "accepted" | "declined";
+  status: "awaiting" | "accepted" | "declined" | "delivered";
   eta: string | null;
   github_issue_url: string | null;
   votes_up: number;
@@ -141,19 +141,19 @@ export async function updateGithubIssueUrl(
 // -----------------------------------------------------------------------
 
 /**
- * Record a vote for a suggestion by an IP hash.
+ * Record or toggle an upvote for a suggestion by an IP hash.
  *
- * Rate-limit: a single ip_hash may cast at most 3 votes per rolling 1-hour window
- * across ALL suggestions. If exceeded, returns { ok: false, rateLimited: true }.
+ * Rate-limit: a single ip_hash may cast at most 3 new votes per rolling 1-hour
+ * window across ALL suggestions. Removals (toggle off) do not consume a slot.
+ * If exceeded, returns { ok: false, rateLimited: true }.
  *
- * Dedup: one row per (suggestion_id, ip_hash) — UNIQUE constraint in schema.
- *   - If no prior vote exists, INSERT and increment the matching counter.
- *   - If a prior vote exists with the SAME direction, treat as a no-op (idempotent).
- *   - If a prior vote exists with DIFFERENT direction, UPDATE direction and swap counters
- *     (decrement old direction, increment new direction).
+ * Toggle behavior: one row per (suggestion_id, ip_hash) — UNIQUE constraint.
+ *   - No prior vote: INSERT and increment votes_up.
+ *   - Prior vote exists with the same direction: DELETE and decrement votes_up (toggle off).
+ *   - Prior vote exists with a different direction: UPDATE direction, swap counters
+ *     (kept for backward compatibility with any residual votes_down rows in the DB).
  *
- * Both the vote row upsert and the counter update are issued in a db.batch()
- * to keep votes_up/votes_down consistent.
+ * All mutations are issued in a db.batch() to keep counts consistent.
  *
  * Returns the updated counts from the suggestions row.
  */
@@ -167,32 +167,7 @@ export async function recordVote(
     now: string; // ISO timestamp
   }
 ): Promise<VoteResult> {
-  // 1. Check hourly rate limit (last 1 hour window)
-  const oneHourAgo = new Date(
-    new Date(params.now).getTime() - 60 * 60 * 1000
-  ).toISOString();
-
-  const countResult = await db
-    .prepare(
-      `SELECT COUNT(*) AS cnt FROM suggestion_votes
-       WHERE ip_hash = ? AND created_at > ?`
-    )
-    .bind(params.ip_hash, oneHourAgo)
-    .first<{ cnt: number }>();
-
-  const currentCount = countResult?.cnt ?? 0;
-  if (currentCount >= 3) {
-    // Return current counts without mutating
-    const row = await getSuggestion(db, params.suggestion_id);
-    return {
-      ok: false,
-      rateLimited: true,
-      votes_up: row?.votes_up ?? 0,
-      votes_down: row?.votes_down ?? 0,
-    };
-  }
-
-  // 2. Check for existing vote on this suggestion from this ip_hash
+  // 1. Check for existing vote on this suggestion from this ip_hash
   const existing = await db
     .prepare(
       `SELECT id, direction FROM suggestion_votes
@@ -203,16 +178,51 @@ export async function recordVote(
 
   if (existing) {
     if (existing.direction === params.direction) {
-      // Idempotent — same direction, no change
-      const row = await getSuggestion(db, params.suggestion_id);
+      // Toggle off: remove the vote and decrement the counter.
+      // Removals do not consume a rate-limit slot.
+      const decCol = existing.direction === "up" ? "votes_up" : "votes_down";
+      await db.batch([
+        db
+          .prepare(`DELETE FROM suggestion_votes WHERE id = ?`)
+          .bind(existing.id),
+        db
+          .prepare(
+            `UPDATE suggestions SET ${decCol} = MAX(0, ${decCol} - 1) WHERE id = ?`
+          )
+          .bind(params.suggestion_id),
+      ]);
+
+      const updated = await getSuggestion(db, params.suggestion_id);
       return {
         ok: true,
+        votes_up: updated?.votes_up ?? 0,
+        votes_down: updated?.votes_down ?? 0,
+      };
+    }
+
+    // Direction switch: update the vote row and swap counters.
+    // Rate-limit applies here (changing direction is treated as a new vote).
+    const oneHourAgo = new Date(
+      new Date(params.now).getTime() - 60 * 60 * 1000
+    ).toISOString();
+    const countResult = await db
+      .prepare(
+        `SELECT COUNT(*) AS cnt FROM suggestion_votes
+         WHERE ip_hash = ? AND created_at > ?`
+      )
+      .bind(params.ip_hash, oneHourAgo)
+      .first<{ cnt: number }>();
+
+    if ((countResult?.cnt ?? 0) >= 3) {
+      const row = await getSuggestion(db, params.suggestion_id);
+      return {
+        ok: false,
+        rateLimited: true,
         votes_up: row?.votes_up ?? 0,
         votes_down: row?.votes_down ?? 0,
       };
     }
 
-    // Switch direction: update the vote row and swap counters in the suggestion
     const decCol = existing.direction === "up" ? "votes_up" : "votes_down";
     const incCol = params.direction === "up" ? "votes_up" : "votes_down";
 
@@ -229,7 +239,28 @@ export async function recordVote(
         .bind(params.suggestion_id),
     ]);
   } else {
-    // New vote — insert and increment counter
+    // New vote — check rate limit, then insert and increment counter.
+    const oneHourAgo = new Date(
+      new Date(params.now).getTime() - 60 * 60 * 1000
+    ).toISOString();
+    const countResult = await db
+      .prepare(
+        `SELECT COUNT(*) AS cnt FROM suggestion_votes
+         WHERE ip_hash = ? AND created_at > ?`
+      )
+      .bind(params.ip_hash, oneHourAgo)
+      .first<{ cnt: number }>();
+
+    if ((countResult?.cnt ?? 0) >= 3) {
+      const row = await getSuggestion(db, params.suggestion_id);
+      return {
+        ok: false,
+        rateLimited: true,
+        votes_up: row?.votes_up ?? 0,
+        votes_down: row?.votes_down ?? 0,
+      };
+    }
+
     const incCol = params.direction === "up" ? "votes_up" : "votes_down";
 
     await db.batch([
@@ -253,7 +284,7 @@ export async function recordVote(
     ]);
   }
 
-  // 3. Return fresh counts
+  // Return fresh counts
   const updated = await getSuggestion(db, params.suggestion_id);
   return {
     ok: true,
@@ -274,7 +305,7 @@ export async function setSuggestionStatus(
   db: D1Database,
   params: {
     id: string;
-    status: "awaiting" | "accepted" | "declined";
+    status: "awaiting" | "accepted" | "declined" | "delivered";
     eta?: string | null;
     github_issue_url?: string | null;
   }
