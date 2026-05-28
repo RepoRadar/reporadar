@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 04-03: workspace route with two-pane layout and RepoPane"
-last_updated: "2026-05-28T09:17:24.401Z"
+stopped_at: "Completed 04-04: ChatClient streaming chat UI"
+last_updated: "2026-05-28T09:23:38.665Z"
 last_activity: 2026-05-28 -- Phase --phase execution started
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 18
-  completed_plans: 16
-  percent: 89
+  completed_plans: 17
+  percent: 94
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: 1 of --name
 Status: Executing Phase --phase
 Last activity: 2026-05-28 -- Phase --phase execution started
 
-Progress: [█████████░] 89%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [█████████░] 89%
 | Phase 04-repo-intelligence P05 | 5 | 1 tasks | 1 files |
 | Phase 04-repo-intelligence P02 | 35 | 3 tasks | 5 files |
 | Phase 04-repo-intelligence P03 | 35 | 2 tasks | 4 files |
+| Phase 04-repo-intelligence P04 | 25 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - INTL-04: only err.message + coarse metadata in catch blocks; zero message-body logging in /api/repo-chat
 - Not-found state renders styled component (not notFound()) so back link and try-again are always visible (D-04-03-a)
 - 04-04 ChatClient mount point: pass fullName, repoName, ctx (RepoContext), apiKeyPresent to ChatClient in left pane (D-04-03-c)
+- D-04-04-a: sendMessage snapshots history before async fetch to avoid sending empty assistant placeholder
+- D-04-04-b: ChatClient chip-2 gate uses max-height CSS transition for slide-in form; aria-expanded on chip toggle
 
 ### Pending Todos
 
@@ -154,8 +157,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-28T09:17:24.395Z
-Stopped at: Completed 04-03: workspace route with two-pane layout and RepoPane
+Last session: 2026-05-28T09:23:38.659Z
+Stopped at: Completed 04-04: ChatClient streaming chat UI
 Resume file: None
 
 **Planned Phase:** 04 (repo-intelligence) — 6 plans — 2026-05-28T08:45:39.150Z
