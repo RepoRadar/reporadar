@@ -27,9 +27,21 @@ This phase builds **only** the free "talk to a repo" chat (Phase 4 surface 1), p
 - Read the local Next 16 docs under `node_modules/next/dist/docs/` before writing route/streaming code; confirm the streaming-with-tools shape in `@google/generative-ai` 0.24.1.
 - Branch `feat/talk-to-a-repo`. End at a reviewable DRAFT PR. Do NOT deploy (human-gated).
 
+## Requirement scope and deferrals
+
+This MVP pass covers these phase requirements:
+- **INTL-01** (talk-to-a-repo chat, seeded with README + file tree + RepoRadar scores, suggested prompts, single fast model): IN SCOPE, fully delivered.
+- **INTL-04** (proprietary pasted input handled explicitly, not logged/retained without consent): IN SCOPE, satisfied by the ephemeral no-persistence, no-logging design.
+
+Deferred to a Phase 4 continuation (NOT planned in this pass):
+- **INTL-02** (paid personalized adoption report): DEFERRED. The chat gives an inline fit read, but the structured paid report product is later.
+- **INTL-03** (standalone concierge recommendation product): DEFERRED. The chat can call `search_reporadar` to suggest alternatives inline, but the standalone concierge product is later.
+
+When the requirements coverage gate runs, INTL-02 and INTL-03 are intentionally uncovered: move them to a follow-up phase, do not block this MVP.
+
 ## Success criteria
 
-See PRD §13 (8 falsifiable criteria). The phase is done when all 8 hold and lint/build/tests are green.
+See PRD §13 (8 falsifiable criteria). The phase MVP is done when all 8 hold and lint/build/tests are green. (Phase 4 as a whole stays open until INTL-02/03 ship later.)
 
 ## Key files to mirror
 
