@@ -6,7 +6,7 @@ const BUILD_TIME = new Date().toISOString();
 const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_TIME: BUILD_TIME,
-    NEXT_PUBLIC_APP_VERSION: "v0.4",
+    NEXT_PUBLIC_APP_VERSION: "v0.5",
   },
 };
 
