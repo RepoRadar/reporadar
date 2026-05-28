@@ -62,12 +62,12 @@ INTERACTIVITY GUIDANCE (CRITICAL):
 
 NEEDS-RUNTIME SHAPE (only used when formFactor === "needs-runtime"):
   Layout(direction: "column", gap: 18, children: [
-    Heading(level: 1, text: "<repo name> — needs a runtime to demo live"),
+    Heading(level: 1, text: "<repo name>: needs a runtime to demo live"),
     Text(text: "<1-2 sentences in plain English: what this repo actually is>"),
     Heading(level: 2, text: "What it would take to run live"),
     Text(text: "<2-3 sentences explaining the missing piece, e.g.: 'This is an OpenClaw skill pack. To see it run, we'd need to spin up an OpenClaw instance in a Cloudflare Container, load the skill, and tunnel the UI through. We're scoping that for a future RepoRadar release.'"),
     Heading(level: 2, text: "Want this live sooner?"),
-    Text(text: "Ping the RepoRadar team — we can prioritize repos people actually want."),
+    Text(text: "Ping the RepoRadar team. We can prioritize repos people actually want."),
     Layout(direction: "row", gap: 12, children: [
       Button(label: "Ping Christo on GitHub", action: "link:https://github.com/letsgochristo", variant: "primary"),
       Button(label: "Ping Priyanshu on GitHub", action: "link:https://github.com/priyanshuharshbodhi1", variant: "secondary"),

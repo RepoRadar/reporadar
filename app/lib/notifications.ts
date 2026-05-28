@@ -270,6 +270,6 @@ export function buildAlertEmail(opts: {
 
   return {
     subject: `RepoRadar alert: ${term} crossed your threshold`,
-    html: buildEmailShell(`RepoRadar alert — ${term}`, bodyContent),
+    html: buildEmailShell(`RepoRadar alert: ${term}`, bodyContent),
   };
 }

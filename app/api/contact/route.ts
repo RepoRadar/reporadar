@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
 <html lang="en">
 <head><meta charset="utf-8"><title>Contact from ${safeName}</title></head>
 <body style="font-family:sans-serif;background:#06080d;color:#fafafa;padding:2rem;">
-  <h2 style="color:#22c55e;margin-bottom:1rem;">New Contact Message — RepoRadar</h2>
+  <h2 style="color:#22c55e;margin-bottom:1rem;">New contact message: RepoRadar</h2>
   <table style="border-collapse:collapse;width:100%;max-width:600px;">
     <tr>
       <td style="padding:0.5rem 1rem 0.5rem 0;color:#b3bbc8;white-space:nowrap;vertical-align:top;">
@@ -172,12 +172,12 @@ export async function POST(req: NextRequest) {
   </table>
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:1.5rem 0;">
   <p style="color:#6b7384;font-size:0.875rem;">
-    Sent via RepoRadar /contact — reply directly to respond to this visitor.
+    Sent via RepoRadar /contact. Reply directly to respond to this visitor.
   </p>
 </body>
 </html>`;
 
-  const text = `New Contact Message — RepoRadar\n\nFrom: ${name}\nReply-to: ${email}\n\nMessage:\n${message}\n\n---\nSent via RepoRadar /contact`;
+  const text = `New contact message: RepoRadar\n\nFrom: ${name}\nReply-to: ${email}\n\nMessage:\n${message}\n\n---\nSent via RepoRadar /contact`;
 
   try {
     const result = await sendEmail({
