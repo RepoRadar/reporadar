@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Changelog — RepoRadar",
   description:
     "All notable changes to RepoRadar, curated and kept up to date.",
+  alternates: {
+    types: { "application/rss+xml": "/changelog/rss.xml" },
+  },
 };
 
 export default function ChangelogPage() {
@@ -38,7 +41,14 @@ export default function ChangelogPage() {
             fontFamily: "var(--font-geist-mono)",
           }}
         >
-          All notable changes to RepoRadar, newest first.
+          All notable changes to RepoRadar, newest first.{" "}
+          <a
+            href="/changelog/rss.xml"
+            style={{ color: "var(--primary)", textDecoration: "none" }}
+            title="Subscribe to the changelog RSS feed"
+          >
+            · RSS
+          </a>
         </p>
       </header>
       <Prose markdown={changelog} />
