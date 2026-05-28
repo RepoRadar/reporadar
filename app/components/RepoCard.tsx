@@ -146,7 +146,7 @@ export function RepoCard({
               }}
               title={`Original: ${repo.description ?? ""}`}
             >
-              [Translated from {repo.descriptionLang} to English]
+              [Translated from {repo.descriptionLang}]
             </span>
           )}
           <div className="relative">

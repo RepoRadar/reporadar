@@ -62,7 +62,7 @@ export function InteractMenu() {
     { label: "About", href: "/blog/why-we-built-reporadar" },
     { label: "Blog", href: "/blog" },
     { label: "Contact", href: "/contact" },
-    { label: "Donations", href: DONATION_URL, external: true },
+    { label: "Donate", href: DONATION_URL, external: true },
     { label: "FAQ", href: "/blog/why-we-built-reporadar#faq" },
     { label: "Refer a Friend", action: handleRefer },
     { label: "Suggestions", href: "/suggestions" },
