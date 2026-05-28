@@ -248,7 +248,11 @@ export function buildAlertEmail(opts: {
   <tr>
     <td style="padding:1rem 1.25rem;">
       <p style="color:${TEXT_COLOR};font-size:1rem;font-weight:600;margin:0 0 0.25rem;">
-        ${safeFullName}
+        <a href="https://reporadar.io/?q=${encodeURIComponent(safeFullName)}"
+           style="color:${BRAND_COLOR};text-decoration:none;"
+           target="_blank" rel="noopener noreferrer">
+          ${safeFullName}
+        </a>
       </p>
       <p style="color:${MUTED_COLOR};font-size:0.875rem;margin:0;">
         ${safeReason}

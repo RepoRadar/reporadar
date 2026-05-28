@@ -33,7 +33,7 @@ export function Footer() {
             <span style={{ color: "var(--primary)" }}>Radar</span>
           </span>
           <span className="text-xs" style={{ color: "var(--fg-dim)" }}>
-            Surface the repos worth building on.
+            Stop scrolling. Start building.
           </span>
         </div>
 

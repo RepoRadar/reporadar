@@ -20,6 +20,7 @@ import { HeaderControls, type TimeWindow as HeaderTimeWindow } from "@/app/compo
 import { buildShareUrl } from "@/app/lib/shareUrl";
 import { DeployForm } from "@/app/components/DeployForm";
 import { FeedbackWidget } from "@/app/components/FeedbackWidget";
+import { InteractMenu } from "@/app/components/InteractMenu";
 import { Footer } from "@/app/components/Footer";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
 import { track } from "@/app/lib/analytics";
@@ -780,8 +781,10 @@ export function RepoRadarApp({
               ↻
             </button>
           </span>
+          <InteractMenu />
           <FeedbackWidget
             context={`Active query: ${lastQuery || "none"}. Visible repos: ${ranked.length}. Priorities: ${priorities.join(",") || "weighted score"}.`}
+            showButton={false}
           />
         </div>
       </header>
