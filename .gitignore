@@ -59,3 +59,6 @@ next-env.d.ts
 .dev.vars*
 !.dev.vars.example
 .gstack/
+
+# Local scratch folder for source images (only public/blog-assets is served)
+pics/
