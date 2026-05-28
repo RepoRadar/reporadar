@@ -17,7 +17,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import type { Components } from "react-markdown";
 import type { RepoContext } from "@/app/lib/repoContext";
-import { blobUrl, treeUrl } from "@/app/lib/repoContext";
+import { blobUrl, treeUrl, resolveReadmeUrl } from "@/app/lib/repoContext";
 import { DIMENSION_META, DIMENSION_ORDER } from "@/app/lib/types";
 
 const RADAR_GRADIENT =
@@ -39,7 +39,7 @@ function formatPushedAt(iso: string): string {
 
 // Compact markdown component map for the README pane.
 // Headings sized per UI-SPEC: h1 text-lg, h2 text-base, h3 text-sm.
-// Links always open in a new tab. No raw HTML rendering plugin used.
+// Links always open in a new tab. HTML is rendered via rehype-raw + sanitized.
 const readmeComponents: Components = {
   h1: ({ children }) => (
     <h1 style={{ color: "var(--fg)", fontSize: "1.125rem", fontWeight: 700, margin: "1rem 0 0.5rem" }}>
@@ -386,6 +386,7 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeSanitize]}
+              urlTransform={(url, key) => resolveReadmeUrl(owner, repo, url, key)}
               components={readmeComponents}
             >
               {readme.text}
