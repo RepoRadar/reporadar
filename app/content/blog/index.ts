@@ -25,6 +25,6 @@ export type BlogPost = {
 
 /** All published posts, newest-first. */
 export const posts: BlogPost[] = [
-  whyWeBuilt,
-  howItScores,
+  howItScores,   // 2026-05-20
+  whyWeBuilt,    // 2026-05-10 (hackathon / founding)
 ];

@@ -3,7 +3,7 @@ import type { BlogPost } from "./index";
 export const post: BlogPost = {
   slug: "how-reporadar-scores-repos",
   title: "How RepoRadar scores repos — the 10 dimensions",
-  date: "2026-05-10",
+  date: "2026-05-20",
   summary:
     "RepoRadar ranks repos using a 10-dimension scoring model. Each dimension is normalized 0–1 and blended with your tuning weights. Here's what each dimension measures and why it matters.",
   body: `
