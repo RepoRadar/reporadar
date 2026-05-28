@@ -94,6 +94,37 @@ export function treeUrl(fullName: string, path: string): string {
   return `https://github.com/${fullName}/tree/HEAD/${path}`;
 }
 
+/**
+ * Resolve a URL found in a rendered README against GitHub. README authors use
+ * relative paths (e.g. "assets/banner.png", "docs/x.md") that are relative to
+ * the repo, not to reporadar.io. Left alone they resolve against the chat page
+ * origin and 404. This rewrites relative paths: image `src` to raw.githubusercontent
+ * (so the bytes load) and link `href` to the github.com blob view. Absolute URLs,
+ * anchors, data:, and mailto: are returned unchanged.
+ *
+ * Pure + dependency-free so it is unit-testable without a browser or token.
+ */
+export function resolveReadmeUrl(
+  owner: string,
+  repo: string,
+  url: string,
+  key: string
+): string {
+  if (!url) return url;
+  if (
+    /^(https?:)?\/\//i.test(url) ||
+    url.startsWith("#") ||
+    url.startsWith("data:") ||
+    url.startsWith("mailto:")
+  ) {
+    return url;
+  }
+  const clean = url.replace(/^\.?\/+/, "");
+  return key === "src"
+    ? `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${clean}`
+    : `https://github.com/${owner}/${repo}/blob/HEAD/${clean}`;
+}
+
 // ---------------------------------------------------------------------------
 // RepoContext type
 // ---------------------------------------------------------------------------
