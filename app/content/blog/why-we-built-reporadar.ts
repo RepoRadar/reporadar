@@ -23,6 +23,19 @@ That question is different from "what is trending." It requires:
 
 ---
 
+## What RepoRadar does
+
+Four things, and none of them are "here's a list, good luck."
+
+1. **Search every repo, then judge it for you.** Search GitHub or Google and you get a list ranked by stars or SEO. You still open ten tabs and guess. RepoRadar scores each repo on the things that decide whether you'll actually adopt it, so you get a verdict instead of homework.
+2. **Score what matters, in the open.** Every repo is rated across 10 tunable dimensions: topic relevance, velocity, maturity, community health, documentation, and more. Move the sliders and the rankings move with you. The score bars on each card show you *why* a repo landed where it did.
+3. **Watch, instead of search again.** Searching is something you repeat forever. Alerts flip that around: set your criteria once and we tell you when a repo crosses them, like one that gained 2,000 stars in three days, scores high on security, and sits in your topic. Google can't tell you what got good this week.
+4. **Ask about a specific repo.** Open the chat on any repo and ask it directly, "would this work with what I already built?" The model reads the repo against our scoring criteria, makes a judgment call, and points you to better-fit alternatives if there are any.
+
+The pitch in one line: high signal for minimal effort, and more reason to come back as new repos keep landing.
+
+---
+
 ## The hackathon context
 
 RepoRadar was built for the **AI Tinkerers Generative UI Hackathon** (May 10, 2026). The theme was Generative UI: building interfaces where the AI generates the UI, not just the content.
@@ -74,6 +87,9 @@ See the full roster on the [AI Tinkerers hackathon team page](https://sf.aitinke
 ---
 
 ## FAQ {#faq}
+
+### Isn't this just GitHub search or Google?
+No. Search tools answer one question: what exists? They rank by stars or SEO and leave you to judge every result yourself. They're reactive (you keep searching) and generic (they don't know what you've built). RepoRadar judges repos on the dimensions you care about, watches for new ones so you don't have to, and can reason about whether a specific repo fits your stack. Short version: Google and GitHub tell you what's popular. RepoRadar tells you what's good, whether it fits you, and when something worth knowing shows up.
 
 ### How is RepoRadar different from GitHub Trending?
 GitHub Trending shows what's popular right now by raw star accumulation. RepoRadar lets you tune **10 dimensions** (topic relevance, velocity, maturity, community health, documentation quality, and more) so the ranking matches your priorities, not the crowd's.

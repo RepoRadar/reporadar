@@ -23,6 +23,7 @@ import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { InteractMenu } from "@/app/components/InteractMenu";
 import { Footer } from "@/app/components/Footer";
 import { NotificationSignup } from "@/app/components/NotificationSignup";
+import { DashboardIntro } from "@/app/components/DashboardIntro";
 import { track } from "@/app/lib/analytics";
 
 // Time-window chip values map to the GitHub `pushed:>YYYY-MM-DD` filter.
@@ -802,6 +803,10 @@ export function RepoRadarApp({
         onSetPriorities={tunePriorities}
         onSetTimeWindow={(w) => setTimeWindow(w as TimeWindow)}
       />
+
+      {/* Dismissible value strip — explains the four live pillars to new
+          visitors, hidden for good once they click "Got it". */}
+      <DashboardIntro />
 
       <main className="grid flex-1 grid-cols-12 gap-5 p-5">
         <aside
