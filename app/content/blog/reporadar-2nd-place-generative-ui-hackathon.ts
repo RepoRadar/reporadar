@@ -30,7 +30,9 @@ For the longer story of how the scoring and the AI-rendered surfaces work, see [
 
 ## Built by three
 
-RepoRadar was an even three-way effort. Christo Roberts, Priyanshu Harshbodhi, and Craig Latta each took an equal share and co-led the build, and Craig's livecoding and systems instincts were central to all of it. You can meet all three of us in [meet the founders](/blog/meet-the-founders).
+RepoRadar was an even three-way effort. Christo Roberts, Priyanshu Harshbodhi, and Craig Latta each took an equal share and co-led the build, and Craig was central to it the whole way, from the livecoding instincts to the systems thinking.
+
+One thing to set straight: the official winners announcement names only Christo and Priyanshu. Craig was left off, and he should not have been. He is an equal co-founder and co-lead of RepoRadar, and we have asked the organizers to add him back. You can meet all three of us in [meet the founders](/blog/meet-the-founders).
 
 ## What it won
 
@@ -38,6 +40,8 @@ RepoRadar was an even three-way effort. Christo Roberts, Priyanshu Harshbodhi, a
 - $5,000 in Google Cloud credits.
 - $1,000 in LangSmith credits.
 - Sponsor swag.
+
+![Hudson wearing Ray-Ban Meta glasses at the hackathon](/blog-assets/hudson-raybans.jpg "Hudson trying on Ray-Ban Metas for the first time, borrowed from someone from Meta we met at the event. We had no idea we would win a pair each as the runner-up prize.")
 
 ## The announcement
 
