@@ -718,16 +718,18 @@ export function RepoRadarApp({
             height={36}
             className="h-9 w-9 shrink-0"
           />
-          <h1 className="text-2xl font-black leading-none tracking-normal">
-            <span style={{ color: "var(--fg)" }}>Repo</span>
-            <span style={{ color: "var(--primary)" }}>Radar</span>
-          </h1>
-          <span
-            className="hidden text-base italic leading-none sm:inline"
-            style={{ color: "var(--fg-muted)" }}
-          >
-            Explore the wild world of repos FTW!
-          </span>
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-black leading-none tracking-normal">
+              <span style={{ color: "var(--fg)" }}>Repo</span>
+              <span style={{ color: "var(--primary)" }}>Radar</span>
+            </h1>
+            <span
+              className="hidden text-base italic leading-none sm:inline"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              Stop scrolling and start building!
+            </span>
+          </div>
         </button>
         <div
           className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-[11px] font-mono"
