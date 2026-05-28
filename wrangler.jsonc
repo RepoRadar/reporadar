@@ -68,5 +68,14 @@
 			"database_id": "ba6ce5a3-54e5-449a-9371-178eda6de8a3",
 			"migrations_dir": "migrations"
 		}
+	],
+	"kv_namespaces": [
+		{
+			// Shared trending-repo cache: caches the GitHub fetch + scoring result
+			// for the default/common views so cold Worker isolates serve from KV
+			// instead of re-hitting the GitHub Search API. ~5 min fresh + SWR.
+			"binding": "TRENDING_CACHE",
+			"id": "b429c01316e74900858f6d7f9a347a27"
+		}
 	]
 }
