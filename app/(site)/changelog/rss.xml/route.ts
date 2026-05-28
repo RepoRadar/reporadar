@@ -16,12 +16,12 @@ function escapeXml(s: string): string {
   );
 }
 
-// Parse "## YYYY-MM-DD — Title" sections out of the changelog markdown into feed items.
+// Parse "## YYYY-MM-DD: Title" (or "— Title") sections out of the changelog markdown into feed items.
 function parseEntries(md: string): { date: string; title: string; body: string }[] {
   const entries: { date: string; title: string; body: string }[] = [];
   let cur: { date: string; title: string; body: string } | null = null;
   for (const line of md.split("\n")) {
-    const m = line.match(/^##\s+(\d{4}-\d{2}-\d{2})\s+[—-]\s+(.+)$/);
+    const m = line.match(/^##\s+(\d{4}-\d{2}-\d{2})\s+[:—-]\s+(.+)$/);
     if (m) {
       if (cur) entries.push(cur);
       cur = { date: m[1], title: m[2].trim(), body: "" };
