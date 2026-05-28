@@ -630,7 +630,7 @@ export default function SuggestionsBoard() {
             ...prev,
             [suggestionId]:
               data.error ??
-              "You've used your 3 votes this hour. Try again later.",
+              "You've used your 3 votes for now. Try again later.",
           }));
         } else if (!data.ok) {
           // Revert optimistic update on error
