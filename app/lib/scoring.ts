@@ -4,8 +4,8 @@ import type {
   Dimensions,
   Repo,
   ScoredRepo,
-} from "./types";
-import { DIMENSION_ORDER } from "./types";
+} from "./types.ts";
+import { DIMENSION_ORDER } from "./types.ts";
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
