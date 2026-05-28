@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { fetchRepoContext, isValidFullName } from "@/app/lib/repoContext";
 import RepoPane from "./RepoPane";
+import ChatClient from "./ChatClient";
 
 export const runtime = "nodejs";
 
@@ -114,7 +115,7 @@ export default async function ChatWorkspace({
           minHeight: 0,
         }}
       >
-        {/* Left pane: 55% - chat shell (ChatClient mounts here in 04-04) */}
+        {/* Left pane: 55% - chat shell */}
         <div
           style={{
             flex: "0 0 55%",
@@ -164,36 +165,12 @@ export default async function ChatWorkspace({
             </div>
           </div>
 
-          {/* ChatClient mounts here in 04-04 */}
-          {/* Props to pass: fullName, repoName (repo), ctx (RepoContext), apiKeyPresent */}
-          {/* Placeholder content until 04-04 wires the client component */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--fg-dim)",
-              fontSize: "0.8125rem",
-              fontFamily: "var(--font-geist-mono)",
-            }}
-          >
-            {apiKeyPresent ? (
-              <span>Chat loading&hellip;</span>
-            ) : (
-              <div
-                style={{
-                  border: "1px solid var(--border)",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  background: "var(--surface-2)",
-                  textAlign: "center",
-                }}
-              >
-                Chat is not available right now.
-              </div>
-            )}
-          </div>
+          {/* ChatClient: streaming chat UI (04-04) */}
+          <ChatClient
+            fullName={fullName}
+            repoName={repo}
+            apiKeyPresent={apiKeyPresent}
+          />
         </div>
 
         {/* Right pane: 45% - repo context */}
