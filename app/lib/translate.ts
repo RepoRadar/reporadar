@@ -57,14 +57,14 @@ export async function translateRepoDescriptions(repos: Repo[]): Promise<void> {
     const model = client.getGenerativeModel({
       model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       systemInstruction:
-        "You translate short GitHub repo descriptions into clean, idiomatic English. Preserve meaning but render it naturally. Detect the source language exactly (e.g. 'Chinese', 'Japanese', 'Korean', 'Arabic', 'Russian', 'Hebrew', 'Thai', 'Hindi', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Vietnamese', 'Turkish'). Return ONLY a JSON array.",
+        "You translate short GitHub repo descriptions into clean, idiomatic English. Preserve meaning but render it naturally. Detect the source language precisely and name it in full. For Chinese, distinguish 'Traditional Chinese' from 'Simplified Chinese' by the script used. Labels to return look like: 'Traditional Chinese', 'Simplified Chinese', 'Japanese', 'Korean', 'Arabic', 'Russian', 'Hebrew', 'Thai', 'Hindi', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Vietnamese', 'Turkish'. Return ONLY a JSON array.",
       generationConfig: {
         responseMimeType: "application/json",
         temperature: 0.2,
       },
     });
 
-    const prompt = `Translate each item to English and detect its source language. Return JSON array of {"idx": number, "lang": string, "en": string}.
+    const prompt = `Translate each item to English and detect its source language (for Chinese, specify Traditional Chinese or Simplified Chinese). Return JSON array of {"idx": number, "lang": string, "en": string}.
 
 Items:
 ${candidates
