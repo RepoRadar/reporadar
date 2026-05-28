@@ -81,7 +81,14 @@ Plans:
   2. A user who pastes their stack/repo URL gets an adoption report with accurate benefit, integration difficulty, effort/time as a reasoned RANGE, risks, and a concrete integration sketch — not false precision.
   3. A user who describes their product (e.g. "blogcast.io") gets a relevant, justified shortlist with honest pros/cons and integration reads — not a generic top-stars list.
   4. Proprietary pasted input is handled explicitly and is not logged/retained without consent.
-**Plans**: TBD
+**Plans**: 6 plans (MVP pass: INTL-01 + INTL-04 only; INTL-02 paid adoption report and INTL-03 standalone concierge are deferred to a Phase 4 continuation)
+Plans:
+- [ ] 04-01-PLAN.md, repoContext.ts grounding bundle (README body, file tree, scores, link helpers) + unit tests
+- [ ] 04-02-PLAN.md, /api/repo-chat streaming endpoint with Gemini tool loop, rate limit, em-dash backstop, no logging + unit tests
+- [ ] 04-03-PLAN.md, /chat/[owner]/[repo] route + right pane (scores bars, README, file-tree links) + states
+- [ ] 04-04-PLAN.md, ChatClient streaming UI, markdown, four chips, describe-your-build gate, not-saved note
+- [ ] 04-05-PLAN.md, RepoCard "Ask this repo" entry anchor (opens the workspace in a new tab)
+- [ ] 04-06-PLAN.md, browser QA pass against PRD success criteria + fixes, draft PR
 **UI hint**: yes
 
 ### Phase 5: Audio Overview
@@ -91,7 +98,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Clicking "audio overview" on a card produces, within a few seconds and with a clear loading state, playable audio that accurately describes that repo (what it is, its dimension profile, why it stands out).
   2. Repeat clicks serve the cached R2 object (keyed by repo + content hash); audio regenerates only when the repo's data changes, keeping generation cost-bounded.
-**Plans**: TBD
+**Plans**: 6 plans (MVP pass: INTL-01 + INTL-04 only; INTL-02 paid adoption report and INTL-03 standalone concierge are deferred to a Phase 4 continuation)
+Plans:
+- [ ] 04-01-PLAN.md, repoContext.ts grounding bundle (README body, file tree, scores, link helpers) + unit tests
+- [ ] 04-02-PLAN.md, /api/repo-chat streaming endpoint with Gemini tool loop, rate limit, em-dash backstop, no logging + unit tests
+- [ ] 04-03-PLAN.md, /chat/[owner]/[repo] route + right pane (scores bars, README, file-tree links) + states
+- [ ] 04-04-PLAN.md, ChatClient streaming UI, markdown, four chips, describe-your-build gate, not-saved note
+- [ ] 04-05-PLAN.md, RepoCard "Ask this repo" entry anchor (opens the workspace in a new tab)
+- [ ] 04-06-PLAN.md, browser QA pass against PRD success criteria + fixes, draft PR
 **UI hint**: yes
 
 ### Phase 6: Premium + Stripe
@@ -101,7 +115,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A test-mode Stripe Checkout purchase results in entitlements stored in D1 via an idempotent `/api/stripe/webhook`.
   2. Paid surfaces (adoption report, concierge, alert count/finer thresholds, audio) are gated by entitlements server-side — in both the UI and the cron job — while the free tier still allows browse + talk-to-a-repo + a small number of alerts.
-**Plans**: TBD
+**Plans**: 6 plans (MVP pass: INTL-01 + INTL-04 only; INTL-02 paid adoption report and INTL-03 standalone concierge are deferred to a Phase 4 continuation)
+Plans:
+- [ ] 04-01-PLAN.md, repoContext.ts grounding bundle (README body, file tree, scores, link helpers) + unit tests
+- [ ] 04-02-PLAN.md, /api/repo-chat streaming endpoint with Gemini tool loop, rate limit, em-dash backstop, no logging + unit tests
+- [ ] 04-03-PLAN.md, /chat/[owner]/[repo] route + right pane (scores bars, README, file-tree links) + states
+- [ ] 04-04-PLAN.md, ChatClient streaming UI, markdown, four chips, describe-your-build gate, not-saved note
+- [ ] 04-05-PLAN.md, RepoCard "Ask this repo" entry anchor (opens the workspace in a new tab)
+- [ ] 04-06-PLAN.md, browser QA pass against PRD success criteria + fixes, draft PR
 **UI hint**: yes
 
 ### Phase 7: Launch Prep
