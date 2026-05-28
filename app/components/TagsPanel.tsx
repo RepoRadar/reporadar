@@ -3,15 +3,15 @@
 const TRENDING_TAGS: { topic: string; label: string; help: string }[] = [
   { topic: "hermes", label: "Hermes", help: "Open-weights instruction-tuned models from Nous Research." },
   { topic: "claude-code", label: "Claude Code", help: "Anthropic's CLI agent for engineering workflows." },
-  { topic: "mcp", label: "MCP", help: "Model Context Protocol — the open standard for connecting AI assistants to tools." },
+  { topic: "mcp", label: "MCP", help: "Model Context Protocol, the open standard for connecting AI assistants to tools." },
   { topic: "a2ui", label: "A2UI", help: "Google DeepMind's open protocol for agents emitting interactive UI." },
   { topic: "ag-ui", label: "AG-UI", help: "CopilotKit's open transport protocol for fullstack agentic UI in React." },
   { topic: "openclaw", label: "OpenClaw", help: "Open-source agentic tooling from this hackathon's stack." },
   { topic: "generative-ui", label: "Generative UI", help: "Agents that emit interactive UI at runtime instead of plain text." },
   { topic: "agents", label: "Agents", help: "AI agents, autonomous systems, multi-step reasoning loops." },
-  { topic: "rag", label: "RAG", help: "Retrieval-augmented generation — embeddings + retrieval + LLM." },
+  { topic: "rag", label: "RAG", help: "Retrieval-augmented generation: embeddings + retrieval + LLM." },
   { topic: "langchain", label: "LangChain", help: "Production-grade LLM application framework: chains, agents, RAG, memory." },
-  { topic: "cloudflare", label: "Cloudflare", help: "Workers, D1, R2, Durable Objects — edge-deployed everything." },
+  { topic: "cloudflare", label: "Cloudflare", help: "Workers, D1, R2, Durable Objects: edge-deployed everything." },
   { topic: "gemini", label: "Gemini", help: "Google's multimodal model family." },
   { topic: "anthropic", label: "Anthropic", help: "Claude, prompt engineering, agent SDKs." },
   { topic: "openai", label: "OpenAI", help: "GPT models, function calling, the Assistants API." },
@@ -47,7 +47,7 @@ export function TagsPanel({
         className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em]"
         style={{ color: "var(--fg-dim)" }}
       >
-        Pick a topic — click to load
+        Pick a topic, click to load
       </p>
       <div className="flex flex-wrap gap-2">
         {TRENDING_TAGS.map((t) => {

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RepoRadar — Smarter repo discovery for builders",
+  title: "RepoRadar: Smarter repo discovery for builders",
   description:
     "Tune 10 dimensions to surface trending GitHub repos that match your priorities. Deploy AI-generated interactive surfaces for any repo. Stop scrolling. Start building.",
   icons: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "RepoRadar — Smarter repo discovery for builders",
+    title: "RepoRadar: Smarter repo discovery for builders",
     description:
       "Tune sliders, surface trending GitHub repos, and deploy a unique interactive surface for any repo on demand.",
     url: "https://reporadar.io",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "RepoRadar — Smarter repo discovery for builders",
+    title: "RepoRadar: Smarter repo discovery for builders",
     description:
       "Tune sliders, surface trending GitHub repos, and deploy a unique interactive surface for any repo on demand.",
   },

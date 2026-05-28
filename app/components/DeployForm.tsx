@@ -143,7 +143,7 @@ export function DeployForm({
         </label>
 
         <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--fg-muted)" }}>
-          Notify me when ready <span style={{ color: "var(--fg-dim)" }}>(email or phone — optional)</span>
+          Notify me when ready <span style={{ color: "var(--fg-dim)" }}>(email or phone, optional)</span>
           <input
             type="text"
             value={contact}
@@ -305,11 +305,11 @@ export function DeployForm({
             How to test
           </div>
           <ol className="ml-4 list-decimal space-y-0.5">
-            <li>Open the URL above — it&apos;s a real interactive app, not a screenshot.</li>
+            <li>Open the URL above. It&apos;s a real interactive app, not a screenshot.</li>
             <li>Fill in any text fields and click <span style={{ color: "var(--primary)" }}>Save</span>. The record persists in this deploy&apos;s own Cloudflare D1 table.</li>
-            <li>Click <span style={{ color: "var(--secondary)" }}>Refresh</span> (or reload the page) — your records reappear.</li>
+            <li>Click <span style={{ color: "var(--secondary)" }}>Refresh</span> (or reload the page) and your records reappear.</li>
             <li>Click <span style={{ color: "var(--fg)" }}>×</span> next to any saved record to delete it.</li>
-            <li>Share the URL — anyone visiting sees the same persisted data.</li>
+            <li>Share the URL. Anyone visiting sees the same persisted data.</li>
           </ol>
         </div>
         {contact && (

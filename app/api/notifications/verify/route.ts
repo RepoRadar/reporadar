@@ -18,7 +18,7 @@ const CONFIRMED_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Subscription confirmed — RepoRadar</title>
+  <title>Subscription confirmed | RepoRadar</title>
 </head>
 <body style="font-family:system-ui,sans-serif;background:#06080d;color:#fafafa;margin:0;padding:2rem;text-align:center;">
   <h1 style="color:#22c55e;margin-bottom:1rem;">
@@ -41,7 +41,7 @@ const EXPIRED_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Link expired — RepoRadar</title>
+  <title>Link expired | RepoRadar</title>
 </head>
 <body style="font-family:system-ui,sans-serif;background:#06080d;color:#fafafa;margin:0;padding:2rem;text-align:center;">
   <h1 style="color:#22c55e;margin-bottom:1rem;">

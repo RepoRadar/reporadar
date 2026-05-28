@@ -33,7 +33,7 @@ const COPY = {
   },
   feature: {
     title: "Suggest a feature",
-    helper: "Describe what you need — AI scopes it into a feature request on GitHub.",
+    helper: "Describe what you need. AI scopes it into a feature request on GitHub.",
     label: "Feature suggestion",
     placeholder: "What feature would make RepoRadar more useful for you?",
     submit: "Send suggestion",

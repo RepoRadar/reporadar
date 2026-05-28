@@ -104,7 +104,7 @@ export const DIMENSION_META: Record<
   security: {
     label: "Security & Trust",
     short: "Security",
-    help: "Security signals — explicit security tooling, active maintenance, low open-vuln pressure. Higher = safer to adopt.",
+    help: "Security signals: explicit security tooling, active maintenance, low open-vuln pressure. Higher = safer to adopt.",
   },
   documentation: {
     label: "Documentation Quality",

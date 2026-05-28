@@ -81,7 +81,7 @@ export function Footer() {
             href={DONATION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Buy us a coffee — support RepoRadar on Ko-fi (opens in new tab)"
+            aria-label="Buy us a coffee, support RepoRadar on Ko-fi (opens in new tab)"
             className="transition-colors hover:underline underline-offset-2"
             style={{ color: "var(--fg-muted)" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)"; }}

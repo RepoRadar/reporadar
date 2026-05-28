@@ -11,23 +11,23 @@ export const post: BlogPost = {
 
 Every day, hundreds of repositories get pushed to the top of GitHub Trending. Most of them are impressive. Very few of them are meaningful to *you*, right now, as a builder.
 
-The existing tools for discovering repos — Trending pages, Hacker News, newsletters — treat every repo as equally interesting. A viral CSS demo ranks next to a foundational new inference engine. A one-day spike sits alongside a quietly compounding project that has been growing for three years.
+The existing tools for discovering repos (Trending pages, Hacker News, newsletters) treat every repo as equally interesting. A viral CSS demo ranks next to a foundational new inference engine. A one-day spike sits alongside a quietly compounding project that has been growing for three years.
 
 We wanted a better way to answer a specific question: **what is the most meaningful repo I could build upon this week?**
 
 That question is different from "what is trending." It requires:
 
 - Understanding what you care about (language, topic, recency, community health).
-- Scoring repos along multiple dimensions — not just stars.
+- Scoring repos along multiple dimensions, not just stars.
 - Making the scoring model *transparent and tunable* so you can trust the output.
 
 ---
 
 ## The hackathon context
 
-RepoRadar was built for the **AI Tinkerers Generative UI Hackathon** (May 10, 2026). The theme was Generative UI — building interfaces where the AI generates the UI, not just the content.
+RepoRadar was built for the **AI Tinkerers Generative UI Hackathon** (May 10, 2026). The theme was Generative UI: building interfaces where the AI generates the UI, not just the content.
 
-Most teams interpreted this as "AI writes some JSX." We took it further: every repo card in RepoRadar is a fully AI-rendered Generative UI surface. When you click "Deploy" on a repo, a CopilotKit agent reads the README, infers the repo's purpose and audience, and assembles a bespoke interactive page — forms, visualizations, explanations — in real time.
+Most teams interpreted this as "AI writes some JSX." We took it further: every repo card in RepoRadar is a fully AI-rendered Generative UI surface. When you click "Deploy" on a repo, a CopilotKit agent reads the README, infers the repo's purpose and audience, and assembles a bespoke interactive page (forms, visualizations, explanations) in real time.
 
 The dashboard itself is the tuning interface. The sliders and match-score bars use the same visual grammar so the controls and the output speak the same language.
 
@@ -47,7 +47,7 @@ This means:
 
 ## What's next
 
-RepoRadar is a real, actively maintained product. Phase 2 (shipping now) adds credibility surfaces — this blog, a changelog, a contact form, a suggestion box, a donation link, and privacy-respecting analytics.
+RepoRadar is a real, actively maintained product. Phase 2 (shipping now) adds credibility surfaces: this blog, a changelog, a contact form, a suggestion box, a donation link, and privacy-respecting analytics.
 
 The long-term roadmap includes:
 
@@ -55,14 +55,14 @@ The long-term roadmap includes:
 - **Audio summaries**: lean per-repo audio overviews.
 - **Premium**: saved searches, alert history, priority scoring.
 
-If you find a repo you want to build upon — and you find it here — that's exactly what we set out to do.
+If you find a repo you want to build upon, and you find it here, that's exactly what we set out to do.
 
 ---
 
 ## FAQ {#faq}
 
 ### How is RepoRadar different from GitHub Trending?
-GitHub Trending shows what's popular right now by raw star accumulation. RepoRadar lets you tune **10 dimensions** — topic relevance, velocity, maturity, community health, documentation quality, and more — so the ranking matches your priorities, not the crowd's.
+GitHub Trending shows what's popular right now by raw star accumulation. RepoRadar lets you tune **10 dimensions** (topic relevance, velocity, maturity, community health, documentation quality, and more) so the ranking matches your priorities, not the crowd's.
 
 ### Does RepoRadar cost money?
 The core dashboard is free. Future premium features (saved searches, alert history, priority scoring) will be announced here and on the blog.
@@ -71,7 +71,7 @@ The core dashboard is free. Future premium features (saved searches, alert histo
 Use the **Trend alerts** panel on the dashboard. Enter your email, a term to watch, a metric (stars gained, % growth, or stars/day), and a threshold. When a repo crosses that threshold, you get one email. No spam.
 
 ### Can I deploy a repo from RepoRadar?
-Yes — click the **Deploy →** button on any repo card. An AI agent reads the repo's README and generates a bespoke interactive surface (playground, dashboard, or wizard) at \`<slug>.reporadar.io\`.
+Yes. Click the **Deploy →** button on any repo card. An AI agent reads the repo's README and generates a bespoke interactive surface (playground, dashboard, or wizard) at \`<slug>.reporadar.io\`.
 
 ### How do I give feedback or suggest a feature?
 Click **Interact → Suggestions** in the top-right of the dashboard, or use the **Suggest a feature** link in the footer.

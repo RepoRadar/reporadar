@@ -57,7 +57,7 @@ export function PriorityBar({
         <span
           className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] cursor-help whitespace-nowrap"
           style={{ color: "var(--fg-dim)" }}
-          title="Click up to 3 sort options in priority order. The first you click is the primary sort, second breaks ties, third refines further. 'Most Stars' is on by default — toggle it off if you want a different ranking."
+          title="Click up to 3 sort options in priority order. The first you click is the primary sort, second breaks ties, third refines further. 'Most Stars' is on by default. Toggle it off if you want a different ranking."
         >
           Sort by
           <span

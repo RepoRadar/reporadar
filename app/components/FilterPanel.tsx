@@ -54,7 +54,7 @@ export function FilterPanel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
-            Pick up to 3 sort priorities — click in order
+            Pick up to 3 sort priorities, click in order
           </p>
           <span className="text-[10px] font-mono" style={{ color: "var(--fg-dim)" }}>
             ({priorities.length}/{MAX_PRIORITIES})

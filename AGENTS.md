@@ -6,6 +6,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # RepoRadar Agent Rules
 
+## Writing style (NON-NEGOTIABLE)
+
+All user-facing and outbound text MUST follow the avoid-ai-writing skill at `.claude/skills/avoid-ai-writing/SKILL.md`. This covers everything RepoRadar emits: UI copy, blog and changelog content, email bodies (verify, alert, contact, deploy notifications), the suggestions and feedback flows, and any AI-generated text the app produces for users. It applies equally to Claude and Hermes (and any other agent).
+
+The rules that bite most:
+- NO em dashes (the `—` character) or double-hyphens (`--`). Use commas, periods, parentheses, colons, or split into two sentences. Target zero.
+- Sentence case for headings, not Title Case.
+- No AI-isms: delve, leverage, robust, seamless, comprehensive, utilize, "it's not X, it's Y", "the future looks bright", chatbot openers like "Certainly!", and the rest of the skill's tier tables.
+- Be concrete and direct, vary sentence length, cut filler.
+
+Run new or edited copy through the skill before shipping it. When the app generates text with Gemini or another model for users (repo descriptions, summaries, audio scripts, adoption reports), bias those prompts toward these same rules.
+
 ## Tooling and Workflow
 
 - Use GetShitDone / GSD skills for project planning, execution, review, and verification work. If an instruction says "GASD memory", treat that as the repo's GSD/gstack memory workflow unless a more specific memory tool is configured.

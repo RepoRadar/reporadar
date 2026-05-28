@@ -10,10 +10,10 @@ import { FilterPanel } from "@/app/components/FilterPanel";
 export type TimeWindow = "30" | "90" | "365" | "all";
 
 const TIME_WINDOWS: { key: TimeWindow; label: string; help: string }[] = [
-  { key: "30", label: "1mo", help: "Pushed in the last 30 days — freshest, smallest pool." },
+  { key: "30", label: "1mo", help: "Pushed in the last 30 days: freshest, smallest pool." },
   { key: "90", label: "3mo", help: "Pushed in the last 90 days." },
-  { key: "365", label: "1y", help: "Pushed in the last year. Default — broad enough for most queries." },
-  { key: "all", label: "All", help: "No time filter — surfaces classic + long-tail repos too." },
+  { key: "365", label: "1y", help: "Pushed in the last year. Default, broad enough for most queries." },
+  { key: "all", label: "All", help: "No time filter. Surfaces classic and long-tail repos too." },
 ];
 
 type ActivePanel = "tags" | "talk" | "type" | "filter" | null;

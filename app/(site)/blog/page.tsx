@@ -10,7 +10,7 @@ import { posts } from "@/app/content/blog";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Blog — RepoRadar",
+  title: "Blog | RepoRadar",
   description:
     "Articles about how and why we built RepoRadar, and how it scores repos.",
 };

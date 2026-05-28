@@ -2,12 +2,12 @@ import type { BlogPost } from "./index";
 
 export const post: BlogPost = {
   slug: "how-reporadar-scores-repos",
-  title: "How RepoRadar scores repos — the 10 dimensions",
+  title: "How RepoRadar scores repos: the 10 dimensions",
   date: "2026-05-20",
   summary:
     "RepoRadar ranks repos using a 10-dimension scoring model. Each dimension is normalized 0–1 and blended with your tuning weights. Here's what each dimension measures and why it matters.",
   body: `
-## A score you can trust — and tune
+## A score you can trust, and tune
 
 Most "repo discovery" tools rank by raw star count. Stars are a popularity signal, not a relevance signal. A five-year-old library with 40,000 stars may be less useful today than a 6-month-old tool with 800 stars and weekly releases.
 
@@ -53,9 +53,9 @@ The ratio of closed issues to total issues, adjusted for issue volume. A project
 ---
 
 ### 6. Fork activity
-The ratio of forks to stars, combined with recent fork velocity. High fork-to-star ratio indicates that builders are actively copying and extending the codebase — a strong signal of practical utility.
+The ratio of forks to stars, combined with recent fork velocity. High fork-to-star ratio indicates that builders are actively copying and extending the codebase, a strong signal of practical utility.
 
-**Why it matters:** Stars can be passive; forks are an action — someone found the repo worth building upon.
+**Why it matters:** Stars can be passive; forks are an action. Someone found the repo worth building upon.
 
 ---
 
