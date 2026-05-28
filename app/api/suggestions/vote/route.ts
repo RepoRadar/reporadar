@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
         rateLimited: true,
         votes_up: result.votes_up,
         votes_down: result.votes_down,
-        error: "You've used your 3 votes this hour. Try again later.",
+        error: "You've used your 3 votes for now. Try again later.",
       },
       { status: 429 }
     );
