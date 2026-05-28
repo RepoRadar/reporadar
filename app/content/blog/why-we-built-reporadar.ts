@@ -59,6 +59,20 @@ If you find a repo you want to build upon, and you find it here, that's exactly 
 
 ---
 
+## The team {#team}
+
+RepoRadar was built for the AI Tinkerers Generative UI Hackathon by three people.
+
+**Christo Roberts**, founder. Builds and ships across the Cloudflare stack and creates under the "letsgochristo" handle. [letsgochristo.com](https://letsgochristo.com/), [LinkedIn](https://www.linkedin.com/in/christopherbroberts/), [X](https://x.com/letsgochristo/), [YouTube](https://www.youtube.com/@letsgochristo), [Instagram](https://www.instagram.com/letsgochristo/), [TikTok](https://www.tiktok.com/@letsgochristo).
+
+**Priyanshu Harshbodhi**, co-founder. AI Engineer at Truxt.ai with about four years in computer science, based in the Greater Delhi Area. [LinkedIn](https://www.linkedin.com/in/priyanshu-harshbodhi), [X](https://x.com/priyanhb), [GitHub](https://github.com/priyanshuharshbodhi1).
+
+**Craig Latta**, co-founder. Research computer scientist at Black Page Digital, with UC Berkeley degrees in music composition and computer science and a stint as an AI researcher at the IBM Watson Research Lab. He is building Orbit, an agentic pair-programming agent for livecoding. [LinkedIn](https://www.linkedin.com/in/ccrraaiigg), [GitHub](https://github.com/ccrraaiigg).
+
+See the full roster on the [AI Tinkerers hackathon team page](https://sf.aitinkerers.org/hackathons/h_FZX7ihFWcHA/teams/ht_kAYzJVwLU68).
+
+---
+
 ## FAQ {#faq}
 
 ### How is RepoRadar different from GitHub Trending?
@@ -77,7 +91,7 @@ Yes. Click the **Deploy →** button on any repo card. An AI agent reads the rep
 Click **Interact → Suggestions** in the top-right of the dashboard, or use the **Suggest a feature** link in the footer.
 
 ### Who built this?
-RepoRadar was built by Christo Roberts and two collaborators at the AI Tinkerers Generative UI Hackathon (May 10, 2026). It's MIT-licensed and open source at [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar).
+Christo Roberts with co-founders Priyanshu Harshbodhi and Craig Latta, at the AI Tinkerers Generative UI Hackathon (May 10, 2026). Bios and links are in [The team](#team) above. It's MIT-licensed and open source at [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar).
 
 ### Can I contribute?
 Absolutely. The repo is public and MIT-licensed. File issues, submit PRs, or fork it. See the [GitHub repo](https://github.com/RepoRadar/reporadar) to get started.
