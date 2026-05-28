@@ -726,7 +726,7 @@ export function RepoRadarApp({
             className="hidden text-base italic leading-none sm:inline"
             style={{ color: "var(--fg-muted)" }}
           >
-            Find the most meaningful repo to build upon as efficiently as possible.
+            Explore the wild world of repos FTW!
           </span>
         </button>
         <div
