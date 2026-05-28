@@ -1,5 +1,5 @@
 import { RepoRadarApp } from "@/app/components/RepoRadarApp";
-import { fetchTrending } from "@/app/lib/github";
+import { fetchTrendingCached } from "@/app/lib/trendingCache";
 import type { Repo } from "@/app/lib/types";
 import { parseShareParams, labelFor, type TimeWindow } from "@/app/lib/shareUrl";
 
@@ -18,8 +18,9 @@ export const revalidate = 0;
 // the HTML arrives card-complete and the only post-hydration work is the
 // auto-snap to the top repo.
 //
-// We import fetchTrending directly (not via /api/repos round-trip) so the
-// Cloudflare Worker stays within itself. If GitHub rate-limits us at SSR
+// We call fetchTrendingCached directly (not via /api/repos round-trip) so the
+// Cloudflare Worker stays within itself. It adds the shared KV cache so cold
+// isolates serve from KV instead of GitHub. If GitHub rate-limits us at SSR
 // time, we degrade gracefully: pass an empty initialRepos array and the
 // client-side bootstrap fires the old way.
 // Time window → GitHub `pushed:>YYYY-MM-DD` cutoff. "all" = no cutoff.
@@ -64,7 +65,9 @@ type PrefetchKey = { topic?: string; query?: string; timeWindow: TimeWindow };
 
 function prefetchOnce(k: PrefetchKey): Promise<Repo[]> {
   return withTimeout(
-    fetchTrending({
+    // fetchTrendingCached adds the shared KV layer (cold isolates serve from KV
+    // instead of GitHub). The in-memory prefetchCache below stays as a fast L0.
+    fetchTrendingCached({
       topic: k.topic,
       query: k.query,
       since: sinceFor(k.timeWindow),
