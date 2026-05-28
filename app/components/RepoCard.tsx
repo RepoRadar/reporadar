@@ -207,80 +207,82 @@ export function RepoCard({
         </div>
       </div>
 
-      {/* FOOTER: three-item action row */}
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-        <a
-          href={repo.htmlUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          aria-label={`Open ${repo.fullName} on GitHub`}
-          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition"
-          style={{
-            borderColor: "var(--border)",
-            background: "var(--surface-3)",
-            color: "var(--secondary)",
-          }}
-          title={`Open ${repo.fullName} on GitHub in a new tab`}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--secondary)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
-          }}
-        >
-          <GitHubMark size={13} />
-          GitHub repo
-        </a>
+      {/* FOOTER: GitHub + Deploy on top, full-width Chat below (the headline action) */}
+      <div className="mt-auto flex flex-col gap-2 pt-1">
+        <div className="flex items-center justify-between gap-2">
+          <a
+            href={repo.htmlUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Open ${repo.fullName} on GitHub`}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition"
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--surface-3)",
+              color: "var(--secondary)",
+            }}
+            title={`Open ${repo.fullName} on GitHub in a new tab`}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--secondary)";
+              (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
+              (e.currentTarget as HTMLAnchorElement).style.color = "var(--secondary)";
+            }}
+          >
+            <GitHubMark size={13} />
+            GitHub repo
+          </a>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeploy(repo);
+            }}
+            disabled={isDeploying}
+            className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-medium tracking-wide transition disabled:opacity-50"
+            style={{
+              borderColor: "var(--primary)",
+              background: "rgba(34,197,94,0.08)",
+              color: "var(--primary)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.20)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px var(--primary-glow)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+            }}
+          >
+            {isDeploying ? "deploying…" : "Deploy →"}
+          </button>
+        </div>
         <a
           href={`/chat/${repo.fullName}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          aria-label={`Ask ${repo.fullName}, opens the chat workspace in a new tab`}
-          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] transition"
+          aria-label={`Chat with ${repo.fullName}, opens the chat workspace in a new tab`}
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md border px-3 font-mono text-[11px] font-semibold transition"
           style={{
-            borderColor: "var(--secondary)",
-            background: "rgba(59,130,246,0.08)",
-            color: "var(--secondary)",
+            borderColor: "var(--accent)",
+            background: "rgba(234,179,8,0.12)",
+            color: "var(--accent)",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(59,130,246,0.20)";
-            (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 16px var(--secondary-glow)";
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(234,179,8,0.24)";
+            (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 16px var(--accent-glow)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(59,130,246,0.08)";
+            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(234,179,8,0.12)";
             (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none";
           }}
         >
           <ChatIcon size={13} />
-          Ask this repo
+          Chat with repo
         </a>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDeploy(repo);
-          }}
-          disabled={isDeploying}
-          className="inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-medium tracking-wide transition disabled:opacity-50"
-          style={{
-            borderColor: "var(--primary)",
-            background: "rgba(34,197,94,0.08)",
-            color: "var(--primary)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.20)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 16px var(--primary-glow)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "rgba(34,197,94,0.08)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
-          }}
-        >
-          {isDeploying ? "deploying…" : "Deploy →"}
-        </button>
       </div>
     </div>
   );
