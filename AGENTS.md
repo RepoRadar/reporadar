@@ -21,7 +21,9 @@ Run new or edited copy through the skill before shipping it. When the app genera
 ## Tooling and Workflow
 
 - Use GetShitDone / GSD skills for project planning, execution, review, and verification work. If an instruction says "GASD memory", treat that as the repo's GSD/gstack memory workflow unless a more specific memory tool is configured.
-- Use gstack skills for coding workflows when the user names them or the task matches them. In particular: `/qa` for browser QA, `/qa-only` for report-only QA, `/design-shotgun` or `/design-review` for visual work, `/review` for diff review, `/context-save` and `/context-restore` for handoff memory.
+- **QA gate before every feature push (NON-NEGOTIABLE):** before you push a branch or open a PR for any feature (anything touching UI, a route, or behavior), run gstack `/qa` (open the real app, test the change against its acceptance criteria, fix bugs found) AND `/browse` (dogfood the affected pages in a real headless browser). Do not push the feature until both pass. This is in addition to `npm run lint` / `npm run build` / tests. Pure copy or docs edits may skip it.
+- gstack is installed at `~/.claude/skills/gstack` (run `/gstack-upgrade` to update). Use its skills for coding workflows: `/qa` and `/qa-only` (browser QA), `/browse` (headless browser for QA + dogfooding), `/review` (pre-landing diff review), `/ship` (test + review + PR), `/design-review` and `/design-shotgun` (visual work), `/context-save` and `/context-restore` (handoff memory), plus the planning + `/cso` security skills.
+- For all web browsing and browser-based QA, prefer the gstack `/browse` and `/qa` skills. Do not use `mcp__claude-in-chrome__*` tools.
 - Use Superpowers skills when they apply. For bugs or visual regressions, start with systematic debugging; before claiming completion, run verification and report the exact commands.
 - Prefer persistent repo instructions in this file over one-off assumptions. If you learn a durable rule, add it here.
 - Before editing any Next.js code, read the relevant local doc under `node_modules/next/dist/docs/`. This repo uses Next.js 16 and assumptions from older versions can be wrong.
