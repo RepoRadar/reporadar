@@ -38,13 +38,14 @@ Run new or edited copy through the skill before shipping it. When the app genera
 - Repo cards must show rank first, then repository name, then a compact star count in one readable line. Only the repo name may truncate.
 - Star count display should sit at the top-right of the card as icon then value, e.g. `★ 141.7k`, with star and number at the same visual size.
 - Do not let stars, rank badges, tooltips, or metadata squeeze the repo name into one or two characters.
-- Repo cards should have exactly one GitHub link: the lower-left "GitHub repo" action with a GitHub icon. The repo title is display text, not a link.
+- Repo cards should have exactly one GitHub link: the left-most "Open Repo" action with the GitHub mark. The repo title is display text, not a link.
+- The card footer is a single row of three actions, left/center/right aligned (justify-between), all on one line at the same height: "Open Repo" (GitHub link, left), "Chat" (opens the per-repo chat workspace in a new tab, center, accent yellow), and "Deploy" (right).
 - The metadata block under the repo title should prioritize `owner/repo · language`; put timeline beneath it if needed so the repo identity does not get squeezed.
 - Slider rails and card match-score bars should use the same green, blue, yellow, red gradient language so tuning controls visually match the scoring output.
 - Tags, descriptions, and match-score bars should occupy consistent vertical positions across cards in the same row.
 - Infinite scroll should show a visible loading state with spinner and explanatory slide text, plus a retry affordance if loading fails.
 - Do not use fake/decorative icons for tag chips. Only use a tag icon when it is the real, recognizable icon for that exact technology or brand; otherwise show plain text.
-- The GitHub action should show the GitHub mark plus "GitHub repo", with an accessible label for screen readers.
+- The GitHub action should show the GitHub mark plus "Open Repo", with an accessible label for screen readers.
 - Long descriptions should stay clamped in the card, then reveal the full description on hover after a short delay.
 - Do not put a native `title` tooltip on the entire repo card. It creates a large browser tooltip over the grid and makes the dashboard harder to read. Use `aria-label` for card-level affordance and keep tooltips scoped to specific controls.
 - Slider rails in "Slide to tune" must be visible as filled bars, and slider thumbs must be vertically centered on the rail in Chromium and Firefox.
