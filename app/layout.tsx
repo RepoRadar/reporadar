@@ -16,14 +16,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RepoRadar — Generative UI for trending repos",
+  title: "RepoRadar — Smarter repo discovery for builders",
   description:
-    "Tune sliders, surface trending GitHub repos as agent-rendered cards, and deploy a unique interactive surface for any repo on demand.",
+    "Tune 10 dimensions to surface trending GitHub repos that match your priorities. Deploy AI-generated interactive surfaces for any repo. Stop scrolling. Start building.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.svg", type: "image/svg+xml" },
     ],
+  },
+  openGraph: {
+    title: "RepoRadar — Smarter repo discovery for builders",
+    description:
+      "Tune sliders, surface trending GitHub repos, and deploy a unique interactive surface for any repo on demand.",
+    url: "https://reporadar.io",
+    siteName: "RepoRadar",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RepoRadar — Smarter repo discovery for builders",
+    description:
+      "Tune sliders, surface trending GitHub repos, and deploy a unique interactive surface for any repo on demand.",
   },
 };
 

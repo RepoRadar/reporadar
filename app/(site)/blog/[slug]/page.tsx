@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import { posts } from "@/app/content/blog";
 import Prose from "@/app/(site)/_components/Prose";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 export const dynamicParams = false;
 
 /** Pre-render every known post slug at build time. */

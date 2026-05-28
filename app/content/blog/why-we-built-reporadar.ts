@@ -56,5 +56,30 @@ The long-term roadmap includes:
 - **Premium**: saved searches, alert history, priority scoring.
 
 If you find a repo you want to build upon — and you find it here — that's exactly what we set out to do.
+
+---
+
+## FAQ {#faq}
+
+### How is RepoRadar different from GitHub Trending?
+GitHub Trending shows what's popular right now by raw star accumulation. RepoRadar lets you tune **10 dimensions** — topic relevance, velocity, maturity, community health, documentation quality, and more — so the ranking matches your priorities, not the crowd's.
+
+### Does RepoRadar cost money?
+The core dashboard is free. Future premium features (saved searches, alert history, priority scoring) will be announced here and on the blog.
+
+### How do I get notified about new repos?
+Use the **Trend alerts** panel on the dashboard. Enter your email, a term to watch, a metric (stars gained, % growth, or stars/day), and a threshold. When a repo crosses that threshold, you get one email. No spam.
+
+### Can I deploy a repo from RepoRadar?
+Yes — click the **Deploy →** button on any repo card. An AI agent reads the repo's README and generates a bespoke interactive surface (playground, dashboard, or wizard) at \`<slug>.reporadar.io\`.
+
+### How do I give feedback or suggest a feature?
+Click **Interact → Suggestions** in the top-right of the dashboard, or use the **Suggest a feature** link in the footer.
+
+### Who built this?
+RepoRadar was built by Christo Roberts and two collaborators at the AI Tinkerers Generative UI Hackathon (May 10, 2026). It's MIT-licensed and open source at [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar).
+
+### Can I contribute?
+Absolutely. The repo is public and MIT-licensed. File issues, submit PRs, or fork it. See the [GitHub repo](https://github.com/RepoRadar/reporadar) to get started.
 `.trim(),
 };

@@ -41,7 +41,7 @@ const COPY = {
   },
 } as const;
 
-export function FeedbackWidget({ context }: { context: string }) {
+export function FeedbackWidget({ context, showButton = true }: { context: string; showButton?: boolean }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<FeedbackMode>("feedback");
   const [feedback, setFeedback] = useState("");
@@ -138,6 +138,7 @@ export function FeedbackWidget({ context }: { context: string }) {
 
   return (
     <div ref={panelRef} className="relative">
+      {showButton && (
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -153,6 +154,7 @@ export function FeedbackWidget({ context }: { context: string }) {
       >
         Feedback
       </button>
+      )}
 
       {open && (
         <div

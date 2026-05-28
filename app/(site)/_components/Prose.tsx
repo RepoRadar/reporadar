@@ -7,6 +7,22 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
+import type { ReactNode } from "react";
+
+/**
+ * Extract anchor ID from heading children that end with {#id}.
+ * Renders the heading with that id and strips the {#id} suffix from display.
+ */
+function extractHeadingId(children: ReactNode): { id?: string; label: ReactNode } {
+  const raw = children?.toString() || "";
+  const match = raw.match(/\s*\{#([\w-]+)\}\s*$/);
+  if (match) {
+    const id = match[1];
+    const before = raw.slice(0, raw.lastIndexOf("{#"));
+    return { id, label: before.trim() };
+  }
+  return { label: children };
+}
 
 const components: Components = {
   h1: ({ children }) => (
@@ -24,19 +40,23 @@ const components: Components = {
       {children}
     </h1>
   ),
-  h2: ({ children }) => (
-    <h2
-      style={{
-        color: "var(--fg)",
-        fontSize: "1.375rem",
-        fontWeight: 600,
-        lineHeight: 1.3,
-        margin: "2rem 0 0.75rem",
-      }}
-    >
-      {children}
-    </h2>
-  ),
+  h2: ({ children }) => {
+    const { id, label } = extractHeadingId(children);
+    return (
+      <h2
+        id={id}
+        style={{
+          color: "var(--fg)",
+          fontSize: "1.375rem",
+          fontWeight: 600,
+          lineHeight: 1.3,
+          margin: "2rem 0 0.75rem",
+        }}
+      >
+        {label}
+      </h2>
+    );
+  },
   h3: ({ children }) => (
     <h3
       style={{
