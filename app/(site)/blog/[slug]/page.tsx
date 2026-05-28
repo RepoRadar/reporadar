@@ -24,9 +24,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = posts.find((p) => p.slug === slug);
-  if (!post) return { title: "Not Found — RepoRadar" };
+  if (!post) return { title: "Not Found: RepoRadar" };
   return {
-    title: `${post.title} — RepoRadar`,
+    title: `${post.title} | RepoRadar`,
     description: post.summary,
   };
 }

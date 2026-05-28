@@ -12,7 +12,7 @@ import ContactForm from "@/app/(site)/_components/ContactForm";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Contact — RepoRadar",
+  title: "Contact | RepoRadar",
   description: "Get in touch with the RepoRadar team.",
 };
 
@@ -40,8 +40,8 @@ export default function ContactPage() {
             maxWidth: "520px",
           }}
         >
-          Have a question, idea, or just want to say hi? Drop us a message —
-          we read every one.
+          Have a question, idea, or just want to say hi? Drop us a message.
+          We read every one.
         </p>
       </header>
 
@@ -78,7 +78,7 @@ export default function ContactPage() {
         >
           Open an issue
         </a>{" "}
-        — we triage regularly.
+        We triage regularly.
       </p>
     </>
   );

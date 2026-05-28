@@ -81,7 +81,7 @@ export default function ContactForm() {
 
       if (body.queued) {
         setStatus("queued");
-        setStatusMessage("Message received — we'll be in touch soon.");
+        setStatusMessage("Message received. We'll be in touch soon.");
       } else {
         setStatus("sent");
         setStatusMessage("Message sent! We'll get back to you soon.");
@@ -171,7 +171,7 @@ export default function ContactForm() {
           maxLength={4000}
           required
           disabled={isBusy || isSuccess}
-          placeholder="How can we help? Questions, ideas, feedback — anything."
+          placeholder="How can we help? Questions, ideas, feedback, anything."
           style={{
             background: "var(--surface-2)",
             border: "1px solid var(--border)",

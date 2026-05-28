@@ -12,7 +12,7 @@ import SuggestionsBoard from "@/app/(site)/_components/SuggestionsBoard";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Suggestions — RepoRadar",
+  title: "Suggestions | RepoRadar",
   description:
     "Suggest features for RepoRadar, vote on ideas from the community, and see what the team is working on.",
 };
@@ -41,7 +41,7 @@ export default function SuggestionsPage() {
             maxWidth: "520px",
           }}
         >
-          Have an idea to make RepoRadar better? Submit it below — suggestions
+          Have an idea to make RepoRadar better? Submit it below. Suggestions
           are visible immediately and the community can vote on them. We review
           and respond to every one.
         </p>
@@ -71,7 +71,7 @@ export default function SuggestionsPage() {
         >
           Open an issue directly
         </a>{" "}
-        — we triage regularly.
+        We triage regularly.
       </p>
     </>
   );

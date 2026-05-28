@@ -10,7 +10,7 @@ import Prose from "@/app/(site)/_components/Prose";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Changelog — RepoRadar",
+  title: "Changelog | RepoRadar",
   description:
     "All notable changes to RepoRadar, curated and kept up to date.",
   alternates: {

@@ -192,7 +192,7 @@ function VoteButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={`${label} — ${count} vote${count !== 1 ? "s" : ""}`}
+      aria-label={`${label} (${count} vote${count !== 1 ? "s" : ""})`}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -487,7 +487,7 @@ export default function SuggestionsBoard() {
       }
 
       setSubmitStatus("sent");
-      setSubmitMessage("Posted — it's live below.");
+      setSubmitMessage("Posted. It's live below.");
       setName("");
       setDescription("");
     } catch (err) {
@@ -698,7 +698,7 @@ export default function SuggestionsBoard() {
                 maxLength={4000}
                 required
                 disabled={isSending || isSuccess}
-                placeholder="Describe your idea — what problem does it solve? What would you expect?"
+                placeholder="Describe your idea. What problem does it solve? What would you expect?"
                 style={{
                   background: "var(--surface-2)",
                   border: "1px solid var(--border)",
@@ -846,7 +846,7 @@ export default function SuggestionsBoard() {
               fontFamily: "var(--font-geist-mono)",
             }}
           >
-            No suggestions yet — be the first!
+            No suggestions yet. Be the first!
           </div>
         )}
 
