@@ -1,0 +1,25 @@
+{
+  "name": "reporadar-video",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Remotion product explainer for RepoRadar (standalone, not part of the Next.js app or the Cloudflare deploy).",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render RepoRadarExplainer out/reporadar-explainer.mp4",
+    "still": "remotion still RepoRadarExplainer out/frame.png --frame=1100",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0"
+  }
+}
