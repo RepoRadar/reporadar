@@ -54,13 +54,22 @@ const KIND_LABELS: Record<AlertRow["kind"], string> = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function NotificationSignup() {
+export function NotificationSignup({
+  initialTerm,
+  initialKind,
+}: {
+  // Optional prefill so the collapsed affordance or the contextual prompt can
+  // seed the form with what the user just searched/tuned. The user can still
+  // edit everything before submitting.
+  initialTerm?: string;
+  initialKind?: "topic" | "query";
+} = {}) {
   // --- Persisted email -------------------------------------------------------
   const [email, setEmail] = useState("");
 
   // --- Create form state -----------------------------------------------------
-  const [term, setTerm] = useState("");
-  const [kind, setKind] = useState<"topic" | "query">("topic");
+  const [term, setTerm] = useState(initialTerm ?? "");
+  const [kind, setKind] = useState<"topic" | "query">(initialKind ?? "topic");
   const [metric, setMetric] = useState<"stars_pct" | "stars_abs" | "velocity">("stars_pct");
   const [threshold, setThreshold] = useState<number>(20);
   const [windowDays, setWindowDays] = useState<number>(7);
