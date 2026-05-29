@@ -12,6 +12,8 @@ export const post: BlogPost = {
   body: `
 RepoRadar took **2nd place** in the AI Tinkerers Generative UI Global Hackathon, finishing second out of 302 teams across all 17 host cities.
 
+![Craig and Christo building RepoRadar together in San Francisco](/blog-assets/team-building-reporadar.jpg "Craig, Christo, Priyanshu (remote), and Claude. Brainstorming, deciding, planning, designing, building, shipping, iterating. Five to six hours nonstop, a mile a minute.")
+
 The challenge ran on May 9, 2026: one synchronized six-hour build session worldwide, presented by AI Tinkerers with Google DeepMind, CopilotKit, Manufact, LangChain, and Daytona. The brief was blunt. For three years, most "AI-powered" apps have been a chatbot in a trench coat, text in and text out. This one asked for the opposite: agents that render complete, interactive interfaces on the fly. Forms, dashboards, approval flows, whole applications generated from agent output. The open stack was A2UI from Google DeepMind, AG-UI and CopilotKit, and MCP Apps.
 
 We built RepoRadar in those six hours in San Francisco, and it is still live and growing at [reporadar.io](https://reporadar.io).
