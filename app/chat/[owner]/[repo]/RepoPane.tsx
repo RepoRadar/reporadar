@@ -20,8 +20,30 @@ import type { RepoContext } from "@/app/lib/repoContext";
 import { blobUrl, treeUrl, resolveReadmeUrl } from "@/app/lib/repoContext";
 import { DIMENSION_META, DIMENSION_ORDER } from "@/app/lib/types";
 
-const RADAR_GRADIENT =
-  "linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--danger))";
+/**
+ * Value-colored score fill. Color reads as a verdict: red below 40,
+ * amber 40-69, green at 70+. The fill width still equals score% of the
+ * track, so a low score is a short red bar and a high score is a long
+ * green bar. A subtle same-hue gradient keeps the bar from looking flat.
+ */
+function scoreFill(score: number): { background: string; glow: string } {
+  if (score >= 70) {
+    return {
+      background: "linear-gradient(90deg, #16a34a, var(--primary))",
+      glow: "var(--primary-glow)",
+    };
+  }
+  if (score >= 40) {
+    return {
+      background: "linear-gradient(90deg, #ca8a04, var(--accent))",
+      glow: "var(--accent-glow)",
+    };
+  }
+  return {
+    background: "linear-gradient(90deg, #dc2626, var(--danger))",
+    glow: "var(--danger-glow)",
+  };
+}
 
 const TREE_DISPLAY_CAP = 30;
 
@@ -288,8 +310,8 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
                     height: "100%",
                     width: `${score}%`,
                     borderRadius: "9999px",
-                    background: RADAR_GRADIENT,
-                    boxShadow: "0 0 6px var(--primary-glow)",
+                    background: scoreFill(score).background,
+                    boxShadow: `0 0 6px ${scoreFill(score).glow}`,
                   }}
                 />
               </div>
@@ -335,8 +357,8 @@ export default function RepoPane({ ctx }: { ctx: RepoContext }) {
                 height: "100%",
                 width: `${overallPct}%`,
                 borderRadius: "9999px",
-                background: RADAR_GRADIENT,
-                boxShadow: "0 0 6px var(--primary-glow)",
+                background: scoreFill(overallPct).background,
+                boxShadow: `0 0 6px ${scoreFill(overallPct).glow}`,
               }}
             />
           </div>

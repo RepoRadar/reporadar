@@ -3,8 +3,32 @@
 import type { ScoredRepo } from "@/app/lib/types";
 
 const TAGS_SHOWN = 5;
-const RADAR_GRADIENT =
-  "linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--danger))";
+
+/**
+ * Value-colored match-score fill. Color reads as a verdict: red below 40,
+ * amber 40-69, green at 70+. The fill width still equals score% of the
+ * track, so a low score is a short red bar and a high score is a long
+ * green bar. The sliders keep the gradient because they encode weighting,
+ * not a quality judgment.
+ */
+function scoreFill(score: number): { background: string; glow: string } {
+  if (score >= 70) {
+    return {
+      background: "linear-gradient(90deg, #16a34a, var(--primary))",
+      glow: "var(--primary-glow)",
+    };
+  }
+  if (score >= 40) {
+    return {
+      background: "linear-gradient(90deg, #ca8a04, var(--accent))",
+      glow: "var(--accent-glow)",
+    };
+  }
+  return {
+    background: "linear-gradient(90deg, #dc2626, var(--danger))",
+    glow: "var(--danger-glow)",
+  };
+}
 
 export function RepoCard({
   repo,
@@ -200,8 +224,8 @@ export function RepoCard({
             className="h-full"
             style={{
               width: `${overallPct}%`,
-              background: RADAR_GRADIENT,
-              boxShadow: "0 0 8px var(--primary-glow)",
+              background: scoreFill(overallPct).background,
+              boxShadow: `0 0 8px ${scoreFill(overallPct).glow}`,
             }}
           />
         </div>

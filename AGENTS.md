@@ -43,7 +43,7 @@ Run new or edited copy through the skill before shipping it. When the app genera
 - Repo cards should have exactly one GitHub link: the left-most "Open Repo" action with the GitHub mark. The repo title is display text, not a link.
 - The card footer is a single row of three actions, left/center/right aligned (justify-between), all on one line at the same height: "Open Repo" (GitHub link, left), "Chat" (opens the per-repo chat workspace in a new tab, center, accent yellow), and "Deploy" (right).
 - The metadata block under the repo title should prioritize `owner/repo · language`; put timeline beneath it if needed so the repo identity does not get squeezed.
-- Slider rails and card match-score bars should use the same green, blue, yellow, red gradient language so tuning controls visually match the scoring output.
+- Slider rails keep the green, blue, yellow, red gradient because they encode the user's weighting, not a quality judgment. Score bars and the card match-score bar are value-colored instead: red below 40, amber 40 to 69, green at 70 and up, so color reads as a verdict (low score = short red bar, high score = long green bar). Sliders show your taste; score bars show the result.
 - Tags, descriptions, and match-score bars should occupy consistent vertical positions across cards in the same row.
 - Infinite scroll should show a visible loading state with spinner and explanatory slide text, plus a retry affordance if loading fails.
 - Do not use fake/decorative icons for tag chips. Only use a tag icon when it is the real, recognizable icon for that exact technology or brand; otherwise show plain text.
