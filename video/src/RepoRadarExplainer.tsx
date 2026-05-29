@@ -99,7 +99,11 @@ const Dot: React.FC = () => (
 );
 
 // Floating browser window holding a real product screenshot, with a slow zoom.
-const BrowserCard: React.FC<{ src: string; dur: number }> = ({ src, dur }) => {
+const BrowserCard: React.FC<{ src: string; dur: number; chrome?: boolean }> = ({
+  src,
+  dur,
+  chrome = true,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const enter = spring({ frame, fps, config: { damping: 200 } });
@@ -117,24 +121,26 @@ const BrowserCard: React.FC<{ src: string; dur: number }> = ({ src, dur }) => {
         transform: `translateY(${(1 - enter) * 70}px)`,
       }}
     >
-      <div
-        style={{
-          height: 46,
-          display: "flex",
-          alignItems: "center",
-          gap: 9,
-          padding: "0 18px",
-          background: C.surface2,
-          borderBottom: `1px solid ${C.border}`,
-        }}
-      >
-        <Dot />
-        <Dot />
-        <Dot />
-        <div style={{ marginLeft: 14, color: C.dim, fontFamily: MONO, fontSize: 18 }}>
-          reporadar.io
+      {chrome ? (
+        <div
+          style={{
+            height: 46,
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            padding: "0 18px",
+            background: C.surface2,
+            borderBottom: `1px solid ${C.border}`,
+          }}
+        >
+          <Dot />
+          <Dot />
+          <Dot />
+          <div style={{ marginLeft: 14, color: C.dim, fontFamily: MONO, fontSize: 18 }}>
+            reporadar.io
+          </div>
         </div>
-      </div>
+      ) : null}
       <div style={{ overflow: "hidden" }}>
         <Img
           src={src}
@@ -237,7 +243,8 @@ const PillarShot: React.FC<{
   sub: string;
   src: string;
   dur: number;
-}> = ({ n, title, sub, src, dur }) => (
+  chrome?: boolean;
+}> = ({ n, title, sub, src, dur, chrome = true }) => (
   <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: "0 70px" }}>
     <div style={{ width: 940, marginBottom: 40 }}>
       <Rise>
@@ -252,7 +259,7 @@ const PillarShot: React.FC<{
         <div style={{ fontSize: 32, color: C.muted, marginTop: 16 }}>{sub}</div>
       </Rise>
     </div>
-    <BrowserCard src={src} dur={dur} />
+    <BrowserCard src={src} dur={dur} chrome={chrome} />
   </AbsoluteFill>
 );
 
@@ -449,9 +456,10 @@ export const RepoRadarExplainer: React.FC = () => {
         <Scene dur={SCENES.ask.dur}>
           <PillarShot
             n={4}
-            title="Ask any repo if it fits."
-            sub="It answers against our scores and your stack."
-            src={staticFile("chat.png")}
+            title="A high score isn't a fit."
+            sub="This security repo looked great. I asked how it fit my app, and found three better fits instead."
+            src={staticFile("ask-security.png")}
+            chrome={false}
             dur={SCENES.ask.dur}
           />
         </Scene>
