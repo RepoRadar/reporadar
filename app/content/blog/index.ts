@@ -37,5 +37,5 @@ export const posts: BlogPost[] = [
   wonHackathon,  // 2026-05-28 (2nd place result)
   meetFounders,  // 2026-05-28 (founder intros)
   howItScores,   // 2026-05-20
-  whyWeBuilt,    // 2026-05-10 (hackathon / founding)
+  whyWeBuilt,    // 2026-05-09 (hackathon / founding)
 ];
