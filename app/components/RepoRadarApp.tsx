@@ -22,7 +22,8 @@ import { DeployForm } from "@/app/components/DeployForm";
 import { FeedbackWidget } from "@/app/components/FeedbackWidget";
 import { InteractMenu } from "@/app/components/InteractMenu";
 import { Footer } from "@/app/components/Footer";
-import { NotificationSignup } from "@/app/components/NotificationSignup";
+import { AlertPanel, type AlertPanelHandle } from "@/app/components/AlertPanel";
+import { ContextualAlertPrompt } from "@/app/components/ContextualAlertPrompt";
 import { DashboardIntro } from "@/app/components/DashboardIntro";
 import { track } from "@/app/lib/analytics";
 
@@ -244,6 +245,28 @@ export function RepoRadarApp({
   // after the last change.
   const [reranking, setReranking] = useState(false);
   const rerankTimerRef = useRef<number | null>(null);
+
+  // --- Contextual "Watch this?" prompt --------------------------------------
+  // Fires once per session at an aha moment (a successful tune OR a search).
+  // ContextualAlertPrompt owns the persisted-dismissal gating; this flag just
+  // says "an aha happened, offer it now". Once true it stays true for the
+  // session (the prompt itself hides after dismiss/submit).
+  const [ahaFired, setAhaFired] = useState(false);
+  const alertPanelRef = useRef<AlertPanelHandle>(null);
+
+  // What the prompt should pre-fill: the current topic (preferred) or freeform
+  // query the user is looking at. "topic" kind when a topic is active, else
+  // "query". Both are derived from render-safe state (no ref reads during
+  // render): activeCategory holds the topic; lastQuery holds the labelled
+  // search ("ask: …" / "voice: …" / "tag: …"), so we strip the prefix for the
+  // freeform-query case. Empty until there's something concrete to watch.
+  const watchTerm = activeCategory
+    ? activeCategory.split(",")[0].trim()
+    : lastQuery.replace(/^[^:]+:\s*/, "").trim();
+  const watchKind: "topic" | "query" = activeCategory ? "topic" : "query";
+
+  // Mark the aha. Cheap + idempotent; safe to call from every tune/search path.
+  const fireAha = () => setAhaFired(true);
   const triggerRerankPulse = () => {
     setReranking(true);
     if (rerankTimerRef.current) clearTimeout(rerankTimerRef.current);
@@ -260,12 +283,14 @@ export function RepoRadarApp({
     setWeights(next);
     setPriorities((p) => (p.length === 1 && p[0] === "stars" ? [] : p));
     triggerRerankPulse();
+    fireAha();
   };
 
   // Sort-filter (FILTER panel) changes are tuning too — re-rank with a pulse.
   const tunePriorities = (next: SortKey[]) => {
     setPriorities(next);
     triggerRerankPulse();
+    fireAha();
   };
 
   // Click a card → snap the radar/sliders to that repo's dimensional profile
@@ -423,6 +448,14 @@ export function RepoRadarApp({
         if (fresh.length > 0) {
           selectRepoProfile(fresh[0]);
         }
+        // A successful user-initiated search (tag/ask/voice) is an aha moment —
+        // offer the contextual watch prompt. System pulls ("trending:…",
+        // refresh, time-window) are not user intent, so they don't fire it.
+        const userInitiated =
+          label?.startsWith("tag: ") ||
+          label?.startsWith("ask: ") ||
+          label?.startsWith("voice: ");
+        if (userInitiated) fireAha();
       } else {
         // Non-OK response — surface it rather than leave stale cards.
         setQueryError({ topic, query, label, window });
@@ -620,7 +653,10 @@ export function RepoRadarApp({
       }
       const baseRepos = (await res.json()) as Repo[];
       const scored = rankRepos(baseRepos, weights, priorities);
-      if (scored.length > 0) setRepos(scored);
+      if (scored.length > 0) {
+        setRepos(scored);
+        fireAha();
+      }
       return {
         ok: true,
         count: scored.length,
@@ -813,7 +849,7 @@ export function RepoRadarApp({
           className="col-span-12 flex flex-col gap-5 rounded-2xl border p-4 lg:col-span-3"
           style={{ borderColor: "var(--border)", background: "var(--surface)" }}
         >
-          <NotificationSignup />
+          <AlertPanel ref={alertPanelRef} />
 
           <div className="flex flex-col gap-2">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--fg-dim)" }}>
@@ -996,6 +1032,16 @@ export function RepoRadarApp({
                   </>
                 )}
               </div>
+              <ContextualAlertPrompt
+                visible={ahaFired && Boolean(watchTerm)}
+                watchTerm={watchTerm}
+                watchKind={watchKind}
+                onDismiss={() => setAhaFired(false)}
+                onRefine={(prefill) => {
+                  setAhaFired(false);
+                  alertPanelRef.current?.open(prefill);
+                }}
+              />
               <div
                 className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 transition-opacity"
                 style={{ opacity: reranking ? 0.5 : 1, transitionDuration: "180ms" }}
