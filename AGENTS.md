@@ -32,7 +32,7 @@ Run new or edited copy through the skill before shipping it. When the app genera
 
 - RepoRadar won 2nd place in the AI Tinkerers Generative UI Global Hackathon, finishing second out of 302 teams across all 17 host cities (result declared 2026-05-28). The demo-quality freeze that applied during judging is lifted.
 - The winning differentiator was real Generative UI: every repo card and deploy surface is genuinely AI-rendered, backed by four interconnected Cloudflare Workers and the A2UI, AG-UI/CopilotKit, and MCP protocols running in production. Protect that in future changes.
-- Keep the "AI Tinkerers Generative UI Hackathon" header text and the May 10, 2026 context (see UI contracts) unless the user explicitly asks to change it.
+- Keep the "AI Tinkerers Generative UI Hackathon" header text and the May 9, 2026 context (see UI contracts) unless the user explicitly asks to change it.
 - Near-term focus is the post-hackathon roadmap: alerts, per-repo audio, premium, and growth. Prefer small, verifiable improvements with browser QA over broad refactors. If a change is not clearly helpful, do not make it.
 
 ## Current UI Contracts
@@ -52,7 +52,7 @@ Run new or edited copy through the skill before shipping it. When the app genera
 - Do not put a native `title` tooltip on the entire repo card. It creates a large browser tooltip over the grid and makes the dashboard harder to read. Use `aria-label` for card-level affordance and keep tooltips scoped to specific controls.
 - Slider rails in "Slide to tune" must be visible as filled bars, and slider thumbs must be vertically centered on the rail in Chromium and Firefox.
 - Avoid overlapping text in the repo grid. Long repo names, long descriptions, translated labels, and large star counts should truncate or wrap cleanly inside their own regions.
-- Keep the "AI Tinkerers Generative UI Hackathon" header text and May 10, 2026 context unless the user explicitly asks to change it.
+- Keep the "AI Tinkerers Generative UI Hackathon" header text and May 9, 2026 context unless the user explicitly asks to change it.
 - Brand mark must stay faithful to the provided RepoRadar icon: circular green radar, four ticks, sweep beam, curved arrow, white nodes, and green hex node. Improve sharpness/quality only; do not invent a different icon.
 - The dashboard wordmark should render as text, not a wordmark image: white `Repo` plus green `Radar`, paired with the radar mark.
 

@@ -3,7 +3,7 @@ import type { BlogPost } from "./index";
 export const post: BlogPost = {
   slug: "why-we-built-reporadar",
   title: "Why we built RepoRadar",
-  date: "2026-05-10",
+  date: "2026-05-09",
   summary:
     "RepoRadar started as a hackathon project built for the AI Tinkerers Generative UI Hackathon. Here's the problem we set out to solve and why we think it matters.",
   body: `
@@ -38,7 +38,7 @@ The pitch in one line: high signal for minimal effort, and more reason to come b
 
 ## The hackathon context
 
-RepoRadar was built for the **AI Tinkerers Generative UI Hackathon** (May 10, 2026). The theme was Generative UI: building interfaces where the AI generates the UI, not just the content.
+RepoRadar was built for the **AI Tinkerers Generative UI Hackathon** (May 9, 2026). The theme was Generative UI: building interfaces where the AI generates the UI, not just the content.
 
 Most teams interpreted this as "AI writes some JSX." We took it further: every repo card in RepoRadar is a fully AI-rendered Generative UI surface. When you click "Deploy" on a repo, a CopilotKit agent reads the README, infers the repo's purpose and audience, and assembles a bespoke interactive page (forms, visualizations, explanations) in real time.
 
@@ -107,7 +107,7 @@ Yes. Click the **Deploy →** button on any repo card. An AI agent reads the rep
 Click **Interact → Suggestions** in the top-right of the dashboard, or use the **Suggest a feature** link in the footer.
 
 ### Who built this?
-Christo Roberts with co-founders Priyanshu Harshbodhi and Craig Latta, at the AI Tinkerers Generative UI Hackathon (May 10, 2026). Bios and links are in [The team](#team) above. It's MIT-licensed and open source at [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar).
+Christo Roberts with co-founders Priyanshu Harshbodhi and Craig Latta, at the AI Tinkerers Generative UI Hackathon (May 9, 2026). Bios and links are in [The team](#team) above. It's MIT-licensed and open source at [github.com/RepoRadar/reporadar](https://github.com/RepoRadar/reporadar).
 
 ### Can I contribute?
 Absolutely. The repo is public and MIT-licensed. File issues, submit PRs, or fork it. See the [GitHub repo](https://github.com/RepoRadar/reporadar) to get started.

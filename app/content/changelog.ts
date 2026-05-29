@@ -48,7 +48,7 @@ All notable changes to RepoRadar are documented here, newest first.
 ## 2026-05-09: Hackathon Build (v1.0 launch)
 
 ### Added
-- Initial launch at the **AI Tinkerers Generative UI Hackathon** (May 10, 2026).
+- Initial launch at the **AI Tinkerers Generative UI Hackathon** (May 9, 2026).
 - Dashboard with 10-dimension scored repo cards, match-score bars, tuning sliders, and AI-generated Generative UI surfaces for individual repos.
 - Tag chips, search, and per-topic filtering.
 - Infinite scroll with loading state, retry affordance.
